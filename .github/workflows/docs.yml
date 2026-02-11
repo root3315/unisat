@@ -1,0 +1,64 @@
+name: Generate Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'README.md'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-docs:
+    name: Build Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install documentation tools
+        run: |
+          pip install markdown weasyprint pygments
+          sudo apt-get install -y pandoc texlive-xetex
+
+      - name: Generate PDF from Markdown
+        run: |
+          mkdir -p docs/pdf
+          for f in docs/*.md; do
+            basename=$(basename "$f" .md)
+            pandoc "$f" -o "docs/pdf/${basename}.pdf" \
+              --pdf-engine=xelatex \
+              -V geometry:margin=2.5cm \
+              -V fontsize=11pt \
+              --highlight-style=tango \
+              --toc
+          done
+
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-pdf
+          path: docs/pdf/
+          retention-days: 30
+
+      - name: Generate documentation index
+        run: |
+          echo "# UniSat Documentation" > docs/pdf/index.md
+          echo "" >> docs/pdf/index.md
+          echo "Generated: $(date -u '+%Y-%m-%d %H:%M UTC')" >> docs/pdf/index.md
+          echo "" >> docs/pdf/index.md
+          for f in docs/pdf/*.pdf; do
+            basename=$(basename "$f")
+            echo "- [${basename}](./${basename})" >> docs/pdf/index.md
+          done

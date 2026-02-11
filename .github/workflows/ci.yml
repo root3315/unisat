@@ -1,0 +1,110 @@
+name: UniSat CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python-tests:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r flight-software/requirements.txt
+          pip install -r ground-station/requirements.txt
+          pip install -r simulation/requirements.txt
+          pip install pytest pytest-cov pytest-asyncio
+
+      - name: Run flight software tests
+        run: pytest flight-software/tests/ -v --cov=flight-software --cov-report=xml
+
+      - name: Run ground station tests
+        run: pytest ground-station/tests/ -v --cov=ground-station --cov-report=xml --cov-append
+
+      - name: Upload coverage
+        if: matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  firmware-build:
+    name: Firmware Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi
+
+      - name: Build firmware
+        run: |
+          cd firmware
+          mkdir -p build
+          cd build
+          cmake ..
+          make -j$(nproc)
+
+  firmware-tests:
+    name: Firmware Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get install -y gcc cmake
+
+      - name: Build and run tests
+        run: |
+          cd firmware/tests
+          gcc -I../stm32/Core/Inc -I../stm32/ADCS -I../stm32/EPS -Iunity \
+              test_ccsds.c test_adcs_algorithms.c test_eps.c \
+              unity/unity.c -o run_tests -lm
+          ./run_tests
+
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install linters
+        run: pip install ruff mypy
+
+      - name: Run ruff
+        run: ruff check flight-software/ ground-station/ simulation/ configurator/ payloads/
+
+      - name: Run mypy
+        run: mypy flight-software/ --ignore-missing-imports
