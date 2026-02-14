@@ -1,0 +1,5 @@
+sgp4>=2.22
+numpy>=1.26.0
+pyserial>=3.5
+Pillow>=10.1.0
+aiofiles>=23.2.0
