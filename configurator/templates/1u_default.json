@@ -1,0 +1,11 @@
+{
+  "form_factor": "1U",
+  "mass_limit_kg": 1.33,
+  "dimensions_mm": [100, 100, 113.5],
+  "solar_panels": 4,
+  "subsystems": {
+    "obc": true, "eps": true, "comm_uhf": true, "comm_sband": false,
+    "adcs": false, "gnss": true, "camera": false, "payload": true
+  },
+  "notes": "Minimal configuration suitable for CanSat competitions"
+}

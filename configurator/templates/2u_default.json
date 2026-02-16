@@ -1,0 +1,11 @@
+{
+  "form_factor": "2U",
+  "mass_limit_kg": 2.66,
+  "dimensions_mm": [100, 100, 227.0],
+  "solar_panels": 4,
+  "subsystems": {
+    "obc": true, "eps": true, "comm_uhf": true, "comm_sband": false,
+    "adcs": true, "gnss": true, "camera": true, "payload": true
+  },
+  "notes": "Technology demonstration mission with basic imaging"
+}

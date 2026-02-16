@@ -1,0 +1,11 @@
+{
+  "form_factor": "3U",
+  "mass_limit_kg": 4.0,
+  "dimensions_mm": [100, 100, 340.5],
+  "solar_panels": 6,
+  "subsystems": {
+    "obc": true, "eps": true, "comm_uhf": true, "comm_sband": true,
+    "adcs": true, "gnss": true, "camera": true, "payload": true
+  },
+  "notes": "Standard Earth observation mission — recommended configuration"
+}
