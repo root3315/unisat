@@ -1,0 +1,3 @@
+streamlit>=1.30.0
+plotly>=5.18.0
+fpdf2>=2.7.0
