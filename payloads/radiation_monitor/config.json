@@ -1,0 +1,8 @@
+{
+  "payload_type": "radiation_monitor",
+  "sensor": "SBM-20",
+  "sampling_interval_s": 5,
+  "conversion_factor": 0.0057,
+  "high_voltage_v": 400,
+  "dead_time_us": 190
+}

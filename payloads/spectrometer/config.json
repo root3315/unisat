@@ -1,0 +1,1 @@
+{"payload_type": "spectrometer", "sensor": "AS7265x", "channels": 18, "integration_ms": 100, "wavelength_range_nm": [410, 940]}

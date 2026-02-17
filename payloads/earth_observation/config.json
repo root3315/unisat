@@ -1,0 +1,1 @@
+{"payload_type": "earth_observation", "resolution_mp": 8, "gsd_m": 30, "bands": ["R","G","B","NIR"], "compression": "SVD", "svd_rank": 50, "storage_gb": 32}
