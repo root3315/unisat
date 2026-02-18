@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 350" fill="none">
+  <rect width="600" height="350" fill="#0E1117"/>
+  <text x="300" y="25" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">System State Machine</text>
+  <!-- States -->
+  <circle cx="100" cy="100" r="35" fill="#16213e" stroke="#4ecdc4" stroke-width="2"/>
+  <text x="100" y="105" text-anchor="middle" fill="#4ecdc4" font-size="10">STARTUP</text>
+  <circle cx="280" cy="100" r="35" fill="#16213e" stroke="#f9ca24" stroke-width="2"/>
+  <text x="280" y="98" text-anchor="middle" fill="#f9ca24" font-size="9">DEPLOY</text>
+  <text x="280" y="110" text-anchor="middle" fill="#f9ca24" font-size="9">MENT</text>
+  <circle cx="460" cy="100" r="35" fill="#16213e" stroke="#a29bfe" stroke-width="2"/>
+  <text x="460" y="98" text-anchor="middle" fill="#a29bfe" font-size="9">DETUM</text>
+  <text x="460" y="110" text-anchor="middle" fill="#a29bfe" font-size="9">BLING</text>
+  <circle cx="460" cy="230" r="40" fill="#16213e" stroke="#2ecc71" stroke-width="3"/>
+  <text x="460" y="235" text-anchor="middle" fill="#2ecc71" font-size="12">NOMINAL</text>
+  <circle cx="200" cy="280" r="35" fill="#16213e" stroke="#ff6b6b" stroke-width="2"/>
+  <text x="200" y="278" text-anchor="middle" fill="#ff6b6b" font-size="9">SAFE</text>
+  <text x="200" y="290" text-anchor="middle" fill="#ff6b6b" font-size="9">MODE</text>
+  <circle cx="100" cy="230" r="35" fill="#16213e" stroke="#fd79a8" stroke-width="2"/>
+  <text x="100" y="228" text-anchor="middle" fill="#fd79a8" font-size="9">LOW</text>
+  <text x="100" y="240" text-anchor="middle" fill="#fd79a8" font-size="9">POWER</text>
+  <!-- Transitions -->
+  <line x1="135" y1="100" x2="245" y2="100" stroke="#fff" stroke-width="1"/>
+  <line x1="315" y1="100" x2="425" y2="100" stroke="#fff" stroke-width="1"/>
+  <line x1="460" y1="135" x2="460" y2="190" stroke="#fff" stroke-width="1"/>
+  <line x1="425" y1="240" x2="235" y2="270" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="420" y1="245" x2="135" y2="240" stroke="#fd79a8" stroke-width="1" stroke-dasharray="4,4"/>
+  <line x1="200" y1="245" x2="430" y2="220" stroke="#2ecc71" stroke-width="1"/>
+  <line x1="120" y1="200" x2="430" y2="215" stroke="#2ecc71" stroke-width="1"/>
+</svg>

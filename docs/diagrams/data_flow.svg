@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 300" fill="none">
+  <rect width="700" height="300" fill="#0E1117"/>
+  <text x="350" y="25" text-anchor="middle" fill="#fff" font-size="16" font-weight="bold">Data Flow Diagram</text>
+  <!-- Sensors -->
+  <rect x="20" y="60" width="80" height="40" rx="5" fill="#16213e" stroke="#4ecdc4"/>
+  <text x="60" y="85" text-anchor="middle" fill="#4ecdc4" font-size="10">Sensors</text>
+  <!-- Arrow -->
+  <line x1="100" y1="80" x2="140" y2="80" stroke="#fff" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- SensorTask -->
+  <rect x="140" y="60" width="100" height="40" rx="5" fill="#16213e" stroke="#74b9ff"/>
+  <text x="190" y="85" text-anchor="middle" fill="#74b9ff" font-size="10">SensorTask</text>
+  <!-- Queue -->
+  <rect x="260" y="60" width="100" height="40" rx="20" fill="#16213e" stroke="#f9ca24"/>
+  <text x="310" y="85" text-anchor="middle" fill="#f9ca24" font-size="10">TLM Queue</text>
+  <line x1="240" y1="80" x2="260" y2="80" stroke="#fff" stroke-width="1"/>
+  <!-- TelemetryTask -->
+  <rect x="380" y="60" width="100" height="40" rx="5" fill="#16213e" stroke="#fd79a8"/>
+  <text x="430" y="85" text-anchor="middle" fill="#fd79a8" font-size="10">TLM Task</text>
+  <line x1="360" y1="80" x2="380" y2="80" stroke="#fff" stroke-width="1"/>
+  <!-- CCSDS -->
+  <rect x="500" y="60" width="80" height="40" rx="5" fill="#16213e" stroke="#a29bfe"/>
+  <text x="540" y="85" text-anchor="middle" fill="#a29bfe" font-size="10">CCSDS</text>
+  <line x1="480" y1="80" x2="500" y2="80" stroke="#fff" stroke-width="1"/>
+  <!-- CommTask -->
+  <rect x="600" y="60" width="80" height="40" rx="5" fill="#16213e" stroke="#ff6b6b"/>
+  <text x="640" y="85" text-anchor="middle" fill="#ff6b6b" font-size="10">COMM</text>
+  <line x1="580" y1="80" x2="600" y2="80" stroke="#fff" stroke-width="1"/>
+  <!-- Ground -->
+  <rect x="500" y="140" width="180" height="40" rx="5" fill="#16213e" stroke="#4ecdc4"/>
+  <text x="590" y="165" text-anchor="middle" fill="#4ecdc4" font-size="10">Ground Station</text>
+  <line x1="640" y1="100" x2="640" y2="140" stroke="#ff6b6b" stroke-width="1" stroke-dasharray="3,3"/>
+  <!-- SQLite -->
+  <rect x="200" y="140" width="120" height="40" rx="5" fill="#16213e" stroke="#2ecc71"/>
+  <text x="260" y="165" text-anchor="middle" fill="#2ecc71" font-size="10">SQLite DB</text>
+  <line x1="430" y1="100" x2="310" y2="140" stroke="#2ecc71" stroke-width="1"/>
+  <!-- Legend -->
+  <text x="20" y="220" fill="#888" font-size="10">→ Data flow direction | ⬛ Processing node | ⬭ Queue</text>
+</svg>

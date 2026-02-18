@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" fill="none">
+  <rect width="800" height="500" fill="#0E1117"/>
+  <text x="400" y="30" text-anchor="middle" fill="#fff" font-size="18" font-weight="bold">UniSat System Block Diagram</text>
+  <!-- Ground Station -->
+  <rect x="250" y="50" width="300" height="60" rx="8" fill="#1a1a2e" stroke="#4ecdc4" stroke-width="2"/>
+  <text x="400" y="85" text-anchor="middle" fill="#4ecdc4" font-size="14">Ground Station (Streamlit)</text>
+  <!-- Radio Link -->
+  <line x1="400" y1="110" x2="400" y2="150" stroke="#ff6b6b" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="420" y="135" fill="#ff6b6b" font-size="10">UHF/S-band</text>
+  <!-- Flight Controller -->
+  <rect x="200" y="150" width="400" height="60" rx="8" fill="#1a1a2e" stroke="#74b9ff" stroke-width="2"/>
+  <text x="400" y="185" text-anchor="middle" fill="#74b9ff" font-size="14">Flight Controller (RPi Zero 2 W)</text>
+  <!-- UART -->
+  <line x1="400" y1="210" x2="400" y2="250" stroke="#a29bfe" stroke-width="2"/>
+  <text x="420" y="235" fill="#a29bfe" font-size="10">UART</text>
+  <!-- OBC -->
+  <rect x="200" y="250" width="400" height="60" rx="8" fill="#1a1a2e" stroke="#fd79a8" stroke-width="2"/>
+  <text x="400" y="285" text-anchor="middle" fill="#fd79a8" font-size="14">OBC Firmware (STM32F4 + FreeRTOS)</text>
+  <!-- Subsystem boxes -->
+  <rect x="50" y="340" width="100" height="50" rx="5" fill="#16213e" stroke="#4ecdc4"/>
+  <text x="100" y="370" text-anchor="middle" fill="#4ecdc4" font-size="11">ADCS</text>
+  <rect x="170" y="340" width="100" height="50" rx="5" fill="#16213e" stroke="#f9ca24"/>
+  <text x="220" y="370" text-anchor="middle" fill="#f9ca24" font-size="11">EPS</text>
+  <rect x="290" y="340" width="100" height="50" rx="5" fill="#16213e" stroke="#ff6b6b"/>
+  <text x="340" y="370" text-anchor="middle" fill="#ff6b6b" font-size="11">COMM</text>
+  <rect x="410" y="340" width="100" height="50" rx="5" fill="#16213e" stroke="#74b9ff"/>
+  <text x="460" y="370" text-anchor="middle" fill="#74b9ff" font-size="11">GNSS</text>
+  <rect x="530" y="340" width="100" height="50" rx="5" fill="#16213e" stroke="#a29bfe"/>
+  <text x="580" y="370" text-anchor="middle" fill="#a29bfe" font-size="11">Sensors</text>
+  <rect x="650" y="340" width="100" height="50" rx="5" fill="#16213e" stroke="#fd79a8"/>
+  <text x="700" y="370" text-anchor="middle" fill="#fd79a8" font-size="11">Payload</text>
+  <!-- Connection lines -->
+  <line x1="100" y1="340" x2="250" y2="310" stroke="#4ecdc4" stroke-width="1"/>
+  <line x1="220" y1="340" x2="300" y2="310" stroke="#f9ca24" stroke-width="1"/>
+  <line x1="340" y1="340" x2="380" y2="310" stroke="#ff6b6b" stroke-width="1"/>
+  <line x1="460" y1="340" x2="420" y2="310" stroke="#74b9ff" stroke-width="1"/>
+  <line x1="580" y1="340" x2="500" y2="310" stroke="#a29bfe" stroke-width="1"/>
+  <line x1="700" y1="340" x2="550" y2="310" stroke="#fd79a8" stroke-width="1"/>
+  <!-- Solar panels -->
+  <rect x="50" y="430" width="200" height="40" rx="5" fill="#16213e" stroke="#f9ca24"/>
+  <text x="150" y="455" text-anchor="middle" fill="#f9ca24" font-size="11">Solar Panels (6× GaAs 29.5%)</text>
+  <line x1="170" y1="430" x2="220" y2="390" stroke="#f9ca24" stroke-width="1"/>
+  <!-- Camera -->
+  <rect x="300" y="430" width="200" height="40" rx="5" fill="#16213e" stroke="#6c5ce7"/>
+  <text x="400" y="455" text-anchor="middle" fill="#6c5ce7" font-size="11">Camera (8MP IMX219)</text>
+</svg>
