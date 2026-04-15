@@ -1,0 +1,23 @@
+{
+  "payload_type": "cansat_descent",
+  "cansat_mass_kg": 0.350,
+  "parachute": {
+    "diameter_m": 0.6,
+    "drag_coefficient": 1.75,
+    "canopy_type": "hemispherical",
+    "material": "ripstop_nylon",
+    "shroud_lines": 6
+  },
+  "deployment": {
+    "altitude_trigger_m": 400,
+    "delay_s": 2.0,
+    "mechanism": "servo_release"
+  },
+  "competition": {
+    "target_descent_rate_ms": 8.0,
+    "min_descent_rate_ms": 6.0,
+    "max_descent_rate_ms": 11.0,
+    "min_descent_time_s": 30,
+    "telemetry_rate_hz": 10
+  }
+}
