@@ -1,0 +1,82 @@
+{
+  "mission": {
+    "name": "Drone Survey Mission",
+    "version": "1.0.0",
+    "description": "UAV/Drone survey and inspection mission profile",
+    "mission_type": "drone_survey",
+    "platform": "drone",
+    "operator": "Team Name",
+    "telemetry_hz": 10.0,
+    "competition": {
+      "type": "drone",
+      "name": "UAV Challenge",
+      "max_flight_time_min": 30,
+      "max_altitude_m": 120,
+      "geofence_radius_m": 500
+    }
+  },
+  "satellite": {
+    "form_factor": "drone",
+    "mass_kg": 2.5,
+    "dimensions_mm": [400, 400, 200]
+  },
+  "subsystems": {
+    "obc": {
+      "enabled": true,
+      "mcu": "STM32F446RE",
+      "clock_mhz": 180,
+      "ram_kb": 128,
+      "flash_kb": 512
+    },
+    "imu": {
+      "enabled": true,
+      "sensor_type": "ICM-20948",
+      "sample_rate_hz": 200,
+      "accel_range_g": 16,
+      "gyro_range_dps": 2000,
+      "has_magnetometer": true,
+      "simulate": false
+    },
+    "barometer": {
+      "enabled": true,
+      "sensor_type": "BMP388",
+      "sample_rate_hz": 50,
+      "ref_pressure_pa": 101325,
+      "ground_altitude_m": 0,
+      "simulate": false
+    },
+    "gnss": {
+      "enabled": true,
+      "receiver": "u-blox_MAX-M10S",
+      "antenna": "patch"
+    },
+    "comm": {
+      "enabled": true,
+      "uhf": {
+        "enabled": true,
+        "frequency_mhz": 2400.0,
+        "power_w": 0.1,
+        "data_rate_bps": 115200,
+        "protocol": "MAVLink"
+      }
+    },
+    "camera": {
+      "enabled": true,
+      "resolution_mp": 12,
+      "storage_gb": 32
+    },
+    "payload": {
+      "enabled": true,
+      "type": "survey",
+      "sensors": ["multispectral", "thermal"]
+    }
+  },
+  "ground_station": {
+    "location": {
+      "name": "GCS",
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "altitude_m": 0
+    }
+  }
+}
