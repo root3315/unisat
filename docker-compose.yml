@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  ground-station:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ground-station
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./ground-station:/app
+      - ./mission_config.json:/app/mission_config.json:ro
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+    restart: unless-stopped
+
+  configurator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.configurator
+    ports:
+      - "8502:8501"
+    volumes:
+      - ./configurator:/app
+      - ./mission_config.json:/app/mission_config.json
+    environment:
+      - STREAMLIT_SERVER_PORT=8501
+      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
+    restart: unless-stopped
+
+  simulation:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.simulation
+    volumes:
+      - ./simulation:/app
+      - ./mission_config.json:/app/mission_config.json:ro
+      - simulation-output:/app/output
+    command: python mission_analyzer.py
+
+volumes:
+  simulation-output:
