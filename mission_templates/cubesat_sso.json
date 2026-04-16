@@ -1,12 +1,11 @@
 {
   "mission": {
-    "name": "UniSat-1",
+    "name": "CubeSat SSO Mission",
     "version": "1.0.0",
-    "description": "Universal modular CubeSat platform",
+    "description": "Sun-synchronous orbit CubeSat mission profile",
     "mission_type": "cubesat_leo",
     "platform": "cubesat",
     "operator": "Team Name",
-    "launch_date": "2026-01-01T00:00:00Z",
     "telemetry_hz": 1.0
   },
   "satellite": {

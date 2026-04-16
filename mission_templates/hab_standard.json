@@ -1,0 +1,88 @@
+{
+  "mission": {
+    "name": "HAB Mission",
+    "version": "1.0.0",
+    "description": "High Altitude Balloon standard mission profile",
+    "mission_type": "hab_standard",
+    "platform": "high_altitude_balloon",
+    "operator": "Team Name",
+    "telemetry_hz": 0.5,
+    "competition": {
+      "type": "hab",
+      "name": "HAB Flight",
+      "target_altitude_m": 30000,
+      "expected_burst_altitude_m": 28000,
+      "expected_ascent_rate_m_s": 5.0
+    }
+  },
+  "satellite": {
+    "form_factor": "hab_payload",
+    "mass_kg": 1.5,
+    "dimensions_mm": [200, 200, 150]
+  },
+  "subsystems": {
+    "obc": {
+      "enabled": true,
+      "mcu": "STM32F446RE",
+      "clock_mhz": 180,
+      "ram_kb": 128,
+      "flash_kb": 512
+    },
+    "imu": {
+      "enabled": false
+    },
+    "barometer": {
+      "enabled": true,
+      "sensor_type": "MS5611",
+      "sample_rate_hz": 10,
+      "ref_pressure_pa": 101325,
+      "ground_altitude_m": 0,
+      "simulate": false
+    },
+    "gnss": {
+      "enabled": true,
+      "receiver": "u-blox_MAX-M10S",
+      "antenna": "patch"
+    },
+    "comm": {
+      "enabled": true,
+      "uhf": {
+        "enabled": true,
+        "frequency_mhz": 434.0,
+        "power_w": 0.5,
+        "data_rate_bps": 300,
+        "protocol": "RTTY"
+      },
+      "aprs": {
+        "enabled": true,
+        "frequency_mhz": 144.39,
+        "callsign": "N0CALL",
+        "interval_s": 120
+      }
+    },
+    "camera": {
+      "enabled": true,
+      "resolution_mp": 5,
+      "capture_interval_s": 30,
+      "storage_gb": 16
+    },
+    "payload": {
+      "enabled": true,
+      "type": "environmental",
+      "sensors": ["temperature", "humidity", "uv", "radiation"]
+    }
+  },
+  "ground_station": {
+    "location": {
+      "name": "Launch Site",
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "altitude_m": 0
+    },
+    "antenna": {
+      "type": "yagi",
+      "gain_dbi": 14,
+      "frequency_mhz": 434
+    }
+  }
+}

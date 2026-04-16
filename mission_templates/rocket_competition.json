@@ -1,0 +1,85 @@
+{
+  "mission": {
+    "name": "Rocket Competition Mission",
+    "version": "1.0.0",
+    "description": "Competition rocketry avionics mission profile (IREC/SA Cup, Team America)",
+    "mission_type": "rocket_competition",
+    "platform": "suborbital_rocket",
+    "operator": "Team Name",
+    "telemetry_hz": 20.0,
+    "competition": {
+      "type": "rocket",
+      "name": "SA Cup / IREC",
+      "target_altitude_m": 3048,
+      "max_acceleration_g": 20,
+      "dual_deploy": true
+    }
+  },
+  "satellite": {
+    "form_factor": "rocket_avionics",
+    "mass_kg": 0.5,
+    "dimensions_mm": [50, 50, 100]
+  },
+  "subsystems": {
+    "obc": {
+      "enabled": true,
+      "mcu": "STM32F446RE",
+      "clock_mhz": 180,
+      "ram_kb": 128,
+      "flash_kb": 512
+    },
+    "imu": {
+      "enabled": true,
+      "sensor_type": "MPU9250",
+      "sample_rate_hz": 200,
+      "accel_range_g": 16,
+      "gyro_range_dps": 2000,
+      "has_magnetometer": false,
+      "simulate": false
+    },
+    "barometer": {
+      "enabled": true,
+      "sensor_type": "BMP388",
+      "sample_rate_hz": 50,
+      "ref_pressure_pa": 101325,
+      "ground_altitude_m": 0,
+      "simulate": false
+    },
+    "gnss": {
+      "enabled": true,
+      "receiver": "u-blox_MAX-M10S",
+      "antenna": "patch"
+    },
+    "comm": {
+      "enabled": true,
+      "uhf": {
+        "enabled": true,
+        "frequency_mhz": 915.0,
+        "power_w": 0.5,
+        "data_rate_bps": 19200,
+        "protocol": "custom"
+      }
+    },
+    "camera": {
+      "enabled": false
+    },
+    "payload": {
+      "enabled": true,
+      "type": "custom",
+      "description": "Experiment payload"
+    }
+  },
+  "ground_station": {
+    "location": {
+      "name": "Launch Rail",
+      "latitude": 0.0,
+      "longitude": 0.0,
+      "altitude_m": 0
+    },
+    "antenna": {
+      "type": "yagi",
+      "gain_dbi": 10,
+      "frequency_mhz": 915
+    }
+  }
+}
