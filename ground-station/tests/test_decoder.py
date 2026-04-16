@@ -34,6 +34,7 @@ def test_decode_beacon_valid():
     data += struct.pack("<I", 3600)  # uptime
     data += struct.pack("<f", 14.2)  # battery_v
     data += struct.pack("<f", 78.5)  # soc
+    data += bytes([0])  # padding to reach 14 bytes min
     result = decode_beacon(data)
     assert result["state"] == 1
     assert result["uptime_s"] == 3600

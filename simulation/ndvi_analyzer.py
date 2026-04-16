@@ -174,7 +174,7 @@ if __name__ == "__main__":
     analyzer = NDVIAnalyzer()
     result = analyzer.analyze(scene["red"], scene["nir"])
 
-    print(f"NDVI Analysis:")
+    print("NDVI Analysis:")
     print(f"  Mean NDVI: {result.mean_ndvi:.3f}")
     print(f"  Range: [{result.min_ndvi:.3f}, {result.max_ndvi:.3f}]")
     print(f"  Vegetation: {result.vegetation_pct:.1f}%")

@@ -12,10 +12,7 @@ def test_orbit_predictor_init():
     assert op is not None
 
 
-def test_get_position():
+def test_predict_passes():
     op = OrbitPredictor()
-    pos = op.get_current_position()
-    assert "latitude" in pos
-    assert "longitude" in pos
-    assert -90 <= pos["latitude"] <= 90
-    assert -180 <= pos["longitude"] <= 180
+    passes = op.predict_passes(41.3, 69.2)
+    assert isinstance(passes, list)

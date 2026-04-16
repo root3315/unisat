@@ -234,25 +234,25 @@ if __name__ == "__main__":
 
     # 2. J2 perturbations
     j2 = compute_j2_perturbations(550, 97.6)
-    print(f"\n2. J2 Perturbations:")
+    print("\n2. J2 Perturbations:")
     print(f"   RAAN rate: {j2.raan_rate_deg_day} deg/day")
     print(f"   SSO: {j2.is_sun_synchronous}")
     print(f"   Required SSO inc: {j2.required_inclination_for_sso_deg}°")
 
     # 3. Eclipse
     eclipse = compute_eclipse(550, 97.6)
-    print(f"\n3. Eclipse:")
+    print("\n3. Eclipse:")
     print(f"   Fraction: {eclipse.eclipse_fraction * 100:.1f}%")
     print(f"   Duration: {eclipse.eclipse_duration_s:.0f}s / {eclipse.sunlit_duration_s:.0f}s")
 
     # 4. Hohmann transfer
     dv = compute_delta_v(400, 550)
-    print(f"\n4. Hohmann 400→550 km:")
+    print("\n4. Hohmann 400→550 km:")
     print(f"   Total ΔV: {dv['total_dv_kms']} km/s")
     print(f"   Transfer time: {dv['transfer_time_min']} min")
 
     # 5. Deorbit lifetime
     life = compute_deorbit_lifetime(550, 4.0, 0.03)
-    print(f"\n5. Orbital Lifetime:")
+    print("\n5. Orbital Lifetime:")
     print(f"   Estimate: {life['estimated_lifetime_years']} years")
     print(f"   25-year compliant: {life['within_25yr_guideline']}")

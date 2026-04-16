@@ -27,7 +27,6 @@ def simulate_power(altitude_km: float = 550, inclination_deg: float = 97.6,
     duration_s = duration_orbits * period_s
 
     # Eclipse fraction (simplified for SSO)
-    earth_angular_radius = math.asin(6371 / r)
     eclipse_fraction = math.acos(math.sqrt(
         max(0, 1 - (6371 / r) ** 2)
     )) / math.pi

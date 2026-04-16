@@ -12,9 +12,8 @@ def test_telemetry_manager_init():
     assert tm is not None
 
 
-def test_build_housekeeping_packet():
+def test_build_packet():
     tm = TelemetryManager()
-    health = {"cpu_temp_c": 35.0, "ram_usage_pct": 45.0, "disk_usage_pct": 12.0}
-    packet = tm.build_housekeeping_packet(health)
+    packet = tm.build_packet(0x001, b"\x01\x02\x03")
     assert packet is not None
     assert len(packet) > 0

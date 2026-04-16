@@ -82,7 +82,7 @@ class FlightController:
         for name, cfg in subsystems.items():
             if cfg.get("enabled", False) and name in self.MODULE_MAP:
                 try:
-                    mod = importlib.import_module(self.MODULE_MAP[name])
+                    importlib.import_module(self.MODULE_MAP[name])
                     logger.info("Loaded module: %s", name)
                 except ImportError as exc:
                     logger.warning("Failed to load %s: %s", name, exc)

@@ -24,9 +24,15 @@ class OrbitalElements:
 @dataclass
 class StateVector:
     """Position and velocity in ECI frame."""
-    x: float; y: float; z: float
-    vx: float; vy: float; vz: float
-    lat: float; lon: float; alt: float
+    x: float
+    y: float
+    z: float
+    vx: float
+    vy: float
+    vz: float
+    lat: float
+    lon: float
+    alt: float
 
 
 def elements_from_config(altitude_km: float, inclination_deg: float,
@@ -53,8 +59,6 @@ def propagate(elements: OrbitalElements, duration_s: float,
     nu = math.radians(elements.true_anomaly_deg)
 
     n = math.sqrt(MU_EARTH / a ** 3)  # Mean motion
-    period = 2 * math.pi / n
-
     # J2 secular rates
     p = a * (1 - e ** 2)
     raan_dot = -1.5 * n * J2 * (R_EARTH / p) ** 2 * math.cos(inc)
