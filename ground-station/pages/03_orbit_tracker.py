@@ -8,7 +8,7 @@ st.set_page_config(page_title="Orbit Tracker", layout="wide")
 st.title("🌍 Orbit Tracker")
 
 # Generate ISS-like ground track (SSO ~97.6° inclination, 550 km)
-n_points = 200
+n_points = 100
 t = np.linspace(0, 2 * np.pi * 1.5, n_points)  # 1.5 orbits
 inclination = np.radians(97.6)
 omega_earth = 2 * np.pi / 86400  # Earth rotation rate

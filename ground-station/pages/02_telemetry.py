@@ -11,16 +11,12 @@ from datetime import datetime, timedelta, timezone
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
-from streamlit_autorefresh import st_autorefresh
 
 # ---------------------------------------------------------------------------
 # Page config
 # ---------------------------------------------------------------------------
 
 st.set_page_config(page_title="Telemetry | UniSat GS", page_icon="📈", layout="wide")
-
-# Auto-refresh every 5 seconds
-st_autorefresh(interval=5_000, key="telemetry_refresh")
 
 # ---------------------------------------------------------------------------
 # Demo data generation

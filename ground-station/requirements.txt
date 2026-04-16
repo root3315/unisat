@@ -5,4 +5,4 @@ numpy>=1.26.0
 sgp4>=2.22
 pydeck>=0.8.0
 Pillow>=10.0.0
-streamlit-autorefresh>=1.0.1
+
