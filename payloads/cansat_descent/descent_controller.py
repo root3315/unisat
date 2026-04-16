@@ -130,17 +130,23 @@ class DescentController:
                     result.deploy_altitude_m = altitude
                     logger.info("Parachute deployed at %.1f m", altitude)
 
-            # Calculate forces
+            # Calculate forces — drag opposes velocity direction
             drag = self.drag_force(abs(velocity), altitude, chute_deployed)
-            acceleration = G - (drag / self.config.cansat_mass_kg)
+            drag_accel = drag / self.config.cansat_mass_kg
+            if velocity > 0:
+                acceleration = G - drag_accel
+            else:
+                acceleration = G + drag_accel
 
-            # Update state (Euler integration)
+            # Semi-implicit Euler for stability
             velocity += acceleration * dt
+            velocity = max(velocity, 0.0)  # prevent bouncing
             altitude -= velocity * dt
 
             # Temperature and pressure estimate
             temp_c = 15.0 - TEMP_LAPSE_RATE * altitude * 1000
-            pressure = 101325 * (1 - 2.25577e-5 * altitude) ** 5.25588
+            pressure_base = max(0.0, 1.0 - 2.25577e-5 * altitude)
+            pressure = 101325.0 * pressure_base ** 5.25588
 
             # Determine phase
             if chute_deployed:

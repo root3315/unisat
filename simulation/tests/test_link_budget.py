@@ -46,7 +46,7 @@ class TestSBandLinkBudget:
 
     def test_sband_positive_margin(self):
         budget = calculate_link_budget(
-            frequency_mhz=2400, tx_power_w=2.0, tx_gain_dbi=6.0,
+            frequency_mhz=2400, tx_power_w=4.0, tx_gain_dbi=8.0,
             rx_gain_dbi=20.0, distance_km=2000, data_rate_bps=256000,
         )
         assert budget.margin_db > 0

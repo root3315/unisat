@@ -2,7 +2,8 @@
 Payload Interface — Abstract base class for swappable payload modules.
 
 All payload types (radiation monitor, camera, IoT relay, etc.) implement
-this interface. Configuration is loaded from per-payload config.json files.
+this interface. Configuration is loaded from per-payload config.json files
+or passed as a dict from the module registry.
 """
 
 import json
@@ -13,12 +14,15 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Any
 
+from modules import BaseModule, ModuleStatus
+
 logger = logging.getLogger("unisat.payload")
 
 
 @dataclass
 class PayloadSample:
     """Single measurement from a payload."""
+
     timestamp: float
     payload_type: str
     data: dict[str, Any]
@@ -28,6 +32,7 @@ class PayloadSample:
 @dataclass
 class PayloadStatus:
     """Current payload operational status."""
+
     active: bool = False
     payload_type: str = ""
     samples_collected: int = 0
@@ -37,28 +42,26 @@ class PayloadStatus:
     config: dict[str, Any] = field(default_factory=dict)
 
 
-class PayloadInterface(ABC):
-    """Abstract interface for all UniSat payload modules."""
+class PayloadInterface(BaseModule, ABC):
+    """Abstract interface for all UniSat payload modules.
 
-    def __init__(self, payload_type: str, config_path: str | None = None) -> None:
-        self.status = PayloadStatus(payload_type=payload_type)
+    Inherits from BaseModule for lifecycle management and from ABC
+    for the payload-specific abstract methods.
+    """
+
+    def __init__(self, payload_type: str, config: dict[str, Any] | None = None) -> None:
+        """Initialize payload module.
+
+        Args:
+            payload_type: Human-readable payload type identifier.
+            config: Configuration dict from module registry or file.
+        """
+        super().__init__(payload_type, config)
+        self.payload_status = PayloadStatus(
+            payload_type=payload_type,
+            config=config or {},
+        )
         self._sequence = 0
-        if config_path:
-            self.status.config = self._load_config(config_path)
-
-    @staticmethod
-    def _load_config(path: str) -> dict[str, Any]:
-        """Load payload configuration from JSON file."""
-        config_file = Path(path)
-        if config_file.exists():
-            with open(config_file, "r", encoding="utf-8") as f:
-                return json.load(f)
-        logger.warning("Config not found: %s, using defaults", path)
-        return {}
-
-    @abstractmethod
-    def initialize(self) -> bool:
-        """Initialize payload hardware. Returns True on success."""
 
     @abstractmethod
     def collect_sample(self) -> PayloadSample | None:
@@ -68,28 +71,46 @@ class PayloadInterface(ABC):
     def shutdown(self) -> None:
         """Safely power down the payload."""
 
-    def start(self) -> bool:
-        """Activate the payload for data collection."""
-        if self.status.active:
-            return True
-        ok = self.initialize()
-        if ok:
-            self.status.active = True
-            logger.info("Payload %s activated", self.status.payload_type)
-        else:
-            self.status.errors += 1
-            logger.error("Failed to activate %s", self.status.payload_type)
-        return ok
+    async def initialize(self) -> bool:
+        """Initialize payload hardware.
 
-    def stop(self) -> None:
+        Returns:
+            True if initialization succeeded.
+        """
+        self.status = ModuleStatus.READY
+        return True
+
+    async def start(self) -> None:
+        """Start the payload for data collection."""
+        self.payload_status.active = True
+        self.status = ModuleStatus.RUNNING
+        self.logger.info("Payload %s activated", self.payload_status.payload_type)
+
+    async def stop(self) -> None:
         """Deactivate the payload."""
         self.shutdown()
-        self.status.active = False
-        logger.info("Payload %s deactivated", self.status.payload_type)
+        self.payload_status.active = False
+        self.status = ModuleStatus.STOPPED
+        self.logger.info("Payload %s deactivated", self.payload_status.payload_type)
+
+    async def get_status(self) -> dict[str, Any]:
+        """Return current payload status.
+
+        Returns:
+            Dict with payload operational status.
+        """
+        return {
+            "status": self.status.name,
+            "payload_type": self.payload_status.payload_type,
+            "active": self.payload_status.active,
+            "samples_collected": self.payload_status.samples_collected,
+            "errors": self.payload_status.errors,
+            "error_count": self._error_count,
+        }
 
     def collect(self) -> PayloadSample | None:
         """Collect a sample with bookkeeping."""
-        if not self.status.active:
+        if not self.payload_status.active:
             logger.warning("Payload not active, cannot collect")
             return None
 
@@ -97,30 +118,38 @@ class PayloadInterface(ABC):
         if sample is not None:
             self._sequence += 1
             sample.sequence_num = self._sequence
-            self.status.samples_collected += 1
-            self.status.last_sample_time = time.time()
+            self.payload_status.samples_collected += 1
+            self.payload_status.last_sample_time = time.time()
         else:
-            self.status.errors += 1
+            self.payload_status.errors += 1
 
         return sample
-
-    def get_status(self) -> PayloadStatus:
-        """Return current payload status."""
-        return self.status
 
 
 class RadiationPayload(PayloadInterface):
     """SBM-20 Geiger counter radiation monitor."""
 
-    def __init__(self, config_path: str | None = None) -> None:
-        super().__init__("radiation_monitor", config_path)
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
+        """Initialize radiation monitor.
+
+        Args:
+            config: Configuration dict with optional sensor parameters.
+        """
+        super().__init__("radiation_monitor", config)
         self._total_dose_usv = 0.0
 
-    def initialize(self) -> bool:
-        logger.info("SBM-20 radiation monitor initialized")
+    async def initialize(self) -> bool:
+        """Initialize SBM-20 sensor.
+
+        Returns:
+            True on success.
+        """
+        self.logger.info("SBM-20 radiation monitor initialized")
+        self.status = ModuleStatus.READY
         return True
 
     def collect_sample(self) -> PayloadSample:
+        """Collect radiation measurement."""
         import random
         cps = random.randint(0, 5)
         cpm = cps * 60
@@ -139,20 +168,26 @@ class RadiationPayload(PayloadInterface):
         )
 
     def shutdown(self) -> None:
-        logger.info("SBM-20 powered down, total dose: %.4f uSv",
-                     self._total_dose_usv)
+        """Power down SBM-20."""
+        self.logger.info(
+            "SBM-20 powered down, total dose: %.4f uSv",
+            self._total_dose_usv,
+        )
 
 
 class NullPayload(PayloadInterface):
     """No-op payload for testing."""
 
-    def __init__(self) -> None:
-        super().__init__("null")
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
+        """Initialize null payload.
 
-    def initialize(self) -> bool:
-        return True
+        Args:
+            config: Ignored configuration dict.
+        """
+        super().__init__("null", config)
 
     def collect_sample(self) -> PayloadSample:
+        """Return a dummy sample."""
         return PayloadSample(
             timestamp=time.time(),
             payload_type="null",
@@ -160,4 +195,4 @@ class NullPayload(PayloadInterface):
         )
 
     def shutdown(self) -> None:
-        pass
+        """No-op shutdown."""

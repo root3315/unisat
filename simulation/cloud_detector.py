@@ -154,10 +154,15 @@ def generate_sample_scene(height: int = 100, width: int = 100,
     nir[:50, :50] = 0.72 + rng.normal(0, 0.03, (50, 50))
 
     # Snow patch (bottom-right quadrant)
-    red[70:, 70:] = 0.60 + rng.normal(0, 0.02, (30, 30))
-    green[70:, 70:] = 0.85 + rng.normal(0, 0.02, (30, 30))
-    blue[70:, 70:] = 0.55 + rng.normal(0, 0.02, (30, 30))
-    nir[70:, 70:] = 0.20 + rng.normal(0, 0.02, (30, 30))
+    h_start = min(70, height)
+    w_start = min(70, width)
+    h_size = height - h_start
+    w_size = width - w_start
+    if h_size > 0 and w_size > 0:
+        red[h_start:, w_start:] = 0.60 + rng.normal(0, 0.02, (h_size, w_size))
+        green[h_start:, w_start:] = 0.85 + rng.normal(0, 0.02, (h_size, w_size))
+        blue[h_start:, w_start:] = 0.55 + rng.normal(0, 0.02, (h_size, w_size))
+        nir[h_start:, w_start:] = 0.20 + rng.normal(0, 0.02, (h_size, w_size))
 
     # Clip to valid range
     for arr in [red, green, blue, nir]:
