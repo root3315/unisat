@@ -147,5 +147,9 @@ def test_phase_definition_custom_display():
 def test_cansat_competition_metadata():
     profile = get_mission_profile("cansat_standard")
     assert profile.competition["type"] == "cansat"
+    assert profile.competition["max_mass_g"] == 500
+    assert profile.competition["can_diameter_mm"] == 64
+    assert profile.competition["can_height_mm"] == 68
+    assert profile.competition["capsule_height_mm"] == 80
     assert profile.competition["min_telemetry_samples"] == 100
     assert profile.competition["max_landing_velocity_m_s"] == 12.0

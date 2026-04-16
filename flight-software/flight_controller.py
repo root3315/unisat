@@ -179,10 +179,32 @@ class FlightController:
                 logger.error("Command error: %s", exc)
 
     async def state_machine_loop(self) -> None:
-        """Monitor state machine timeouts and trigger auto-transitions."""
+        """Monitor state machine timeouts and sensor-driven transitions."""
         while self._running:
             try:
-                # Check for phase timeout
+                phase = self.state_machine.phase_name
+
+                # --- Sensor-driven phase transitions ---
+                sensor_target = await self._check_sensor_transitions(phase)
+                if sensor_target:
+                    old = phase
+                    ok = await self.state_machine.transition_to(
+                        sensor_target[0], reason=sensor_target[1]
+                    )
+                    if ok:
+                        await self.event_bus.emit(
+                            self.state_machine.current.definition.entry_event,
+                            data={"from": old, "to": sensor_target[0],
+                                  "reason": sensor_target[1]},
+                            source="state_machine",
+                        )
+                        # Update descent controller on phase change
+                        dc = self.registry.get_module("descent_controller")
+                        if dc and sensor_target[0] == "descent":
+                            if hasattr(dc, "arm"):
+                                dc.arm()
+
+                # --- Timeout-based auto-transitions ---
                 auto_next = self.state_machine.check_timeout()
                 if auto_next:
                     old = self.state_machine.phase_name
@@ -197,7 +219,62 @@ class FlightController:
                         )
             except Exception as exc:
                 logger.error("State machine error: %s", exc)
-            await asyncio.sleep(1.0)
+            await asyncio.sleep(0.2)
+
+    async def _check_sensor_transitions(self, phase: str) -> tuple[str, str] | None:
+        """Check IMU/barometer data for automatic phase transitions.
+
+        Returns (target_phase, reason) or None if no transition needed.
+        """
+        imu = self.registry.get_module("imu")
+        baro = self.registry.get_module("barometer")
+
+        if phase == "pre_launch":
+            # Detect launch: acceleration > 3g
+            if imu and imu.detect_launch(threshold_g=3.0):
+                return ("ascent", "launch_detected: accel > 3g")
+
+        elif phase == "launch_detect":
+            if imu and imu.detect_launch(threshold_g=3.0):
+                return ("ascent", "launch_detected: accel > 3g")
+
+        elif phase == "ascent":
+            # Detect apogee: barometer sees altitude peak
+            if baro and baro.detect_apogee(window=10):
+                return ("apogee", "apogee_detected: altitude decreasing")
+            # Fallback: IMU detects freefall (near-zero g)
+            if imu and imu.detect_freefall(threshold_g=0.3):
+                return ("apogee", "apogee_detected: freefall")
+
+        elif phase == "apogee":
+            # Auto-transition to descent after brief delay (handled by timeout)
+            pass
+
+        elif phase == "descent" or phase == "drogue_descent" or phase == "main_descent":
+            # Detect landing: stable ~1g for N samples
+            if imu and imu.detect_landing(window=50, threshold_g=0.15):
+                return ("landed", "landing_detected: stable 1g")
+
+        elif phase == "boost":
+            # Rocket: detect burnout (accel drops below 1g after boost)
+            if imu:
+                reading = imu.read() if hasattr(imu, "read") else None
+                if reading and reading.accel_magnitude_g < 1.5:
+                    return ("coast", "burnout_detected: accel < 1.5g")
+
+        elif phase == "coast":
+            if baro and baro.detect_apogee(window=10):
+                return ("apogee", "apogee_detected: altitude decreasing")
+
+        elif phase in ("ground_checkout", "armed", "preflight"):
+            # These phases wait for manual commands
+            pass
+
+        elif phase == "mission_flight":
+            # Drone: check geofence, battery (future)
+            pass
+
+        return None
 
     async def scheduler_loop(self) -> None:
         """Run scheduled tasks via the task scheduler."""

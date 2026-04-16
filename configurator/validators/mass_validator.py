@@ -7,7 +7,7 @@ FORM_FACTOR_LIMITS: dict[str, float] = {
     # CubeSat
     "1U": 1.33, "2U": 2.66, "3U": 4.0, "6U": 12.0, "12U": 24.0,
     # CanSat
-    "cansat_standard": 0.35, "cansat_custom": 0.5,
+    "cansat_standard": 0.5, "cansat_custom": 0.7,
     # Rocket avionics
     "rocket_avionics": 0.5, "rocket_custom": 2.0,
     # HAB payloads
