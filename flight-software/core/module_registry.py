@@ -46,6 +46,7 @@ DEFAULT_MODULE_MAP: dict[str, tuple[str, str]] = {
     "imu": ("modules.imu_sensor", "IMUSensor"),
     "barometer": ("modules.barometric_altimeter", "BarometricAltimeter"),
     "descent_controller": ("modules.descent_controller", "DescentController"),
+    "gnss": ("modules.gnss_receiver", "GNSSReceiver"),
 }
 
 
