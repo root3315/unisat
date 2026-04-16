@@ -13,15 +13,20 @@
       "descent_rate_range_m_s": [6.0, 11.0],
       "max_landing_velocity_m_s": 12.0,
       "min_telemetry_samples": 100,
-      "max_cansat_mass_g": 350,
-      "max_cansat_diameter_mm": 66,
-      "max_cansat_height_mm": 115
+      "max_cansat_mass_g": 500,
+      "max_cansat_diameter_mm": 64,
+      "max_cansat_can_height_mm": 68,
+      "max_cansat_capsule_height_mm": 80
     }
   },
   "satellite": {
-    "form_factor": "cansat",
-    "mass_kg": 0.35,
-    "dimensions_mm": [66, 66, 115]
+    "form_factor": "cansat_standard",
+    "mass_kg": 0.5,
+    "dimensions_mm": {
+      "can_diameter_mm": 64,
+      "can_height_mm": 68,
+      "capsule_height_mm": 80
+    }
   },
   "subsystems": {
     "obc": {

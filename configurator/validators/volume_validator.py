@@ -11,7 +11,7 @@ FORM_FACTOR_VOLUMES: dict[str, dict[str, float]] = {
     "6U": {"x_mm": 100, "y_mm": 226.3, "z_mm": 340.5, "volume_cm3": 7704},
     "12U": {"x_mm": 226.3, "y_mm": 226.3, "z_mm": 340.5, "volume_cm3": 17438},
     # CanSat
-    "cansat_standard": {"x_mm": 66, "y_mm": 66, "z_mm": 115, "volume_cm3": 393},
+    "cansat_standard": {"diameter_mm": 64, "can_height_mm": 68, "capsule_height_mm": 80, "x_mm": 64, "y_mm": 64, "z_mm": 80, "volume_cm3": 257},
     "cansat_custom": {"x_mm": 80, "y_mm": 80, "z_mm": 150, "volume_cm3": 960},
     # Rocket
     "rocket_avionics": {"x_mm": 50, "y_mm": 50, "z_mm": 100, "volume_cm3": 250},
