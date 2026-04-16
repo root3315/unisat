@@ -15,7 +15,6 @@ import argparse
 import asyncio
 import json
 import logging
-import math
 import random
 import sys
 import time
@@ -24,8 +23,7 @@ from pathlib import Path
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
-from core.mission_types import get_mission_profile
-from core.event_bus import EventBus, Event
+from core.event_bus import EventBus
 from core.state_machine import StateMachine
 from core.module_registry import ModuleRegistry
 

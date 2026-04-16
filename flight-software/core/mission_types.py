@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass, field
-from enum import Enum, auto
+from enum import Enum
 from typing import Any
 
 

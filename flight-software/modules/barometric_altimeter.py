@@ -9,7 +9,6 @@ Supports BME280, BMP388, MS5611, and simulated data.
 
 from __future__ import annotations
 
-import math
 import random
 import time
 from dataclasses import dataclass

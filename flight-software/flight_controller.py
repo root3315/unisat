@@ -10,7 +10,6 @@ import asyncio
 import json
 import logging
 from pathlib import Path
-from typing import Any
 
 from core.event_bus import EventBus, Event
 from core.state_machine import StateMachine

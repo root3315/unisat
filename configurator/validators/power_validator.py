@@ -33,8 +33,15 @@ SUBSYSTEM_POWER = {
 def validate_power(form_factor: str, panel_efficiency: float,
                    enabled_subsystems: dict[str, bool]) -> PowerResult:
     """Validate power budget."""
-    panel_counts = {"1U": 4, "2U": 4, "3U": 6, "6U": 8}
-    n_panels = panel_counts.get(form_factor, 6)
+    panel_counts = {
+        "1U": 4, "2U": 4, "3U": 6, "6U": 8, "12U": 10,
+        "cansat_standard": 0, "cansat_custom": 0,
+        "rocket_avionics": 0, "rocket_custom": 0,
+        "hab_payload_small": 0, "hab_payload_medium": 0, "hab_payload_large": 0,
+        "drone_small": 0, "drone_medium": 0,
+        "custom": 0,
+    }
+    n_panels = panel_counts.get(form_factor, 0)
 
     # Average generation (accounting for eclipse and cosine losses)
     avg_factor = 0.35  # ~35% of orbit sunlit with average cosine

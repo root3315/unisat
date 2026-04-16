@@ -99,7 +99,8 @@ class TestRecoveryAttempts:
     """Tests for max recovery attempts."""
 
     def test_recovery_limit_is_five(self):
-        assert SafeModeHandler.MAX_RECOVERY_ATTEMPTS == 5
+        h = SafeModeHandler()
+        assert h.max_recovery_attempts == 5
 
     def test_recovery_attempts_increment(self):
         h = SafeModeHandler()

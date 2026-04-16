@@ -106,12 +106,13 @@ def compute_field(lat_deg: float, lon_deg: float, alt_km: float) -> MagneticFiel
     )
 
     # Convert spherical (r, theta, phi) to NED (North, East, Down)
-    # North = -B_theta (theta points south, north is opposite)
+    # In spherical: theta points southward from north pole
+    # North = -B_theta
     # East  = B_phi
-    # Down  = -B_r (r points outward, down is opposite)
+    # Down  = -B_r (r points outward, down is inward)
     bx = -bt   # North
     by = bp    # East
-    bz = -br   # Down
+    bz = br    # Down (br is already negative-outward, so positive = downward)
 
     magnitude = math.sqrt(bx**2 + by**2 + bz**2)
     bh = math.sqrt(bx**2 + by**2)  # Horizontal intensity
