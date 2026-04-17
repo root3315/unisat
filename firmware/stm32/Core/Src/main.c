@@ -8,6 +8,9 @@
 
 #include "main.h"
 #include "config.h"
+#include "command_dispatcher.h"
+#include "key_store.h"
+#include "fdir.h"
 
 #ifndef SIMULATION_MODE
 #include "cmsis_os2.h"
@@ -77,6 +80,45 @@ int main(void) {
     Telemetry_Init();
     Watchdog_Init();
     Error_Init();
+    FDIR_Init();
+
+    /* Command-authentication boot sequence.
+     *
+     * key_store_init() reads the A/B flash slots, picks the highest-
+     * generation record whose CRC verifies, and caches it. We then
+     * hand the active key straight to the command dispatcher so the
+     * very first post-boot uplink frame is subject to both HMAC
+     * authentication (T1) and replay-window checks (T2).
+     *
+     * Fail-closed contract: if both slots are empty / corrupted,
+     * key_store_get_active() returns KEY_STORE_EMPTY, the dispatcher
+     * is left with a zero-length key, and every incoming frame is
+     * rejected until a ground-driven recovery procedure reloads the
+     * key. FDIR raises FAULT_KEYSTORE_EMPTY so the condition is
+     * observable in downlink telemetry. */
+    {
+        KeyStoreStatus_t ks = key_store_init();
+        if (ks == KEY_STORE_OK) {
+            uint8_t  active_key[KEY_STORE_MAX_KEY_LEN];
+            size_t   active_len = 0;
+            uint32_t active_gen = 0;
+            if (key_store_get_active(active_key, &active_len,
+                                       &active_gen) == KEY_STORE_OK) {
+                CommandDispatcher_SetKey(active_key, active_len);
+            } else {
+                /* Active cache missing despite init success — defensive;
+                 * should never happen but report it rather than silently
+                 * leaving the dispatcher unkeyed. */
+                FDIR_Report(FAULT_KEYSTORE_EMPTY);
+            }
+        } else {
+            /* Cold boot with empty / corrupted slots: fail-closed.
+             * Dispatcher stays without a key, FDIR escalates to
+             * RECOVERY_SAFE_MODE on the first Report per fdir.c
+             * threshold = 1. */
+            FDIR_Report(FAULT_KEYSTORE_EMPTY);
+        }
+    }
 
     if (config.payload.enabled) {
         Payload_Init(PAYLOAD_RADIATION_MONITOR);

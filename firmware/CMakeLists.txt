@@ -450,6 +450,20 @@ else()
     target_compile_definitions(test_key_store PRIVATE SIMULATION_MODE)
     add_test(NAME key_store COMMAND test_key_store)
 
+    # Boot-time security integration — key_store -> dispatcher wiring.
+    # Links the real key_store.c and command_dispatcher.c together
+    # (no stubs) so the end-to-end fail-closed + warm-reboot-rotation
+    # paths main.c relies on are proven in CI.
+    add_executable(test_boot_security
+        tests/test_boot_security.c
+        stm32/Core/Src/key_store.c
+        stm32/Core/Src/command_dispatcher.c
+        stm32/Drivers/Crypto/sha256.c
+        stm32/Drivers/Crypto/hmac_sha256.c
+    )
+    target_compile_definitions(test_boot_security PRIVATE SIMULATION_MODE)
+    add_test(NAME boot_security COMMAND test_boot_security)
+
     # Phase 3 — Fault Detection, Isolation, Recovery (FDIR).
     # Test supplies its own strong FDIR_GetTick so escalation timing
     # is deterministic without HAL_GetTick.
