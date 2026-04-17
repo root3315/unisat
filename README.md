@@ -126,6 +126,13 @@ pip install -r requirements.txt
 python mission_analyzer.py
 ```
 
+**Подробное руководство:** [`docs/USAGE_GUIDE.md`](docs/USAGE_GUIDE.md)
+— от выбора типа миссии (CanSat / CubeSat / HAB / Rocket / Drone)
+до подачи на конкурс.
+
+**Что ещё можно добавить:** [`docs/GAPS_AND_ROADMAP.md`](docs/GAPS_AND_ROADMAP.md)
+— честный статус, приоритизированный список открытых задач.
+
 ### 5. End-to-end AX.25 SITL demo (one command)
 
 ```bash
