@@ -177,3 +177,83 @@ def decode_address(data: bytes) -> tuple[Address, bool]:
     ssid = (ssid_byte >> 1) & 0x0F
     is_last = bool(ssid_byte & 1)
     return Address(callsign, ssid), is_last
+
+
+# ---------------------------------------------------------------------------
+# UI frame encode / pure decode (REQ-AX25-001..015, 018).
+# ---------------------------------------------------------------------------
+
+AX25_MAX_INFO_LEN = 256
+AX25_MAX_FRAME_BYTES = 400
+
+
+@dataclass(frozen=True)
+class UiFrame:
+    dst: Address
+    src: Address
+    control: int
+    pid: int
+    info: bytes
+    fcs: int
+    fcs_valid: bool
+
+
+def encode_ui_frame(
+    dst: Address, src: Address, pid: int, info: bytes,
+) -> bytes:
+    """Encode a full AX.25 UI frame: flags + body + FCS, bit-stuffed."""
+    if len(info) > AX25_MAX_INFO_LEN:
+        raise FrameOverflow(f"info {len(info)} > {AX25_MAX_INFO_LEN}")
+    body = bytearray()
+    body += encode_address(dst, is_last=False)
+    body += encode_address(src, is_last=True)
+    body.append(0x03)
+    body.append(pid & 0xFF)
+    body += info
+    fcs = fcs_crc16(bytes(body))
+    body += fcs.to_bytes(2, "little")
+    stuffed = bit_stuff(bytes(body))
+    frame = b"\x7E" + stuffed + b"\x7E"
+    if len(frame) > AX25_MAX_FRAME_BYTES:
+        raise FrameOverflow(
+            f"stuffed frame {len(frame)} > {AX25_MAX_FRAME_BYTES}"
+        )
+    return frame
+
+
+def decode_ui_frame(body: bytes) -> UiFrame:
+    """Decode an UNSTUFFED frame body (no flags). Used by the streaming
+    decoder once it has extracted the candidate between two flags."""
+    if len(body) < 18:
+        raise FrameOverflow(f"body {len(body)} < 18 (minimum UI frame)")
+
+    dst, dst_last = decode_address(body[0:7])
+    if dst_last:
+        raise InvalidAddress("destination has H-bit set")
+
+    src, src_last = decode_address(body[7:14])
+    if not src_last:
+        # REQ-AX25-018: a third address would mean a digipeater path.
+        raise InvalidAddress(
+            "digipeater path not supported (REQ-AX25-018)"
+        )
+
+    ctrl = body[14]
+    pid = body[15]
+    if ctrl != 0x03:
+        raise InvalidControl(f"control 0x{ctrl:02X} != 0x03")
+    if pid != 0xF0:
+        raise InvalidPid(f"pid 0x{pid:02X} != 0xF0")
+
+    info = bytes(body[16:-2])
+    if len(info) > AX25_MAX_INFO_LEN:
+        raise FrameOverflow(f"info {len(info)} > {AX25_MAX_INFO_LEN}")
+
+    wanted = fcs_crc16(body[:-2])
+    got = int.from_bytes(body[-2:], "little")
+    fcs_valid = wanted == got
+    if not fcs_valid:
+        raise FcsMismatch(
+            f"expected fcs 0x{wanted:04X}, got 0x{got:04X}"
+        )
+    return UiFrame(dst, src, ctrl, pid, info, got, fcs_valid)

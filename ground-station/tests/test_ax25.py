@@ -14,6 +14,8 @@ import pytest
 from utils.ax25 import (
     fcs_crc16, bit_stuff, bit_unstuff, StuffingViolation,
     Address, encode_address, decode_address, InvalidAddress,
+    UiFrame, encode_ui_frame, decode_ui_frame,
+    FcsMismatch, InvalidControl, InvalidPid, FrameOverflow,
 )
 
 
@@ -99,3 +101,62 @@ class TestAddress:
     def test_encode_rejects_long_callsign(self):
         with pytest.raises(InvalidAddress):
             encode_address(Address("TOOLONG", 0), is_last=False)
+
+
+class TestUiFrame:
+    def test_round_trip(self):
+        dst = Address("CQ", 0)
+        src = Address("UN8SAT", 1)
+        frame_bytes = encode_ui_frame(dst, src, 0xF0, b"Hi")
+        assert frame_bytes[0] == 0x7E
+        assert frame_bytes[-1] == 0x7E
+
+        # Strip flags, unstuff to get the body back.
+        body = bit_unstuff(frame_bytes[1:-1])
+        decoded = decode_ui_frame(body)
+        assert decoded.dst == dst
+        assert decoded.src == src
+        assert decoded.control == 0x03
+        assert decoded.pid == 0xF0
+        assert decoded.info == b"Hi"
+        assert decoded.fcs_valid is True
+
+    def test_encode_rejects_info_too_long(self):
+        with pytest.raises(FrameOverflow):
+            encode_ui_frame(
+                Address("CQ", 0), Address("UN8SAT", 1),
+                0xF0, b"\x00" * 257,
+            )
+
+    def test_decode_rejects_digipeater_path(self):
+        """REQ-AX25-018: third address field must be rejected."""
+        d = encode_address(Address("CQ", 0), is_last=False)
+        s = encode_address(Address("UN8SAT", 1), is_last=False)  # H=0
+        r = encode_address(Address("REPEAT", 0), is_last=True)
+        body = d + s + r + b"\x03\xF0X"
+        body += fcs_crc16(body).to_bytes(2, "little")
+        with pytest.raises(InvalidAddress):
+            decode_ui_frame(body)
+
+    def test_decode_rejects_bad_fcs(self):
+        d = encode_address(Address("CQ", 0), is_last=False)
+        s = encode_address(Address("UN8SAT", 1), is_last=True)
+        body = d + s + b"\x03\xF0Hi\xDE\xAD"
+        with pytest.raises(FcsMismatch):
+            decode_ui_frame(body)
+
+    def test_decode_rejects_bad_control(self):
+        d = encode_address(Address("CQ", 0), is_last=False)
+        s = encode_address(Address("UN8SAT", 1), is_last=True)
+        body = d + s + b"\x99\xF0"
+        body += fcs_crc16(body).to_bytes(2, "little")
+        with pytest.raises(InvalidControl):
+            decode_ui_frame(body)
+
+    def test_decode_rejects_bad_pid(self):
+        d = encode_address(Address("CQ", 0), is_last=False)
+        s = encode_address(Address("UN8SAT", 1), is_last=True)
+        body = d + s + b"\x03\xEE"
+        body += fcs_crc16(body).to_bytes(2, "little")
+        with pytest.raises(InvalidPid):
+            decode_ui_frame(body)
