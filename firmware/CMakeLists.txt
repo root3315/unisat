@@ -166,4 +166,19 @@ else()
     target_compile_definitions(test_ax25_golden PRIVATE SIMULATION_MODE)
 
     add_test(NAME ax25_golden COMMAND test_ax25_golden)
+
+    # Streaming decoder (REQ-AX25-017/021/023/024).
+    add_executable(test_ax25_decoder
+        tests/test_ax25_decoder.c
+        stm32/Drivers/AX25/ax25.c
+        stm32/Drivers/AX25/ax25_decoder.c
+    )
+    target_include_directories(test_ax25_decoder PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_ax25_decoder PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_decoder COMMAND test_ax25_decoder)
 endif()

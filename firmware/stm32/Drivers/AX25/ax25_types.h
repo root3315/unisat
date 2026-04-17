@@ -42,4 +42,30 @@ typedef struct {
   bool           fcs_valid;
 } ax25_ui_frame_t;
 
+/**
+ * Streaming decoder state.
+ *
+ * One instance per RX channel. NOT thread-safe: the owning task
+ * (e.g. comm_rx_task) has exclusive access. No heap allocation —
+ * the assembly buffer is embedded in the struct.
+ */
+typedef enum {
+  AX25_STATE_HUNT = 0,   /* scanning for opening 0x7E flag */
+  AX25_STATE_FRAME       /* inside frame, collecting bits  */
+} ax25_decoder_state_t;
+
+typedef struct {
+  uint8_t              buf[AX25_MAX_FRAME_BYTES];
+  size_t               len;          /* bytes assembled so far        */
+  uint16_t             shift_reg;    /* bit-level packing accumulator */
+  uint8_t              bit_count;    /* bits currently in shift_reg   */
+  uint8_t              ones_run;     /* consecutive-1 counter         */
+  ax25_decoder_state_t state;
+  uint32_t             frames_ok;
+  uint32_t             frames_fcs_err;
+  uint32_t             frames_overflow;
+  uint32_t             frames_stuffing_err;
+  uint32_t             frames_other_err;
+} ax25_decoder_t;
+
 #endif /* AX25_TYPES_H */
