@@ -232,4 +232,21 @@ else()
     endif()
 
     add_test(NAME virtual_uart_build COMMAND test_virtual_uart_build)
+
+    # SITL firmware demo binary — connects to GS listener via TCP.
+    add_executable(sitl_fw
+        ${CMAKE_SOURCE_DIR}/../scripts/sitl_fw.c
+        stm32/Drivers/VirtualUART/virtual_uart.c
+        stm32/Drivers/AX25/ax25.c
+        stm32/Drivers/AX25/ax25_decoder.c
+    )
+    target_include_directories(sitl_fw PRIVATE
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+        stm32/Drivers/VirtualUART
+    )
+    target_compile_definitions(sitl_fw PRIVATE SIMULATION_MODE)
+    if(WIN32)
+        target_link_libraries(sitl_fw PRIVATE ws2_32)
+    endif()
 endif()
