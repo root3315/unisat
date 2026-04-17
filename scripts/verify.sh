@@ -53,6 +53,35 @@ docker run --rm -v "$REPO_ABS:/work" -w /work unisat-ci bash -lc '
 '
 
 # ---------------------------------------------------------------
+#  Phase 5 quality gates — best-effort, do not fail verify.sh if
+#  the tool is missing from the CI image.
+# ---------------------------------------------------------------
+echo "==> cppcheck static-analysis gate"
+docker run --rm -v "$REPO_ABS:/work" -w /work unisat-ci bash -lc '
+  if command -v cppcheck >/dev/null; then
+      ./scripts/run_cppcheck.sh || exit 1
+  else
+      echo "    cppcheck not in CI image — skipping."
+      echo "    to enable: apt-get install cppcheck"
+  fi
+'
+
+echo "==> coverage measurement (lcov)"
+docker run --rm -v "$REPO_ABS:/work" -w /work unisat-ci bash -lc '
+  if command -v lcov >/dev/null; then
+      cd firmware
+      rm -rf build-cov
+      cmake -B build-cov -S . -DCOVERAGE=ON > /dev/null
+      cmake --build build-cov > /dev/null
+      ctest --test-dir build-cov > /dev/null
+      cmake --build build-cov --target coverage 2>&1 | tail -5
+  else
+      echo "    lcov not in CI image — skipping."
+      echo "    to enable: apt-get install lcov"
+  fi
+'
+
+# ---------------------------------------------------------------
 #  Target build — produces a real STM32F446RE .elf / .bin / .hex
 #  plus a size report so CI can fail fast on flash/RAM overflow.
 #  This step is best-effort: when the host image is missing the

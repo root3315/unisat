@@ -1,0 +1,9 @@
+missingIncludeSystem
+unusedFunction
+unmatchedSuppression
+*:firmware/tests/unity/unity.h
+misra-c2012-2.3
+misra-c2012-2.5
+misra-c2012-8.9
+misra-c2012-11.5
+misra-c2012-21.6:firmware/tests/*

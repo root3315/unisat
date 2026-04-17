@@ -50,6 +50,12 @@ help:
 	@echo "    make size        Print per-section flash / RAM usage (sysv)"
 	@echo "    make flash       Flash firmware to STM32 via ST-Link"
 	@echo "    make setup-hal   Fetch STM32Cube HAL for production build"
+	@echo ""
+	@echo "  quality gates (Phase 5):"
+	@echo "    make cppcheck    Static-analysis gate (error/warning/portability)"
+	@echo "    make cppcheck-strict  + MISRA advisory report"
+	@echo "    make coverage    Host build + ctest + lcov html report"
+	@echo "    make sanitizers  Host build + ctest under ASAN/UBSAN"
 
 # --- main ---------------------------------------------------------
 
@@ -98,6 +104,33 @@ ci:
 	  cmake --build $(BUILD_DIR) && \
 	  ctest --test-dir $(BUILD_DIR) --output-on-failure && \
 	  cd $(GS_DIR) && python3 -m pytest tests/test_ax25.py -v"
+
+# --- Phase 5 quality gates ---------------------------------------
+#
+#   make cppcheck       static-analysis gate (error/warning/portability)
+#   make cppcheck-strict same + MISRA advisory report
+#   make coverage       host build + ctest + lcov report
+#   make sanitizers     host build + ctest under ASAN/UBSAN
+#
+
+.PHONY: cppcheck cppcheck-strict coverage sanitizers
+
+cppcheck:
+	scripts/run_cppcheck.sh
+
+cppcheck-strict:
+	scripts/run_cppcheck.sh --strict
+
+coverage:
+	cmake -B $(BUILD_DIR) -S $(FIRMWARE_DIR) -DCOVERAGE=ON
+	cmake --build $(BUILD_DIR)
+	ctest --test-dir $(BUILD_DIR) --output-on-failure
+	cmake --build $(BUILD_DIR) --target coverage
+
+sanitizers:
+	cmake -B $(BUILD_DIR)-san -S $(FIRMWARE_DIR) -DSANITIZERS=ON
+	cmake --build $(BUILD_DIR)-san
+	ctest --test-dir $(BUILD_DIR)-san --output-on-failure
 
 # --- STM32F446RE target build ------------------------------------
 #

@@ -121,10 +121,21 @@ bool COMM_SendAX25(CommChannel_t channel,
     AX25_Address_t dst = { .ssid = dst_ssid };
     AX25_Address_t src = { .ssid = src_ssid };
 
+    /* Copy up to 6 callsign chars or stop at NUL. cppcheck's
+     * arrayIndexOutOfBounds checker cannot track that the `!= '\0'`
+     * short-circuit bounds `n` to the string's actual length —
+     * callers pass NUL-terminated literals like "CQ" (3 bytes)
+     * where the loop exits at n=2 before touching dst_call[3..5].
+     * Suppress the false positive inline so the surrounding real
+     * warnings stay visible. */
     size_t n;
-    for (n = 0; n < 6 && dst_call[n] != '\0'; n++) dst.callsign[n] = dst_call[n];
+    /* cppcheck-suppress arrayIndexOutOfBoundsCond */
+    /* cppcheck-suppress arrayIndexOutOfBounds */
+    for (n = 0; n < 6 && dst_call[n] != '\0'; n++) { dst.callsign[n] = dst_call[n]; }
     dst.callsign[n] = '\0';
-    for (n = 0; n < 6 && src_call[n] != '\0'; n++) src.callsign[n] = src_call[n];
+    /* cppcheck-suppress arrayIndexOutOfBoundsCond */
+    /* cppcheck-suppress arrayIndexOutOfBounds */
+    for (n = 0; n < 6 && src_call[n] != '\0'; n++) { src.callsign[n] = src_call[n]; }
     src.callsign[n] = '\0';
 
     uint8_t buf[AX25_MAX_FRAME_BYTES];

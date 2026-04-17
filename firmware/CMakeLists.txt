@@ -37,6 +37,23 @@ project(unisat_firmware
 set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
 set(OPT_FLAGS "-Og -g3")
 
+#
+# Phase 5 opt-in build-quality gates.
+#   -DSTRICT=ON       : host build promotes warnings to errors
+#                        (-Werror) and enables -Wshadow -Wconversion
+#                        so every regression surfaces immediately.
+#   -DCOVERAGE=ON     : host build emits gcov counters; the `coverage`
+#                        target runs lcov + genhtml for a report.
+#   -DSANITIZERS=ON   : host build links AddressSanitizer +
+#                        UndefinedBehaviorSanitizer. Catches
+#                        out-of-bounds, use-after-free, shift of
+#                        negative value, etc. Host-only — the target
+#                        toolchain has no runtime for these.
+#
+option(STRICT     "Host build: -Werror + extra warnings"    OFF)
+option(COVERAGE   "Host build: gcov coverage instrumentation" OFF)
+option(SANITIZERS "Host build: ASAN + UBSAN"                OFF)
+
 if(CROSS_COMPILE)
     set(CMAKE_C_FLAGS
         "${MCU_FLAGS} ${OPT_FLAGS} -Wall -Wextra -Wpedantic -std=c11 \
@@ -57,6 +74,28 @@ if(CROSS_COMPILE)
         -Wl,-Map=unisat_firmware.map,--cref")
 else()
     set(CMAKE_C_FLAGS "-Wall -Wextra -Wpedantic -std=c11 -g -DSIMULATION_MODE")
+
+    if(STRICT)
+        # -Werror gates the CI; -Wshadow catches the classic local
+        # variable shadowing a module-scope name bug; -Wconversion
+        # surfaces narrowing casts that matter on the 32-bit MCU.
+        # Keep off by default so a regular `make test` during
+        # development isn't blocked by a benign third-party warning.
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wshadow -Wconversion \
+            -Wno-error=unused-variable -Wno-error=unused-parameter \
+            -Wno-error=unused-but-set-variable")
+    endif()
+    if(COVERAGE)
+        # --coverage is short for -fprofile-arcs -ftest-coverage on
+        # compile and -lgcov on link.
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -O0")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+    endif()
+    if(SANITIZERS)
+        set(SAN_FLAGS "-fsanitize=address,undefined -fno-omit-frame-pointer")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SAN_FLAGS}")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SAN_FLAGS}")
+    endif()
 endif()
 
 # Include directories
@@ -188,10 +227,15 @@ else()
         tests/test_stubs.c
         stm32/Core/Src/telemetry.c
         stm32/Core/Src/ccsds.c
+        stm32/Drivers/BoardTemp/board_temp.c
+        stm32/Drivers/TMP117/tmp117.c
+        stm32/Core/Src/fdir.c
     )
     target_include_directories(test_beacon_layout PRIVATE
         tests
         stm32/Core/Inc
+        stm32/Drivers/BoardTemp
+        stm32/Drivers/TMP117
     )
     target_compile_definitions(test_beacon_layout PRIVATE SIMULATION_MODE)
     target_link_libraries(test_beacon_layout PRIVATE m)
@@ -303,13 +347,18 @@ else()
         stm32/Core/Src/comm.c
         stm32/Core/Src/telemetry.c
         stm32/Core/Src/ccsds.c
+        stm32/Core/Src/fdir.c
         stm32/Drivers/AX25/ax25.c
         stm32/Drivers/AX25/ax25_decoder.c
+        stm32/Drivers/BoardTemp/board_temp.c
+        stm32/Drivers/TMP117/tmp117.c
     )
     target_include_directories(test_comm_integration PRIVATE
         tests
         stm32/Core/Inc
         stm32/Drivers/AX25
+        stm32/Drivers/BoardTemp
+        stm32/Drivers/TMP117
     )
     target_compile_definitions(test_comm_integration PRIVATE SIMULATION_MODE)
     target_link_libraries(test_comm_integration PRIVATE m)
@@ -433,5 +482,44 @@ else()
     target_compile_definitions(sitl_fw PRIVATE SIMULATION_MODE)
     if(WIN32)
         target_link_libraries(sitl_fw PRIVATE ws2_32)
+    endif()
+
+    # ───────── Phase 5: coverage target ─────────
+    #
+    # Runs ctest, then lcov + genhtml to produce an HTML report under
+    # build/coverage_html/ and a flat line-coverage percentage the CI
+    # scripts can parse. Requires the host build to have been
+    # configured with -DCOVERAGE=ON so gcov counters are embedded.
+    #
+    # Usage (from repo root):
+    #   cmake -B firmware/build -S firmware -DCOVERAGE=ON
+    #   cmake --build firmware/build
+    #   cmake --build firmware/build --target coverage
+    #
+    if(COVERAGE)
+        find_program(LCOV_BIN    lcov)
+        find_program(GENHTML_BIN genhtml)
+        if(LCOV_BIN AND GENHTML_BIN)
+            add_custom_target(coverage
+                COMMAND ${LCOV_BIN} --zerocounters --directory .
+                COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+                COMMAND ${LCOV_BIN} --capture --directory .
+                        --output-file coverage.info
+                        --rc geninfo_unexecuted_blocks=1
+                        --ignore-errors mismatch,negative
+                COMMAND ${LCOV_BIN} --remove coverage.info
+                        "*/tests/*" "*/unity/*" "/usr/*"
+                        --output-file coverage.info
+                        --ignore-errors unused
+                COMMAND ${LCOV_BIN} --list coverage.info
+                COMMAND ${GENHTML_BIN} coverage.info
+                        --output-directory coverage_html --quiet
+                COMMENT "gcov + lcov + genhtml -> coverage_html/"
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            )
+        else()
+            message(WARNING "COVERAGE=ON but lcov / genhtml missing — "
+                            "install lcov package to enable the report target")
+        endif()
     endif()
 endif()
