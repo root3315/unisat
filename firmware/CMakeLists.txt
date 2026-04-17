@@ -216,4 +216,20 @@ else()
     target_link_libraries(test_comm_integration PRIVATE m)
 
     add_test(NAME comm_integration COMMAND test_comm_integration)
+
+    # SITL virtual UART — cross-platform TCP loopback shim.
+    add_executable(test_virtual_uart_build
+        tests/test_virtual_uart_build.c
+        stm32/Drivers/VirtualUART/virtual_uart.c
+    )
+    target_include_directories(test_virtual_uart_build PRIVATE
+        tests
+        stm32/Drivers/VirtualUART
+    )
+    target_compile_definitions(test_virtual_uart_build PRIVATE SIMULATION_MODE)
+    if(WIN32)
+        target_link_libraries(test_virtual_uart_build PRIVATE ws2_32)
+    endif()
+
+    add_test(NAME virtual_uart_build COMMAND test_virtual_uart_build)
 endif()
