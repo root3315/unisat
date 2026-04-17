@@ -31,6 +31,7 @@ uint16_t Telemetry_PackEPS(uint8_t *buffer, uint16_t max_size);
 uint16_t Telemetry_PackADCS(uint8_t *buffer, uint16_t max_size);
 uint16_t Telemetry_PackGNSS(uint8_t *buffer, uint16_t max_size);
 uint16_t Telemetry_PackPayload(uint8_t *buffer, uint16_t max_size);
+uint16_t Telemetry_PackBeaconCcsds(uint8_t *buffer, uint16_t max_size);
 uint16_t Telemetry_PackBeacon(uint8_t *buffer, uint16_t max_size);
 uint16_t Telemetry_PackError(uint8_t *buffer, uint16_t max_size,
                               uint8_t error_code, const char *message);

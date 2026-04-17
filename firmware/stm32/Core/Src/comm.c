@@ -1,15 +1,22 @@
 /**
  * @file comm.c
- * @brief Communication subsystem (UHF/S-band) implementation
+ * @brief Communication subsystem (UHF/S-band) implementation.
+ *
+ * AX.25 link-layer framing is delegated to the streaming decoder
+ * (firmware/stm32/Drivers/AX25). comm.c is a thin byte pump between
+ * the UART ring buffer and that decoder — see spec §4.10 for the
+ * threading model and the dependency inversion.
  */
 
 #include "comm.h"
 #include "ccsds.h"
 #include "config.h"
+#include "ax25_api.h"
 #include <string.h>
 
 #ifndef SIMULATION_MODE
 #include "stm32f4xx_hal.h"
+#include "cmsis_os2.h"
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 #endif
@@ -20,10 +27,24 @@ static uint8_t uhf_tx_buffer[COMM_TX_BUFFER_SIZE];
 static volatile uint16_t uhf_rx_head = 0;
 static volatile uint16_t uhf_rx_tail = 0;
 
+/* One AX.25 decoder instance per RX channel. Owned by this file;
+ * only comm_rx_task (or host tests) calls into it. */
+static AX25_Decoder_t g_uhf_decoder;
+
+/* Weak sink for decoded info payloads. The real implementation lives
+ * in a future CCSDS dispatcher (Track 1b); until then the symbol
+ * resolves here and simply discards the payload. Test harnesses and
+ * other translation units may override by providing a strong symbol. */
+__attribute__((weak))
+void CCSDS_Dispatcher_Submit(const uint8_t *data, uint16_t n) {
+    (void)data; (void)n;
+}
+
 void COMM_Init(void) {
     memset(&comm_status, 0, sizeof(comm_status));
     uhf_rx_head = 0;
     uhf_rx_tail = 0;
+    AX25_DecoderInit(&g_uhf_decoder);
 
 #ifndef SIMULATION_MODE
     if (config.comm.uhf_enabled) {
@@ -93,18 +114,43 @@ uint16_t COMM_Receive(CommChannel_t channel, uint8_t *buffer,
     return count;
 }
 
-bool COMM_SendBeacon(void) {
-    uint8_t buffer[CCSDS_MAX_PACKET_SIZE];
-    uint16_t len = 0;
+bool COMM_SendAX25(CommChannel_t channel,
+                    const char *dst_call, uint8_t dst_ssid,
+                    const char *src_call, uint8_t src_ssid,
+                    const uint8_t *info, uint16_t info_len) {
+    AX25_Address_t dst = { .ssid = dst_ssid };
+    AX25_Address_t src = { .ssid = src_ssid };
 
-    /* Build beacon packet via telemetry module */
-    extern uint16_t Telemetry_PackBeacon(uint8_t *buf, uint16_t max);
-    len = Telemetry_PackBeacon(buffer, sizeof(buffer));
+    size_t n;
+    for (n = 0; n < 6 && dst_call[n] != '\0'; n++) dst.callsign[n] = dst_call[n];
+    dst.callsign[n] = '\0';
+    for (n = 0; n < 6 && src_call[n] != '\0'; n++) src.callsign[n] = src_call[n];
+    src.callsign[n] = '\0';
 
-    if (len > 0) {
-        return COMM_Send(COMM_CHANNEL_UHF, buffer, len);
+    uint8_t buf[AX25_MAX_FRAME_BYTES];
+    uint16_t frame_len = 0;
+    if (!AX25_EncodeUiFrame(&dst, &src, 0xF0, info, info_len,
+                             buf, sizeof(buf), &frame_len)) {
+        comm_status.errors++;
+        return false;
     }
-    return false;
+    return COMM_Send(channel, buf, frame_len);
+}
+
+bool COMM_SendBeacon(void) {
+    /* Spec §7.2: beacon is a 48-byte flat layout carried as the info
+     * field of a CCSDS Space Packet, which is carried as the info
+     * field of an AX.25 UI frame. The CCSDS wrapping lives in the
+     * dispatcher (Track 1b); for now we transmit the raw 48 bytes as
+     * the AX.25 info field so ground listeners see a valid frame. */
+    extern uint16_t Telemetry_PackBeacon(uint8_t *buf, uint16_t max);
+    uint8_t info[48];
+    uint16_t len = Telemetry_PackBeacon(info, sizeof(info));
+    if (len != 48) {
+        comm_status.errors++;
+        return false;
+    }
+    return COMM_SendAX25(COMM_CHANNEL_UHF, "CQ", 0, "UN8SAT", 1, info, len);
 }
 
 int8_t COMM_GetRSSI(CommChannel_t channel) {
@@ -136,5 +182,52 @@ void COMM_UART_RxCallback(CommChannel_t channel, uint8_t byte) {
 }
 
 void COMM_ProcessRxBuffer(void) {
-    /* Placeholder for AX.25 frame parsing */
+    /* Drain the ring buffer one byte at a time through the AX.25
+     * streaming decoder. On a completed frame the info payload is
+     * forwarded to the CCSDS dispatcher. Counters mirrored into
+     * COMM_Status_t so existing telemetry sees link-layer health. */
+    while (uhf_rx_tail != uhf_rx_head) {
+        uint8_t byte = uhf_rx_buffer[uhf_rx_tail];
+        uhf_rx_tail = (uhf_rx_tail + 1) % COMM_RX_BUFFER_SIZE;
+
+        AX25_UiFrame_t frame;
+        bool ready = false;
+        AX25_DecoderPushByte(&g_uhf_decoder, byte, &frame, &ready);
+
+        if (ready) {
+            CCSDS_Dispatcher_Submit(frame.info, frame.info_len);
+        }
+    }
+
+    /* Mirror decoder stats into COMM_Status_t. */
+    comm_status.ax25_frames_ok       = g_uhf_decoder.frames_ok;
+    comm_status.ax25_fcs_errors      = g_uhf_decoder.frames_fcs_err;
+    comm_status.ax25_frame_errors    = g_uhf_decoder.frames_other_err
+                                      + g_uhf_decoder.frames_stuffing_err;
+    comm_status.ax25_overflow_errors = g_uhf_decoder.frames_overflow;
 }
+
+#ifndef SIMULATION_MODE
+
+static void CommRxTask(void *arg) {
+    (void)arg;
+    for (;;) {
+        COMM_ProcessRxBuffer();
+        osDelay(10);  /* 10 ms period per spec §4.10 */
+    }
+}
+
+void COMM_StartTask(void) {
+    const osThreadAttr_t attr = {
+        .name = "comm_rx",
+        .stack_size = AX25_DECODER_TASK_STACK,
+        .priority = osPriorityAboveNormal,
+    };
+    osThreadNew(CommRxTask, NULL, &attr);
+}
+
+#else
+
+void COMM_StartTask(void) { /* no-op under SITL */ }
+
+#endif  /* !SIMULATION_MODE */

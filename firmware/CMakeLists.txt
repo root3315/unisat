@@ -74,7 +74,179 @@ if(CROSS_COMPILE)
         COMMENT "Generating binary and hex files"
     )
 else()
-    # Host build for testing
-    add_library(unisat_core STATIC ${ALL_SOURCES})
+    # Host build for testing.
+    # unisat_core is EXCLUDE_FROM_ALL — the full firmware source tree has
+    # pre-existing host build errors in gnss.c (UBLOX_ReadByte signature
+    # mismatch). Tests link only what they need via focused targets below.
+    add_library(unisat_core STATIC EXCLUDE_FROM_ALL ${ALL_SOURCES})
     target_compile_definitions(unisat_core PUBLIC SIMULATION_MODE)
+
+    # Test targets (host-only)
+    enable_testing()
+
+    add_executable(test_beacon_layout
+        tests/test_beacon_layout.c
+        tests/test_stubs.c
+        stm32/Core/Src/telemetry.c
+        stm32/Core/Src/ccsds.c
+    )
+    target_include_directories(test_beacon_layout PRIVATE
+        tests
+        stm32/Core/Inc
+    )
+    target_compile_definitions(test_beacon_layout PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_beacon_layout PRIVATE m)
+
+    add_test(NAME beacon_layout COMMAND test_beacon_layout)
+
+    # AX.25 library tests — pure, zero HAL/RTOS deps.
+    add_executable(test_ax25_fcs
+        tests/test_ax25_fcs.c
+        stm32/Drivers/AX25/ax25.c
+    )
+    target_include_directories(test_ax25_fcs PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_ax25_fcs PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_fcs COMMAND test_ax25_fcs)
+
+    add_executable(test_ax25_bitstuff
+        tests/test_ax25_bitstuff.c
+        stm32/Drivers/AX25/ax25.c
+    )
+    target_include_directories(test_ax25_bitstuff PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_ax25_bitstuff PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_bitstuff COMMAND test_ax25_bitstuff)
+
+    add_executable(test_ax25_address
+        tests/test_ax25_address.c
+        stm32/Drivers/AX25/ax25.c
+    )
+    target_include_directories(test_ax25_address PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_ax25_address PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_address COMMAND test_ax25_address)
+
+    add_executable(test_ax25_frame
+        tests/test_ax25_frame.c
+        stm32/Drivers/AX25/ax25.c
+    )
+    target_include_directories(test_ax25_frame PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_ax25_frame PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_frame COMMAND test_ax25_frame)
+
+    # Cross-impl golden-vector verification (REQ-AX25-015).
+    add_executable(test_ax25_golden
+        tests/test_ax25_golden.c
+        stm32/Drivers/AX25/ax25.c
+    )
+    target_include_directories(test_ax25_golden PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+        ${CMAKE_SOURCE_DIR}/../tests/golden
+    )
+    target_compile_definitions(test_ax25_golden PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_golden COMMAND test_ax25_golden)
+
+    # Streaming decoder (REQ-AX25-017/021/023/024).
+    add_executable(test_ax25_decoder
+        tests/test_ax25_decoder.c
+        stm32/Drivers/AX25/ax25.c
+        stm32/Drivers/AX25/ax25_decoder.c
+    )
+    target_include_directories(test_ax25_decoder PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_ax25_decoder PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_decoder COMMAND test_ax25_decoder)
+
+    # Project-style facade (ADR-002).
+    add_executable(test_ax25_api
+        tests/test_ax25_api.c
+        stm32/Drivers/AX25/ax25.c
+        stm32/Drivers/AX25/ax25_decoder.c
+    )
+    target_include_directories(test_ax25_api PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_ax25_api PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_api COMMAND test_ax25_api)
+
+    # comm.c integration — RX ring -> streaming decoder -> dispatcher.
+    add_executable(test_comm_integration
+        tests/test_comm_integration.c
+        tests/test_stubs.c
+        stm32/Core/Src/comm.c
+        stm32/Core/Src/telemetry.c
+        stm32/Core/Src/ccsds.c
+        stm32/Drivers/AX25/ax25.c
+        stm32/Drivers/AX25/ax25_decoder.c
+    )
+    target_include_directories(test_comm_integration PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_comm_integration PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_comm_integration PRIVATE m)
+
+    add_test(NAME comm_integration COMMAND test_comm_integration)
+
+    # SITL virtual UART — cross-platform TCP loopback shim.
+    add_executable(test_virtual_uart_build
+        tests/test_virtual_uart_build.c
+        stm32/Drivers/VirtualUART/virtual_uart.c
+    )
+    target_include_directories(test_virtual_uart_build PRIVATE
+        tests
+        stm32/Drivers/VirtualUART
+    )
+    target_compile_definitions(test_virtual_uart_build PRIVATE SIMULATION_MODE)
+    if(WIN32)
+        target_link_libraries(test_virtual_uart_build PRIVATE ws2_32)
+    endif()
+
+    add_test(NAME virtual_uart_build COMMAND test_virtual_uart_build)
+
+    # SITL firmware demo binary — connects to GS listener via TCP.
+    add_executable(sitl_fw
+        ${CMAKE_SOURCE_DIR}/../scripts/sitl_fw.c
+        stm32/Drivers/VirtualUART/virtual_uart.c
+        stm32/Drivers/AX25/ax25.c
+        stm32/Drivers/AX25/ax25_decoder.c
+    )
+    target_include_directories(sitl_fw PRIVATE
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+        stm32/Drivers/VirtualUART
+    )
+    target_compile_definitions(sitl_fw PRIVATE SIMULATION_MODE)
+    if(WIN32)
+        target_link_libraries(sitl_fw PRIVATE ws2_32)
+    endif()
 endif()
