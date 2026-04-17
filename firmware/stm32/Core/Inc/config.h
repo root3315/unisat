@@ -127,4 +127,13 @@ extern SystemConfig_t config;
 
 void Config_Init(void);
 
+/* AX.25 Link Layer Configuration (spec §5.1a).
+ * All AX.25 hard limits surface as compile-time constants — no magic
+ * numbers in library code. Tests may override via -D for boundary cases. */
+#define ENABLE_AX25_FRAMING       true
+#define AX25_MAX_INFO_LEN         256   /* AX.25 v2.2 info field hard max */
+#define AX25_MAX_FRAME_BYTES      400   /* stuffed; 20% margin over +266 B */
+#define AX25_RING_BUFFER_SIZE     512   /* 427 ms headroom @ 9600 bps     */
+#define AX25_DECODER_TASK_STACK   1024  /* FreeRTOS stack, bytes          */
+
 #endif /* CONFIG_H */
