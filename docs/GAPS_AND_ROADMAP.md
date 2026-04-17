@@ -1,7 +1,8 @@
 # UniSat — Gaps & Roadmap
 
 **Честный статус на апрель 2026.** Что работает зелёным, что
-остаётся делать, что принципиально вне scope'а.
+остаётся делать, что принципиально вне scope'а. Начата TRL-5
+hardening (ветка `feat/trl5-hardening`) — фазы отмечены ниже.
 
 ---
 
@@ -10,19 +11,39 @@
 | Проверка | Статус |
 |---|---|
 | Host build firmware (`unisat_core`) | ✅ clean |
-| C unit tests (`ctest`) | ✅ **16 / 16** |
+| **Target build firmware (ARM, `unisat_firmware.elf`)** | ✅ new, `make target` |
+| C unit tests (`ctest`) | ✅ **16 / 16** (dispatcher теперь 11 sub-tests) |
 | Python tests (`pytest`, ground-station) | ✅ **34 / 34** |
 | Hypothesis property + fuzz | ✅ 200 + 500 cases |
 | AX.25 golden vectors C↔Python | ✅ 28 / 28 byte-identical |
 | SHA-256 FIPS 180-4 vectors | ✅ |
 | HMAC-SHA256 RFC 4231 vectors | ✅ |
 | End-to-end SITL beacon demo | ✅ `./scripts/verify.sh` |
+| STM32 size-budget gate (90 % flash/RAM) | ✅ new, в verify.sh |
 | Threat T1 (command injection) | ✅ mitigated by HMAC dispatcher |
+| **Threat T2 (replay)** | ✅ **mitigated** — 32-bit counter + 64-bit window |
 | Threat T3 (bit-stuff DoS) | ✅ hard-reject >400 B |
 | Threat T4 (RF garbage flood) | ✅ decoder never crashes (fuzz) |
 
 **Сегодня платформа готова к подаче на любой студенческий /
-университетский конкурс.**
+университетский конкурс.** TRL-5 hardening в работе — см. ниже.
+
+---
+
+## TRL-5 Hardening Plan (ветка `feat/trl5-hardening`)
+
+Шесть фаз дополнительной работы, чтобы платформа честно
+соответствовала TRL 5 (validated in relevant environment, real
+target hardware execution proven).
+
+| Фаза | Тема | Статус |
+|---|---|---|
+| **1** | STM32 target build — LD, startup, clock, IT, HAL shim, make target / size / flash | ✅ **done** |
+| **2** | Replay protection (T2) + secure key store + rotation | 🟡 in-progress (T2 ✅, key store open) |
+| **3** | FDIR table + watchdog coverage audit + autonomous recovery | ⏳ pending |
+| **4** | Tboard driver + E2E mission scenario test + 48 h soak harness | ⏳ pending |
+| **5** | MISRA-C gate + lcov coverage ≥ 80 % + ASAN/UBSAN + `-Werror` | ⏳ pending |
+| **6** | Full SRS + traceability matrix + characterization templates + HIL plan | ⏳ pending |
 
 ---
 
@@ -30,18 +51,31 @@
 
 ### 🟡 Medium priority — ощутимые улучшения
 
-#### M1. T2 replay protection (оставшаяся часть Track 1b)
+#### M1. T2 replay protection — ✅ **CLOSED** (Phase 2)
 
-**Что:** команды с валидным HMAC, но старым timestamp'ом или
-повторным sequence-number'ом отклонять.
+`command_dispatcher.c` принимает 32-bit BE-counter, пропускает его
+через sliding-window filter (64 bit), HMAC покрывает `counter || body`.
+См. `docs/security/ax25_threat_model.md` §T2.
 
-**Как:** в `command_dispatcher.c` добавить проверку CCSDS
-secondary-header (timestamp + seq) против sliding window (последние
-16 принятых sequence numbers + freshness ±60 сек).
+Остаточный риск (задокументирован) — persistent key store, следующий
+пункт Phase 2 ниже.
 
-**Оценка:** ~2 часа. Низкий риск.
+---
 
-**Impact:** закрывает последнюю серьёзную security-дыру.
+#### M1a. Secure key store + rotation (Phase 2 follow-up)
+
+**Что:** ключ HMAC сейчас в RAM после `CommandDispatcher_SetKey`.
+Нужно: выделенный flash-сектор (0x0807F000, last 4 KB of 512 KB
+F446RE), CRC-защищённое хранение, rotation uplink-командой
+подписанной старым ключом.
+
+**Как:** новый модуль `firmware/stm32/Core/Src/key_store.c` +
+`key_store.h`, persistent shadow в ground-station simulation (host).
+
+**Оценка:** ~4 часа. Средний риск (flash erase семантика).
+
+**Impact:** закрывает остаточный риск T1 (key compromise через warm
+reboot с подменённым образом).
 
 ---
 
@@ -170,11 +204,16 @@ educational / research / amateur-launch сегмент.
 ✅ 50/50 тестов зелёные
 ✅ CDR-level документация
 
-### v1.2 (planned)
+### v1.2 (in progress, branch `feat/trl5-hardening`)
 
-- [ ] M1 — replay protection
-- [ ] M2 — Streamlit live bridge
+- [x] Phase 1 — STM32 target build (LD, startup, clock, flash target)
+- [x] M1 — replay protection (T2 closed)
+- [ ] M1a — secure key store + rotation
+- [ ] Phase 3 — FDIR + watchdog audit
 - [ ] M3 — flight-software e2e scenario
+- [ ] Phase 5 — MISRA gate + coverage ≥ 80 %
+- [ ] Phase 6 — full SRS + traceability matrix
+- [ ] M2 — Streamlit live bridge
 - [ ] L1 — CC1125 radio config doc
 
 ### v1.5 (stretch)
@@ -193,4 +232,4 @@ educational / research / amateur-launch сегмент.
 
 ---
 
-*Last updated: 2026-04-17*
+*Last updated: 2026-04-17 (Phase 1 done, Phase 2 T2 closed, key store in progress)*
