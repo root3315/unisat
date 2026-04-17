@@ -5,6 +5,7 @@
 
 #include "obc.h"
 #include "config.h"
+#include <string.h>
 
 #ifndef SIMULATION_MODE
 #include "stm32f4xx_hal.h"

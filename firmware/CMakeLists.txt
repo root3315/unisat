@@ -46,6 +46,8 @@ include_directories(
     stm32/Drivers/UBLOX
     stm32/Drivers/MCP3008
     stm32/Drivers/SunSensor
+    stm32/Drivers/AX25
+    stm32/Drivers/VirtualUART
     stm32/ADCS
     stm32/EPS
 )
@@ -74,12 +76,13 @@ if(CROSS_COMPILE)
         COMMENT "Generating binary and hex files"
     )
 else()
-    # Host build for testing.
-    # unisat_core is EXCLUDE_FROM_ALL — the full firmware source tree has
-    # pre-existing host build errors in gnss.c (UBLOX_ReadByte signature
-    # mismatch). Tests link only what they need via focused targets below.
-    add_library(unisat_core STATIC EXCLUDE_FROM_ALL ${ALL_SOURCES})
+    # Host build for testing. unisat_core aggregates every firmware
+    # source file so the host build doubles as a full-source compile
+    # check — if a subsystem .c introduces a regression it fails here
+    # even before any test target touches it.
+    add_library(unisat_core STATIC ${ALL_SOURCES})
     target_compile_definitions(unisat_core PUBLIC SIMULATION_MODE)
+    target_link_libraries(unisat_core PUBLIC m)
 
     # Test targets (host-only)
     enable_testing()

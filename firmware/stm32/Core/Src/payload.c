@@ -16,7 +16,8 @@ static uint32_t HAL_GetTick(void) { return sim_tick += 1000; }
 #endif
 
 static Payload_Status_t payload_status;
-static PayloadType_t current_type;
+static PayloadType_t    current_type;
+static SBM20_Handle_t   sbm20_dev;
 
 /* Radiation monitor data buffer */
 static struct {
@@ -36,11 +37,19 @@ void Payload_Init(PayloadType_t type) {
     switch (type) {
         case PAYLOAD_RADIATION_MONITOR:
             memset(&radiation_data, 0, sizeof(radiation_data));
-            SBM20_Init();
+            memset(&sbm20_dev, 0, sizeof(sbm20_dev));
+            (void)SBM20_Init(&sbm20_dev);
             break;
         default:
             break;
     }
+}
+
+/** Read CPS from the SBM-20 driver, returning 0 on error. */
+static uint32_t sbm20_read_cps(void) {
+    uint32_t cps = 0;
+    (void)SBM20_GetCPS(&sbm20_dev, &cps);
+    return cps;
 }
 
 Payload_Status_t Payload_GetStatus(void) {
@@ -64,7 +73,7 @@ uint16_t Payload_ReadData(uint8_t *buffer, uint16_t max_size) {
     switch (current_type) {
         case PAYLOAD_RADIATION_MONITOR: {
             /* Pack radiation data */
-            uint32_t cps = SBM20_GetCPS();
+            uint32_t cps = sbm20_read_cps();
             memcpy(&buffer[offset], &cps, 4); offset += 4;
             memcpy(&buffer[offset], &radiation_data.dose_rate_usv_h, 4);
             offset += 4;
@@ -105,7 +114,7 @@ void Payload_Update(void) {
 
     switch (current_type) {
         case PAYLOAD_RADIATION_MONITOR: {
-            uint32_t cps = SBM20_GetCPS();
+            uint32_t cps = sbm20_read_cps();
 
             radiation_data.cps_values[radiation_data.index] = cps;
             radiation_data.index = (radiation_data.index + 1) % 60;
