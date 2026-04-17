@@ -98,4 +98,18 @@ else()
     target_link_libraries(test_beacon_layout PRIVATE m)
 
     add_test(NAME beacon_layout COMMAND test_beacon_layout)
+
+    # AX.25 library tests — pure, zero HAL/RTOS deps.
+    add_executable(test_ax25_fcs
+        tests/test_ax25_fcs.c
+        stm32/Drivers/AX25/ax25.c
+    )
+    target_include_directories(test_ax25_fcs PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_ax25_fcs PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_fcs COMMAND test_ax25_fcs)
 endif()
