@@ -236,7 +236,41 @@ else()
 
     add_test(NAME virtual_uart_build COMMAND test_virtual_uart_build)
 
-    # SITL firmware demo binary — connects to GS listener via TCP.
+    # ───────── Pre-existing subsystem tests (wired into CMake) ─────────
+
+    add_executable(test_ccsds
+        tests/test_ccsds.c
+        stm32/Core/Src/ccsds.c
+    )
+    target_compile_definitions(test_ccsds PRIVATE SIMULATION_MODE)
+    add_test(NAME ccsds COMMAND test_ccsds)
+
+    add_executable(test_adcs_algorithms
+        tests/test_adcs_algorithms.c
+        stm32/ADCS/quaternion.c
+        stm32/ADCS/bdot.c
+    )
+    target_compile_definitions(test_adcs_algorithms PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_adcs_algorithms PRIVATE m)
+    add_test(NAME adcs_algorithms COMMAND test_adcs_algorithms)
+
+    add_executable(test_eps
+        tests/test_eps.c
+        stm32/EPS/mppt.c
+        stm32/EPS/battery_manager.c
+    )
+    target_compile_definitions(test_eps PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_eps PRIVATE m)
+    add_test(NAME eps COMMAND test_eps)
+
+    add_executable(test_telemetry
+        tests/test_telemetry.c
+    )
+    target_compile_definitions(test_telemetry PRIVATE SIMULATION_MODE)
+    add_test(NAME telemetry_placeholder COMMAND test_telemetry)
+
+    # ───────── SITL firmware demo binary ─────────
+
     add_executable(sitl_fw
         ${CMAKE_SOURCE_DIR}/../scripts/sitl_fw.c
         stm32/Drivers/VirtualUART/virtual_uart.c
