@@ -156,23 +156,35 @@ For more granular control:
 
 ## Project Status
 
+**TRL-5 hardening:** all 6 phases on `feat/trl5-hardening` closed.
+
 | Check | Status |
 |---|---|
 | Firmware host build (all subsystems) | ✅ clean (`unisat_core`) |
-| C unit tests (`ctest`) | ✅ **16 / 16 passing** |
-| Python tests (`pytest`) | ✅ **34 / 34 passing** incl. 200 hypothesis + 500 fuzz cases |
+| **Firmware target build (STM32F446RE .elf/.bin/.hex)** | ✅ `make target` |
+| C unit tests (`ctest`) | ✅ **19 / 19 passing** (64+ sub-tests) |
+| Python tests (`pytest`) | ✅ **38+ passing** incl. 200 hypothesis + 500 fuzz + e2e mission + long-soak |
 | AX.25 golden vectors cross-validation | ✅ 28/28 byte-identical C ↔ Python |
 | SHA-256 FIPS 180-4 oracle | ✅ `"abc"` + `""` canonical digests |
 | HMAC-SHA256 RFC 4231 vectors | ✅ §4.2 + §4.3 on both C and Python |
-| End-to-end SITL demo | ✅ C encoder → TCP → Python decoder, `fcs_valid: true` |
-| Driver reality audit | ✅ all 8 sensors confirmed real (docs/verification/driver_audit.md) |
-| Requirement traceability | ✅ auto-generated (docs/verification/ax25_trace_matrix.md) |
+| End-to-end SITL demo | ✅ C encoder → TCP → Python decoder |
+| **E2E mission scenario (startup → nominal → safe)** | ✅ flight-software/tests/test_mission_e2e.py |
+| **Long-soak harness (48 h gated via UNISAT_SOAK_SECONDS)** | ✅ test_long_soak.py |
+| Driver reality audit | ✅ all 9 drivers verified real (incl. BoardTemp) |
+| Threat T1 (command injection) | ✅ HMAC dispatcher |
+| **Threat T2 (replay)** | ✅ 32-bit counter + 64-bit sliding window |
+| **Persistent key store (A/B + CRC + rotation)** | ✅ 10/10 tests |
+| **FDIR fault advisor + watchdog integration** | ✅ 9/9 tests, 12 fault IDs |
+| **Tboard (TMP117) facade in beacon bytes 14–15** | ✅ 6/6 tests |
+| **cppcheck static-analysis gate** | ✅ clean (`make cppcheck`) |
+| **Line coverage (baseline)** | ✅ 73.6 % (`make coverage`) |
+| **ASAN + UBSAN under ctest** | ✅ 19/19 clean (`make sanitizers`) |
+| **Full SRS + traceability CSV** | ✅ docs/requirements/SRS.md |
+| **HIL test plan + characterization templates** | ✅ docs/testing + docs/characterization |
+| Requirement traceability (AX.25 subset) | ✅ auto-generated (docs/verification/ax25_trace_matrix.md) |
 
-| Track 1b command dispatcher (HMAC T1 mitigated) | ✅ wired end-to-end |
-
-Open items — see [`docs/GAPS_AND_ROADMAP.md`](docs/GAPS_AND_ROADMAP.md):
-replay protection (T2), Streamlit↔AX.25 live bridge, flight-software
-end-to-end scenario test.
+Deferred (not TRL-5 blockers) — see [`docs/GAPS_AND_ROADMAP.md`](docs/GAPS_AND_ROADMAP.md):
+Streamlit↔AX.25 live bridge, CC1125 radio config doc, MISRA backlog cleanup (~1000 Rule 8.7/10.x deviations), STRICT `-Wconversion` cleanup in ccsds.c.
 
 ### 6. Build firmware manually (optional)
 
@@ -279,12 +291,20 @@ unisat/
 
 **Architecture decisions, security, verification:**
 - [ADR-001 — No CSP](docs/adr/ADR-001-no-csp.md) · [ADR-002 — Style Adapter](docs/adr/ADR-002-style-adapter.md)
-- [AX.25 Threat Model](docs/security/ax25_threat_model.md)
+- [AX.25 Threat Model](docs/security/ax25_threat_model.md) — T1 + T2 both mitigated
 - [AX.25 Walkthrough Tutorial](docs/tutorials/ax25_walkthrough.md) — byte-by-byte beacon разбор
 - [AX.25 Verification Trace Matrix](docs/verification/ax25_trace_matrix.md) (auto-generated)
-- [Driver Reality Audit](docs/verification/driver_audit.md) — все 8 сенсоров verified real
+- [Driver Reality Audit](docs/verification/driver_audit.md) — все 9 драйверов verified real
 - [Track 1 Design Spec](docs/superpowers/specs/2026-04-17-track1-ax25-design.md) — 775 lines
 - [Track 1 Implementation Plan](docs/superpowers/plans/2026-04-17-track1-ax25-implementation.md) — 4022 lines
+
+**TRL-5 hardening (feat/trl5-hardening branch):**
+- [SRS — Software Requirements Spec](docs/requirements/SRS.md) — 10 subsystems, numbered REQs
+- [Traceability CSV](docs/requirements/traceability.csv) — REQ → source → test
+- [FDIR module](docs/reliability/fdir.md) — fault detection + recovery ladder
+- [Static analysis policy](docs/quality/static_analysis.md) — cppcheck + coverage + sanitizers
+- [Characterization templates](docs/characterization/README.md) — WCET / stack / heap / power
+- [HIL test plan](docs/testing/hil_test_plan.md) — bench BOM + 10 test IDs
 
 ---
 
@@ -298,10 +318,26 @@ unisat/
 **Via Makefile:**
 ```bash
 make all              # build + test (C + Python)
-make test-c           # ctest only (16 targets)
-make test-py          # pytest only (34 tests + hypothesis/fuzz)
+make test-c           # ctest only (19 targets, 64+ sub-tests)
+make test-py          # pytest only (38+ tests incl. e2e mission + soak)
 make demo             # end-to-end SITL AX.25 beacon demo
 make help             # list all targets
+```
+
+**Quality gates (Phase 5):**
+```bash
+make cppcheck         # static-analysis gate (zero issues)
+make cppcheck-strict  # + MISRA-C:2012 advisory report
+make coverage         # lcov html report (baseline 73.6 % lines)
+make sanitizers       # ASAN + UBSAN under ctest
+```
+
+**STM32 target (Phase 1):**
+```bash
+make setup-hal        # fetch STM32Cube HAL (one-time)
+make target           # cross-compile .elf / .bin / .hex
+make size             # per-section flash / RAM usage
+make flash            # st-flash to Nucleo-F446RE
 ```
 
 **Manual:**

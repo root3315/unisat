@@ -1,0 +1,49 @@
+req_id,subsystem,priority,statement,verification_method,design_doc,source_file,test_file,status
+REQ-CMD-001,CMD,MUST,Every uplink telecommand authenticated with HMAC-SHA256 over payload+counter,Test,docs/security/ax25_threat_model.md,firmware/stm32/Core/Src/command_dispatcher.c,firmware/tests/test_command_dispatcher.c,closed
+REQ-CMD-002,CMD,MUST,Tampered or unauth telecommands dropped silently,Test,docs/security/ax25_threat_model.md,firmware/stm32/Core/Src/command_dispatcher.c,firmware/tests/test_command_dispatcher.c,closed
+REQ-CMD-003,CMD,MUST,32-bit counter + 64-bit sliding replay window,Test,docs/security/ax25_threat_model.md,firmware/stm32/Core/Src/command_dispatcher.c,firmware/tests/test_command_dispatcher.c,closed
+REQ-CMD-004,CMD,MUST,Counter value 0 reserved and rejected,Test,docs/security/ax25_threat_model.md,firmware/stm32/Core/Src/command_dispatcher.c,firmware/tests/test_command_dispatcher.c,closed
+REQ-CMD-005,CMD,MUST,HMAC keys in CRC-protected A/B flash with monotonic generation,Test,docs/security/ax25_threat_model.md,firmware/stm32/Core/Src/key_store.c,firmware/tests/test_key_store.c,closed
+REQ-CMD-006,CMD,SHOULD,Key rotation requires new_gen > current,Test,docs/security/ax25_threat_model.md,firmware/stm32/Core/Src/key_store.c,firmware/tests/test_key_store.c,closed
+REQ-CMD-007,CMD,MUST,Torn write preserves previously-active key,Test,docs/security/ax25_threat_model.md,firmware/stm32/Core/Src/key_store.c,firmware/tests/test_key_store.c,closed
+REQ-CMD-008,CMD,MUST,No-key boot refuses all frames + FAULT_KEYSTORE_EMPTY,Test,docs/reliability/fdir.md,firmware/stm32/Core/Src/command_dispatcher.c,firmware/tests/test_command_dispatcher.c,closed
+REQ-AX25-001,AX25,MUST,AX.25 v2.2 UI frame encoding with bit-stuffing+CRC+flag,Test,docs/superpowers/specs/2026-04-17-track1-ax25-design.md,firmware/stm32/Drivers/AX25/ax25.c,firmware/tests/test_ax25_frame.c,closed
+REQ-AX25-006,AX25,MUST,FCS matches ITU-T X.25 123456789 -> 0x906E on both impl,Test,docs/communication_protocol.md,firmware/stm32/Drivers/AX25/ax25.c,firmware/tests/test_ax25_fcs.c,closed
+REQ-AX25-012,AX25,MUST,Decoder hard-rejects > 400 B frames,Test,docs/security/ax25_threat_model.md,firmware/stm32/Drivers/AX25/ax25_decoder.c,firmware/tests/test_ax25_decoder.c,closed
+REQ-AX25-014,AX25,MUST,Decoder never crashes/leaks on garbage input,Test (fuzz),docs/security/ax25_threat_model.md,firmware/stm32/Drivers/AX25/ax25_decoder.c,firmware/tests/test_ax25_decoder.c,closed
+REQ-AX25-015,AX25,MUST,C and Python byte-identical vs 28 golden vectors,Test,docs/verification/ax25_trace_matrix.md,firmware/stm32/Drivers/AX25/ax25.c,firmware/tests/test_ax25_golden.c,closed
+REQ-AX25-019,AX25,MUST,Decoder runs in FreeRTOS task not ISR,Inspection,docs/architecture.md,firmware/stm32/Core/Src/comm.c,design review,closed
+REQ-AX25-024,AX25,MUST,Decoder error recovery O(1) per byte,Analysis,docs/superpowers/specs/2026-04-17-track1-ax25-design.md,firmware/stm32/Drivers/AX25/ax25_decoder.c,design review,closed
+REQ-TLM-001,TLM,MUST,Housekeeping beacons every 30 s on UHF,Inspection,docs/communication_protocol.md,firmware/stm32/Core/Src/main.c,operator verify,closed
+REQ-TLM-002,TLM,MUST,Beacon packet exactly 48 bytes per spec §7.2,Test,docs/communication_protocol.md,firmware/stm32/Core/Src/telemetry.c,firmware/tests/test_beacon_layout.c,closed
+REQ-TLM-003,TLM,MUST,Tboard in beacon bytes 14-15 as signed 0.1 °C,Test,docs/communication_protocol.md,firmware/stm32/Drivers/BoardTemp/board_temp.c,firmware/tests/test_board_temp.c,closed
+REQ-TLM-004,TLM,MUST,Tboard = 0 only before first valid reading,Test,docs/verification/driver_audit.md,firmware/stm32/Drivers/BoardTemp/board_temp.c,firmware/tests/test_board_temp.c,closed
+REQ-TLM-005,TLM,SHOULD,Out-of-range rejected + FAULT_SENSOR_OUT_OF_RANGE,Test,docs/reliability/fdir.md,firmware/stm32/Drivers/BoardTemp/board_temp.c,firmware/tests/test_board_temp.c,closed
+REQ-TLM-010,TLM,MUST,Downlink wrapped in CCSDS Space Packet,Inspection,docs/communication_protocol.md,firmware/stm32/Core/Src/ccsds.c,design review,closed
+REQ-ADCS-001,ADCS,MUST,B-dot reduces rate below 0.5 °/s in 90 min post-deploy,Analysis,docs/TECHNICAL_DOCUMENTATION.md,firmware/stm32/ADCS/bdot.c,firmware/tests/test_adcs_algorithms.c,partial
+REQ-ADCS-002,ADCS,MUST,Quaternion unit norm preserved to 1e-5 over 10000 iter,Test,docs/TECHNICAL_DOCUMENTATION.md,firmware/stm32/ADCS/quaternion.c,firmware/tests/test_adcs_algorithms.c,closed
+REQ-ADCS-003,ADCS,SHOULD,Magnetometer saturation does not crash filter,Test,docs/TECHNICAL_DOCUMENTATION.md,firmware/stm32/Core/Src/adcs.c,firmware/tests/test_adcs_algorithms.c,closed
+REQ-ADCS-004,ADCS,MAY,Pointing accuracy: sun 5° / nadir 2° / target 10°,Analysis,docs/TECHNICAL_DOCUMENTATION.md,firmware/stm32/ADCS/sun_pointing.c,design review,partial
+REQ-EPS-001,EPS,MUST,MPPT converges in ≤ 10 iter across ±20 % irradiance,Test,docs/power_budget.md,firmware/stm32/EPS/mppt.c,firmware/tests/test_eps.c,closed
+REQ-EPS-002,EPS,MUST,Battery manager triggers undervolt at ≤ 3.2 V,Test,docs/power_budget.md,firmware/stm32/EPS/battery_manager.c,firmware/tests/test_eps.c,closed
+REQ-EPS-003,EPS,MUST,Brown-out forces safe-mode entry,Analysis,docs/reliability/fdir.md,firmware/stm32/EPS/battery_manager.c,firmware/tests/test_fdir.c,closed
+REQ-EPS-004,EPS,SHOULD,Load-shedding priority: payload->camera->actuators->TX->OBC,Inspection,docs/power_budget.md,firmware/stm32/EPS/power_distribution.c,design review,closed
+REQ-FDIR-001,FDIR,MUST,Per-fault + aggregate counters maintained,Test,docs/reliability/fdir.md,firmware/stm32/Core/Src/fdir.c,firmware/tests/test_fdir.c,closed
+REQ-FDIR-002,FDIR,MUST,Escalation at threshold inside recent window,Test,docs/reliability/fdir.md,firmware/stm32/Core/Src/fdir.c,firmware/tests/test_fdir.c,closed
+REQ-FDIR-003,FDIR,MUST,Fault-A isolation from fault-B counters,Test,docs/reliability/fdir.md,firmware/stm32/Core/Src/fdir.c,firmware/tests/test_fdir.c,closed
+REQ-FDIR-004,FDIR,MUST,Recent-window slides; stale events do not accumulate,Test,docs/reliability/fdir.md,firmware/stm32/Core/Src/fdir.c,firmware/tests/test_fdir.c,closed
+REQ-FDIR-005,FDIR,MUST,Missed task-feed raises FAULT_WATCHDOG_TASK_MISS,Test (integration),docs/reliability/fdir.md,firmware/stm32/Core/Src/watchdog.c,manual trace,closed
+REQ-FDIR-006,FDIR,SHOULD,Recovery severity ladder LOG->RETRY->RESET->DISABLE->SAFE->REBOOT,Inspection,docs/reliability/fdir.md,firmware/stm32/Core/Src/fdir.c,design review,closed
+REQ-SAFE-001,SAFE,MUST,Safe mode entered on comm-loss / undervolt / FDIR escalation,Test,docs/reliability/fdir.md,flight-software/modules/safe_mode.py,flight-software/tests/test_mission_e2e.py,closed
+REQ-SAFE-002,SAFE,MUST,Only telemetry/comm/health active in safe mode,Inspection,docs/reliability/fdir.md,flight-software/core/mission_types.py,flight-software/tests/test_mission_e2e.py,closed
+REQ-SAFE-003,SAFE,MUST,Safe mode entry idempotent,Test,docs/reliability/fdir.md,flight-software/modules/safe_mode.py,flight-software/tests/test_safe_mode.py,closed
+REQ-SAFE-004,SAFE,SHOULD,Safe mode exit explicit (ground command or recovery check),Inspection,docs/reliability/fdir.md,flight-software/modules/safe_mode.py,design review,closed
+REQ-GS-001,GS,MUST,Python AX.25 byte-identical vs C on 28 golden vectors,Test,docs/verification/ax25_trace_matrix.md,ground-station/utils/ax25.py,ground-station/tests/test_ax25.py,closed
+REQ-GS-002,GS,MUST,Dashboard decodes every beacon field per spec §7.2,Inspection,docs/communication_protocol.md,ground-station/pages/,manual demo,closed
+REQ-GS-003,GS,SHOULD,Ground HMAC helper mirrors RFC 4231 vectors,Test,docs/security/ax25_threat_model.md,ground-station/utils/hmac_auth.py,firmware/tests/test_hmac.c,closed
+REQ-BLD-001,BLD,MUST,Firmware cross-compiles for STM32F446RE out of the box,Demo,docs/requirements/SRS.md,firmware/stm32/Target/,scripts/verify.sh,closed
+REQ-BLD-002,BLD,MUST,Flash + RAM stays below 90 % of MCU capacity,Analysis,docs/requirements/SRS.md,firmware/CMakeLists.txt,scripts/verify.sh,closed
+REQ-BLD-003,BLD,MUST,Host ctest + pytest pass 100 % on every push,Test,docs/requirements/SRS.md,Makefile,scripts/verify.sh,closed
+REQ-BLD-004,BLD,SHOULD,cppcheck warning+portability gate reports zero issues,Test,docs/quality/static_analysis.md,.cppcheck-suppressions,scripts/run_cppcheck.sh,closed
+REQ-BLD-005,BLD,SHOULD,Host coverage ≥ 80 % lines / ≥ 85 % functions,Test,docs/quality/static_analysis.md,firmware/CMakeLists.txt,make coverage,in_progress
+REQ-BLD-006,BLD,SHOULD,ASAN+UBSAN clean across full ctest,Test,docs/quality/static_analysis.md,firmware/CMakeLists.txt,make sanitizers,closed

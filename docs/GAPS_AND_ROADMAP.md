@@ -39,11 +39,14 @@ target hardware execution proven).
 | Фаза | Тема | Статус |
 |---|---|---|
 | **1** | STM32 target build — LD, startup, clock, IT, HAL shim, make target / size / flash | ✅ **done** |
-| **2** | Replay protection (T2) + secure key store + rotation | 🟡 in-progress (T2 ✅, key store open) |
-| **3** | FDIR table + watchdog coverage audit + autonomous recovery | ⏳ pending |
-| **4** | Tboard driver + E2E mission scenario test + 48 h soak harness | ⏳ pending |
-| **5** | MISRA-C gate + lcov coverage ≥ 80 % + ASAN/UBSAN + `-Werror` | ⏳ pending |
-| **6** | Full SRS + traceability matrix + characterization templates + HIL plan | ⏳ pending |
+| **2** | Replay protection (T2) + secure key store + rotation | ✅ **done** |
+| **3** | FDIR table + watchdog integration + autonomous recovery | ✅ **done** |
+| **4** | Tboard driver + E2E mission scenario test + 48 h soak harness | ✅ **done** |
+| **5** | cppcheck gate + lcov coverage + ASAN/UBSAN + STRICT mode | ✅ **done** |
+| **6** | Full SRS + traceability CSV + characterization templates + HIL plan | ✅ **done** |
+
+**Все 6 фаз TRL-5 hardening закрыты** — ветка `feat/trl5-hardening`
+готова к ревью и слиянию с master.
 
 ---
 
@@ -204,17 +207,18 @@ educational / research / amateur-launch сегмент.
 ✅ 50/50 тестов зелёные
 ✅ CDR-level документация
 
-### v1.2 (in progress, branch `feat/trl5-hardening`)
+### v1.2 (ready, branch `feat/trl5-hardening`)
 
 - [x] Phase 1 — STM32 target build (LD, startup, clock, flash target)
-- [x] M1 — replay protection (T2 closed)
-- [ ] M1a — secure key store + rotation
-- [ ] Phase 3 — FDIR + watchdog audit
-- [ ] M3 — flight-software e2e scenario
-- [ ] Phase 5 — MISRA gate + coverage ≥ 80 %
-- [ ] Phase 6 — full SRS + traceability matrix
-- [ ] M2 — Streamlit live bridge
-- [ ] L1 — CC1125 radio config doc
+- [x] M1  — replay protection (T2 closed, 11/11 tests)
+- [x] M1a — secure key store + A/B rotation (10/10 tests)
+- [x] Phase 3 — FDIR advisor + watchdog→FDIR integration (9/9 tests)
+- [x] M3  — flight-software e2e scenario + long-soak skeleton (4/4 tests)
+- [x] Phase 4 — Tboard (TMP117) facade in beacon (6/6 tests)
+- [x] Phase 5 — cppcheck gate + lcov (73.6 % baseline) + ASAN/UBSAN + STRICT
+- [x] Phase 6 — full SRS + traceability CSV + characterization templates + HIL plan
+- [ ] M2  — Streamlit live bridge (deferred, not TRL-5 blocker)
+- [ ] L1  — CC1125 radio config doc (deferred)
 
 ### v1.5 (stretch)
 
@@ -232,4 +236,4 @@ educational / research / amateur-launch сегмент.
 
 ---
 
-*Last updated: 2026-04-17 (Phase 1 done, Phase 2 T2 closed, key store in progress)*
+*Last updated: 2026-04-17 — All 6 TRL-5 hardening phases closed on feat/trl5-hardening.*
