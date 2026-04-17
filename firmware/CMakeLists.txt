@@ -382,6 +382,17 @@ else()
     target_compile_definitions(test_command_dispatcher PRIVATE SIMULATION_MODE)
     add_test(NAME command_dispatcher COMMAND test_command_dispatcher)
 
+    # Phase 2 / M1a — persistent HMAC key store with rotation.
+    # Test file supplies its own strong platform_read/write/erase
+    # hooks (fault-injection for corrupt-slot and backend-fail cases),
+    # which override the weak defaults in key_store.c.
+    add_executable(test_key_store
+        tests/test_key_store.c
+        stm32/Core/Src/key_store.c
+    )
+    target_compile_definitions(test_key_store PRIVATE SIMULATION_MODE)
+    add_test(NAME key_store COMMAND test_key_store)
+
     # ───────── SITL firmware demo binary ─────────
 
     add_executable(sitl_fw
