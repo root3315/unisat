@@ -177,6 +177,36 @@ else()
     set(HAS_FULL_HAL OFF)
 endif()
 
+#
+# FreeRTOS auto-detect — if scripts/setup_freertos.sh has been run,
+# link the kernel + portable port + CMSIS-RTOSv2 wrapper. Without
+# this the firmware links (HAL_shim + weak osKernelStart stub are
+# enough for --gc-sections to succeed) but tasks won't actually
+# execute on real hardware.
+#
+set(FREERTOS_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Middlewares/FreeRTOS/Source")
+set(FREERTOS_PORT_DIR "${FREERTOS_SRC_DIR}/portable/GCC_ARM_CM4F")
+set(CMSIS_RTOS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Middlewares/CMSIS_RTOS_V2")
+if(CROSS_COMPILE AND EXISTS "${FREERTOS_SRC_DIR}/include" AND EXISTS "${FREERTOS_PORT_DIR}")
+    message(STATUS "FreeRTOS detected — linking kernel + Cortex-M4F port")
+    file(GLOB FREERTOS_KERNEL_SOURCES "${FREERTOS_SRC_DIR}/*.c")
+    file(GLOB FREERTOS_PORT_SOURCES "${FREERTOS_PORT_DIR}/*.c")
+    list(APPEND TARGET_C_SOURCES ${FREERTOS_KERNEL_SOURCES} ${FREERTOS_PORT_SOURCES})
+    include_directories("${FREERTOS_SRC_DIR}/include" "${FREERTOS_PORT_DIR}")
+    if(EXISTS "${CMSIS_RTOS_DIR}/Include")
+        file(GLOB CMSIS_RTOS_SOURCES "${CMSIS_RTOS_DIR}/*.c")
+        list(APPEND TARGET_C_SOURCES ${CMSIS_RTOS_SOURCES})
+        include_directories("${CMSIS_RTOS_DIR}/Include")
+    endif()
+    set(HAS_FREERTOS ON)
+else()
+    if(CROSS_COMPILE)
+        message(STATUS "FreeRTOS not found — CMSIS-RTOSv2 calls will be unresolved")
+        message(STATUS "    run scripts/setup_freertos.sh for a runnable .elf")
+    endif()
+    set(HAS_FREERTOS OFF)
+endif()
+
 if(CROSS_COMPILE)
     add_executable(unisat_firmware.elf
         ${ALL_SOURCES}

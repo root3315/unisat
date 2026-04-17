@@ -20,7 +20,8 @@
 
 .PHONY: all build build-firmware test test-c test-py demo \
         docker-ci ci goldens trace clean help \
-        target size flash setup-hal
+        target size flash setup-hal setup-freertos setup-all \
+        cppcheck cppcheck-strict coverage sanitizers
 
 FIRMWARE_DIR := firmware
 BUILD_DIR    := $(FIRMWARE_DIR)/build
@@ -50,6 +51,8 @@ help:
 	@echo "    make size        Print per-section flash / RAM usage (sysv)"
 	@echo "    make flash       Flash firmware to STM32 via ST-Link"
 	@echo "    make setup-hal   Fetch STM32Cube HAL for production build"
+	@echo "    make setup-freertos Fetch FreeRTOS kernel + CMSIS-RTOSv2 port"
+	@echo "    make setup-all   Run both setup steps (one-time)"
 	@echo ""
 	@echo "  quality gates (Phase 5):"
 	@echo "    make cppcheck    Static-analysis gate (error/warning/portability)"
@@ -155,6 +158,12 @@ flash:
 
 setup-hal:
 	scripts/setup_stm32_hal.sh
+
+setup-freertos:
+	scripts/setup_freertos.sh
+
+setup-all: setup-hal setup-freertos
+	@echo "==> all build-time dependencies in place"
 
 # --- clean --------------------------------------------------------
 
