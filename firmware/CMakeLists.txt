@@ -74,8 +74,11 @@ if(CROSS_COMPILE)
         COMMENT "Generating binary and hex files"
     )
 else()
-    # Host build for testing
-    add_library(unisat_core STATIC ${ALL_SOURCES})
+    # Host build for testing.
+    # unisat_core is EXCLUDE_FROM_ALL — the full firmware source tree has
+    # pre-existing host build errors in gnss.c (UBLOX_ReadByte signature
+    # mismatch). Tests link only what they need via focused targets below.
+    add_library(unisat_core STATIC EXCLUDE_FROM_ALL ${ALL_SOURCES})
     target_compile_definitions(unisat_core PUBLIC SIMULATION_MODE)
 
     # Test targets (host-only)
@@ -83,13 +86,16 @@ else()
 
     add_executable(test_beacon_layout
         tests/test_beacon_layout.c
+        tests/test_stubs.c
+        stm32/Core/Src/telemetry.c
+        stm32/Core/Src/ccsds.c
     )
     target_include_directories(test_beacon_layout PRIVATE
         tests
         stm32/Core/Inc
     )
     target_compile_definitions(test_beacon_layout PRIVATE SIMULATION_MODE)
-    target_link_libraries(test_beacon_layout PRIVATE unisat_core m)
+    target_link_libraries(test_beacon_layout PRIVATE m)
 
     add_test(NAME beacon_layout COMMAND test_beacon_layout)
 endif()
