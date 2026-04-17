@@ -835,4 +835,277 @@ docker compose run simulation
 
 ---
 
-*Документация обновлена: Апрель 2026*
+## 18. AX.25 Link Layer (Track 1)
+
+Полноценный link-layer для UHF-канала по стандарту AX.25 v2.2.
+Реализован с нуля: C11 pure-library + Python зеркало + SITL-демо.
+
+### 18.1 Модульное дерево
+
+```
+firmware/stm32/Drivers/AX25/
+├── ax25_types.h       — ax25_address_t, ax25_ui_frame_t,
+│                        ax25_status_t (10 error codes),
+│                        ax25_decoder_t (stateful decoder)
+├── ax25.h / .c        — pure API: FCS, bit-stuff, address,
+│                        encode_ui_frame, decode_ui_frame
+├── ax25_decoder.h/.c  — streaming decoder:
+│                        init, reset, push_byte (bit-level SM)
+└── ax25_api.h         — AX25_Xxx() facade for project-style
+                         callers (ADR-002)
+
+ground-station/utils/ax25.py        — Python mirror, stdlib only
+ground-station/cli/ax25_listen.py   — TCP server, decodes frames
+ground-station/cli/ax25_send.py     — TCP client, encodes frame
+tests/golden/ax25_vectors.json      — 28 shared test vectors
+tests/golden/ax25_vectors.inc       — C include version
+```
+
+### 18.2 Wire format
+
+```
+0x7E [Dst 7B] [Src 7B] 0x03 0xF0 [Info ≤256B] [FCS 2B LE] 0x7E
+ │    │        │         │    │     │            │          │
+ │    callsign<<1 +      │    │     CCSDS        CRC-16     flag
+ │    SSID byte (§3.12)  │    PID  Space         /X.25
+ │                       UI   0xF0 Packet
+ └─ HDLC flag              Ctrl (no L3)
+```
+
+Body (everything between flags) is bit-stuffed: after 5 consecutive
+1-bits a 0-bit is inserted so a byte-aligned `0x7E` never appears
+mid-frame. See `ax25_bit_stuff` / `ax25_bit_unstuff` in `ax25.c`.
+
+### 18.3 Streaming decoder data flow
+
+```
+ISR:   HAL_UART_Receive_IT
+         └─> COMM_UART_RxCallback(byte)
+               └─> ring buffer push (lock-free)
+
+Task:  comm_rx_task (FreeRTOS, 10 ms period, priority above-normal)
+         └─> COMM_ProcessRxBuffer()
+               └─> ax25_decoder_push_byte()
+                     ├─ HUNT: search for 0x7E opening flag
+                     └─ FRAME:
+                         ├─ read 8 bits LSB-first
+                         ├─ drop stuff bit after 5 ones
+                         ├─ reject 6 consecutive ones
+                         └─ on closing 0x7E → decode_ui_frame
+                                             → CCSDS dispatcher
+```
+
+Декодер **никогда не выполняется в interrupt context** (REQ-AX25-019).
+ISR делает только single-byte push в ring buffer (512 B), что даёт
+427 ms headroom на 9600 bps.
+
+### 18.4 API примеры
+
+**Encode (C, firmware):**
+```c
+#include "ax25_api.h"
+
+AX25_Address_t dst = { .callsign = "CQ",     .ssid = 0 };
+AX25_Address_t src = { .callsign = "UN8SAT", .ssid = 1 };
+uint8_t frame[AX25_MAX_FRAME_BYTES];
+uint16_t n = 0;
+
+if (AX25_EncodeUiFrame(&dst, &src, 0xF0,
+                        info, info_len,
+                        frame, sizeof(frame), &n)) {
+    COMM_Send(COMM_CHANNEL_UHF, frame, n);
+}
+```
+
+**Decode (C, firmware):**
+```c
+static AX25_Decoder_t dec;
+AX25_DecoderInit(&dec);
+
+AX25_UiFrame_t frame;
+bool ready = false;
+AX25_DecoderPushByte(&dec, byte_from_uart, &frame, &ready);
+if (ready) {
+    /* frame.info is the CCSDS Space Packet payload */
+}
+```
+
+**Encode/decode (Python, ground):**
+```python
+from utils.ax25 import Address, encode_ui_frame, Ax25Decoder
+
+wire = encode_ui_frame(Address("CQ", 0), Address("UN8SAT", 1),
+                        0xF0, b"hello")
+
+dec = Ax25Decoder()
+for b in wire:
+    frame = dec.push_byte(b)
+    if frame:
+        print(frame.info, frame.fcs_valid)
+```
+
+### 18.5 Cross-validation (REQ-AX25-015)
+
+C и Python реализации обязаны давать **байт-идентичный результат**
+на всех 28 golden vectors. Автоматически проверяется:
+
+- C:      `firmware/tests/test_ax25_golden.c`
+- Python: `ground-station/tests/test_ax25.py::TestGoldenVectors`
+
+Если в C или Python появится регрессия, один из раннеров провалит
+один и тот же вектор. Разработчик сразу видит расхождение.
+
+---
+
+## 19. HMAC-SHA256 Command Auth (Track 1b)
+
+Криптографические примитивы для аутентификации CCSDS-команд.
+
+### 19.1 Модули
+
+```
+firmware/stm32/Drivers/Crypto/
+├── sha256.h / .c          — FIPS 180-4 SHA-256, streaming API
+└── hmac_sha256.h / .c     — RFC 2104 HMAC + constant-time verify
+
+ground-station/utils/hmac_auth.py  — hashlib-backed Python mirror
+
+firmware/tests/test_hmac.c         — RFC 4231 §4.2, §4.3 vectors
+```
+
+### 19.2 Гарантии
+
+- **FIPS 180-4 корректность:** SHA-256 даёт канонический хеш
+  `e3b0c442...b855` на пустом входе и `ba7816bf...15ad` на `"abc"`.
+- **RFC 4231 совместимость:** HMAC-SHA256 повторяет тестовые
+  векторы §4.2 и §4.3.
+- **Constant-time verification:** `hmac_sha256_verify` не
+  зависит от входа по времени — защита от timing side-channel.
+- **Нет зависимостей:** всё на `<stdint.h>` + `<string.h>`.
+  Готов для flight-software, не требует heap.
+- **Python согласован побайтно:** тот же RFC 4231 тест в pytest.
+
+### 19.3 Применение (план интеграции)
+
+```c
+/* TX (firmware): */
+uint8_t cmd[CCSDS_MAX_PACKET_SIZE];
+uint16_t n = CCSDS_Serialize(&packet, cmd, sizeof(cmd));
+uint8_t tag[HMAC_SHA256_TAG_SIZE];
+hmac_sha256(SHARED_KEY, KEY_LEN, cmd, n, tag);
+memcpy(&cmd[n], tag, HMAC_SHA256_TAG_SIZE);
+COMM_SendAX25(..., cmd, n + HMAC_SHA256_TAG_SIZE);
+
+/* RX (firmware, in the dispatcher — Track 1b wiring): */
+uint8_t expected[HMAC_SHA256_TAG_SIZE];
+hmac_sha256(SHARED_KEY, KEY_LEN, frame.info,
+             frame.info_len - HMAC_SHA256_TAG_SIZE, expected);
+if (!hmac_sha256_verify(
+        expected, &frame.info[frame.info_len - HMAC_SHA256_TAG_SIZE])) {
+    /* drop silently, increment auth-fail counter */
+    return;
+}
+/* dispatch authenticated command */
+```
+
+См. `docs/security/ax25_threat_model.md` (T1, T2) для полного
+threat-model'а и remaining work.
+
+---
+
+## 20. SITL Demo
+
+Полный путь "C-кодер → TCP → Python-декодер" работает локально и в CI.
+
+### 20.1 Запуск в Docker
+
+```bash
+# 1. Собрать CI image (один раз, ~30 сек):
+docker build -f docker/Dockerfile.ci -t unisat-ci .
+
+# 2. Собрать firmware (Linux-host) и прогнать demo:
+docker run --rm -v "$(pwd):/work" -w /work unisat-ci bash -lc "
+  cd firmware && cmake -B build -S . && cmake --build build &&
+  ctest --test-dir build --output-on-failure &&
+  python3 scripts/demo.py --port 52100
+"
+```
+
+Ожидаемый вывод:
+
+```
+[sitl_fw] connecting to 127.0.0.1:52100
+[sitl_fw] sent beacon 1 (69 bytes)
+[demo] beacon 1: 000102030405060708090a0b0c0d0e0f...
+[sitl_fw] sent beacon 2 (69 bytes)
+[demo] beacon 2: 101112131415161718191a1b1c1d1e1f...
+[demo] SUCCESS — 2 beacons decoded
+```
+
+### 20.2 Что именно проверяется
+
+- **C `AX25_EncodeUiFrame`** собирает валидный AX.25 frame
+  (flag, адреса §3.12, control/PID, info, FCS CRC-16/X.25, flag).
+- **C `VirtualUART_Send`** кросс-платформенно (POSIX sockets /
+  Winsock) отправляет байты в TCP-канал.
+- **Python `ax25_listen.py`** принимает TCP-поток, кормит его
+  побайтно в `Ax25Decoder`.
+- **Python `Ax25Decoder`** реассемблирует фрейм, проверяет FCS,
+  эмитит JSON с `fcs_valid: true`.
+- **`scripts/demo.py`** читает JSON, валидирует что пришло
+  ровно 2 beacon'а, `exit 0` на успех.
+
+Фактически это end-to-end proof что C и Python договариваются на
+уровне одного бита на реальном (loopback) wire'е.
+
+---
+
+## 21. Тестовое покрытие
+
+### 21.1 C tests (`ctest`)
+
+```
+ 1: beacon_layout        — Telemetry_PackBeacon 48-byte layout
+ 2: ax25_fcs             — CRC-16/X.25 oracle "123456789"→0x906E
+ 3: ax25_bitstuff        — bit-level stuffing, byte boundaries
+ 4: ax25_address         — callsign<<1, SSID, H-bit (§3.12)
+ 5: ax25_frame           — encode+pure decode roundtrip, error paths
+ 6: ax25_golden          — 28 shared vectors vs Python
+ 7: ax25_decoder         — streaming: single, idle, back-to-back,
+                           recovery, 10k fuzz
+ 8: ax25_api             — project-style facade smoke
+ 9: comm_integration     — ring → decoder → CCSDS dispatcher
+10: virtual_uart_build   — SITL TCP shim
+11: ccsds                — CCSDS packet CRC, sequence, roundtrip
+12: adcs_algorithms      — quaternion math, B-dot
+13: eps                  — MPPT, battery SOC, charge protection
+14: telemetry_placeholder— telemetry test hook
+15: hmac                 — RFC 4231 §4.2-4.3, SHA-256 FIPS 180-4
+```
+
+**Итого: 15 targets, all green.** Покрытие включает каждую из
+подсистем (OBC, ADCS, EPS, COMM, GNSS через integration, Payload
+через SBM20, Crypto).
+
+### 21.2 Python tests (`pytest`)
+
+34 tests в `ground-station/tests/test_ax25.py`:
+
+- **Unit:** FCS, bit-stuffing, address, UI-frame (18 тестов)
+- **Golden vectors:** 28 shared with C (3 test cases)
+- **Streaming:** decoder, idle flags, back-to-back, recovery
+  (4 tests)
+- **Hypothesis:** 200 property-based roundtrips + 500 fuzz
+  cases (2 tests)
+- **HMAC:** RFC 4231 §4.2, §4.3, constant-time verify (3 tests)
+
+### 21.3 Cross-validation
+
+C tests и Python tests **разделяют fixture** (`tests/golden/
+ax25_vectors.*`). Python генератор — `scripts/gen_golden_vectors.py`
+— single source of truth. Если C или Python разойдутся, golden runner
+на одной из сторон упадёт.
+
+---
+
+*Документация обновлена: Апрель 2026 (v1.1 — Track 1 + Track 1b primitives)*

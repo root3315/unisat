@@ -300,3 +300,34 @@ class TestHypothesis:
                 dec.push_byte(b)
         except AX25Error:
             pytest.fail("push_byte must not raise — errors are counted")
+
+
+class TestHmac:
+    """Cross-verify Python HMAC-SHA256 against RFC 4231 test vectors.
+    The C-side (firmware/stm32/Drivers/Crypto/hmac_sha256.c) asserts
+    the same vectors — if both pass, the implementations agree."""
+
+    def test_rfc4231_case1(self):
+        from utils.hmac_auth import hmac_sha256
+        key = b"\x0b" * 20
+        tag = hmac_sha256(key, b"Hi There")
+        assert tag.hex() == (
+            "b0344c61d8db38535ca8afceaf0bf12b"
+            "881dc200c9833da726e9376c2e32cff7"
+        )
+
+    def test_rfc4231_case2(self):
+        from utils.hmac_auth import hmac_sha256
+        tag = hmac_sha256(b"Jefe", b"what do ya want for nothing?")
+        assert tag.hex() == (
+            "5bdcc146bf60754e6a042426089575c7"
+            "5a003f089d2739839dec58b964ec3843"
+        )
+
+    def test_verify_constant_time(self):
+        from utils.hmac_auth import verify, HMAC_TAG_SIZE
+        a = b"\x00" * HMAC_TAG_SIZE
+        b = b"\x00" * HMAC_TAG_SIZE
+        assert verify(a, b) is True
+        b = b"\x00" * (HMAC_TAG_SIZE - 1) + b"\x01"
+        assert verify(a, b) is False

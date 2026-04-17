@@ -51,8 +51,13 @@ logs/
 telemetry_data/
 images/captured/
 
-# Node
+# Node / claude tooling cruft (not part of the project)
 node_modules/
+package.json
+package-lock.json
+
+# Claude Code local state
+.claude/
 
 # Environment
 .env
