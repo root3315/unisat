@@ -140,17 +140,31 @@ bool COMM_SendAX25(CommChannel_t channel,
 bool COMM_SendBeacon(void) {
     /* Spec §7.2: beacon is a 48-byte flat layout carried as the info
      * field of a CCSDS Space Packet, which is carried as the info
-     * field of an AX.25 UI frame. The CCSDS wrapping lives in the
-     * dispatcher (Track 1b); for now we transmit the raw 48 bytes as
-     * the AX.25 info field so ground listeners see a valid frame. */
+     * field of an AX.25 UI frame. Full layered TX path:
+     *   48 B raw  -> Telemetry_PackBeacon
+     *   +CCSDS    -> CCSDS_BuildPacket + CCSDS_Serialize
+     *   +AX.25    -> COMM_SendAX25 */
     extern uint16_t Telemetry_PackBeacon(uint8_t *buf, uint16_t max);
-    uint8_t info[48];
-    uint16_t len = Telemetry_PackBeacon(info, sizeof(info));
-    if (len != 48) {
+    uint8_t raw[48];
+    if (Telemetry_PackBeacon(raw, sizeof(raw)) != 48) {
         comm_status.errors++;
         return false;
     }
-    return COMM_SendAX25(COMM_CHANNEL_UHF, "CQ", 0, "UN8SAT", 1, info, len);
+
+    CCSDS_Packet_t packet;
+    CCSDS_BuildPacket(&packet, APID_BEACON, CCSDS_TELEMETRY, 0,
+                      raw, sizeof(raw));
+
+    uint8_t ccsds_buf[CCSDS_MAX_PACKET_SIZE];
+    uint16_t ccsds_len = CCSDS_Serialize(&packet, ccsds_buf,
+                                          sizeof(ccsds_buf));
+    if (ccsds_len == 0) {
+        comm_status.errors++;
+        return false;
+    }
+
+    return COMM_SendAX25(COMM_CHANNEL_UHF, "CQ", 0, "UN8SAT", 1,
+                         ccsds_buf, ccsds_len);
 }
 
 int8_t COMM_GetRSSI(CommChannel_t channel) {

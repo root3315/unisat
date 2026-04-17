@@ -48,6 +48,7 @@ include_directories(
     stm32/Drivers/SunSensor
     stm32/Drivers/AX25
     stm32/Drivers/VirtualUART
+    stm32/Drivers/Crypto
     stm32/ADCS
     stm32/EPS
 )
@@ -268,6 +269,14 @@ else()
     )
     target_compile_definitions(test_telemetry PRIVATE SIMULATION_MODE)
     add_test(NAME telemetry_placeholder COMMAND test_telemetry)
+
+    add_executable(test_hmac
+        tests/test_hmac.c
+        stm32/Drivers/Crypto/sha256.c
+        stm32/Drivers/Crypto/hmac_sha256.c
+    )
+    target_compile_definitions(test_hmac PRIVATE SIMULATION_MODE)
+    add_test(NAME hmac COMMAND test_hmac)
 
     # ───────── SITL firmware demo binary ─────────
 

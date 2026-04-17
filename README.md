@@ -5,7 +5,9 @@
 <h1 align="center">UniSat — Universal Modular CubeSat Platform</h1>
 
 <p align="center">
-  <a href="https://github.com/root3315/unisat/actions"><img src="https://img.shields.io/github/actions/workflow/status/root3315/unisat/ci.yml?branch=main&label=CI&logo=github" alt="CI"></a>
+  <a href="https://github.com/root3315/unisat/actions"><img src="https://img.shields.io/github/actions/workflow/status/root3315/unisat/ax25.yml?branch=master&label=CI&logo=github" alt="CI"></a>
+  <a href="https://github.com/root3315/unisat/blob/master/docs/superpowers/specs/2026-04-17-track1-ax25-design.md"><img src="https://img.shields.io/badge/AX.25-v2.2_full-success.svg" alt="AX.25"></a>
+  <a href="https://github.com/root3315/unisat/blob/master/docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/tests-C_15%20%2B%20Py_34-brightgreen.svg" alt="Tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg?logo=python&logoColor=white" alt="Python"></a>
   <a href="#"><img src="https://img.shields.io/badge/firmware-STM32F4-green.svg?logo=stmicroelectronics" alt="STM32"></a>
@@ -83,7 +85,7 @@ Designed to be competition-ready for CanSat, CubeSat Design, NASA Space Apps, an
 | **OBC Firmware** | Real-time task management, watchdog, safe mode | STM32F4 + FreeRTOS (C) |
 | **ADCS** | B-dot detumbling, sun/nadir/target pointing | Quaternion math, PID control |
 | **EPS** | MPPT solar charging, battery management | Perturb & Observe algorithm |
-| **Communication** | UHF 9600 bps + S-band 256 kbps | AX.25, CCSDS packets |
+| **Communication** | UHF 9600 bps + S-band 256 kbps | **AX.25 v2.2 full** (streaming decoder, bit-stuffing, CRC-16/X.25, §3.12 addresses) + CCSDS Space Packet + HMAC-SHA256 |
 | **Flight Software** | Async mission control, imaging, orbit prediction | Python 3.11+ asyncio |
 | **Ground Station** | 10-page dashboard with real-time telemetry | Streamlit + Plotly |
 | **Simulation** | Orbit, power, thermal, link budget | Python scientific stack |
@@ -123,6 +125,21 @@ cd simulation
 pip install -r requirements.txt
 python mission_analyzer.py
 ```
+
+### 5. End-to-end AX.25 SITL demo
+
+```bash
+# Requires Docker Desktop for reproducible builds without a local gcc.
+docker build -f docker/Dockerfile.ci -t unisat-ci .
+docker run --rm -v "$(pwd):/work" -w /work unisat-ci bash -lc \
+  "cd firmware && cmake -B build -S . && cmake --build build && \
+   ctest --test-dir build --output-on-failure && \
+   python3 scripts/demo.py --port 52100"
+```
+
+Expected output: ctest 15/15 passes, then two beacons decoded with
+`fcs_valid: true` and `[demo] SUCCESS — 2 beacons decoded`. This
+exercises the C encoder → TCP → Python `Ax25Decoder` path end-to-end.
 
 ### 5. Build firmware
 

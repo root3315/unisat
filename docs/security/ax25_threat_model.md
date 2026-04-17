@@ -19,12 +19,25 @@
 **Vector:** an attacker transmits a crafted AX.25 UI frame carrying a
 syntactically valid CCSDS command packet.
 
-**Mitigation:** CCSDS-level HMAC (256-bit pre-shared key) over the full
-command packet plus a replay-protection sequence window. Track 1b owns
-this — AX.25 alone does not defend against command injection.
+**Mitigation — primitives available (Track 1b partial):**
 
-**Residual risk:** until Track 1b lands, command injection is possible.
-For testing we run with commands disabled; beacon TX is read-only.
+- HMAC-SHA256 library at `firmware/stm32/Drivers/Crypto/hmac_sha256.c`
+  (+ Python mirror at `ground-station/utils/hmac_auth.py`). RFC 4231
+  test vectors asserted on both sides so a ground-computed tag equals
+  the satellite-computed tag bit-for-bit.
+- Constant-time verification (`hmac_sha256_verify`) to defeat
+  timing side-channels.
+
+**Remaining work — command dispatcher wiring:**
+
+- Append 32-byte HMAC tag to every CCSDS command packet on the ground,
+  verify on the satellite before dispatch.
+- Reject packets whose tag fails verification (counter, no reply).
+
+**Residual risk today:** until the dispatcher wiring lands, commands
+reach the subsystem without auth. This is mitigated operationally for
+testing by running with command handling disabled; beacon TX is
+read-only.
 
 ### T2 — Replay
 
