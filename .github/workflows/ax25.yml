@@ -8,12 +8,11 @@ on:
 
 jobs:
   build-and-test:
-    name: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    # Linux-only: macOS runners cost 10x free minutes and add no
+    # platform coverage that Linux doesn't already validate for a
+    # pure-C + Python library. The local Docker flow exercises Win
+    # compatibility of the VirtualUART shim via Winsock ifdefs.
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 

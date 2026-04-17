@@ -1,22 +1,37 @@
 /**
  * @file gnss.c
  * @brief GNSS receiver interface (u-blox) implementation
+ *
+ * Owns a single UBLOX_Handle_t instance configured for the DDC
+ * (I2C) port at 0x42. Under SIMULATION_MODE the driver is inert —
+ * UBLOX_ReadByte returns UBLOX_ERR_NO_DATA and GNSS_Update becomes
+ * a no-op.
  */
 
 #include "gnss.h"
 #include "ublox.h"
 #include "config.h"
+#include <math.h>
 #include <string.h>
 #include <stdlib.h>
 
-static GNSS_Data_t gnss_data;
-static char nmea_buffer[128];
+static GNSS_Data_t     gnss_data;
+static UBLOX_Handle_t  ublox_dev = {
+    .i2c_handle  = NULL,
+    .addr        = UBLOX_I2C_DEFAULT_ADDR,
+    .initialized = false,
+};
+static char    nmea_buffer[128];
 static uint8_t nmea_index = 0;
 
 void GNSS_Init(void) {
     memset(&gnss_data, 0, sizeof(gnss_data));
     gnss_data.fix_type = GNSS_NO_FIX;
-    UBLOX_Init();
+    /* Return code intentionally ignored: under SIMULATION_MODE the
+     * driver always succeeds; on real hardware a failure just means
+     * the sensor is unreachable and GNSS_HasFix() will keep returning
+     * false — the rest of the flight software handles that gracefully. */
+    (void)UBLOX_Init(&ublox_dev);
 }
 
 bool GNSS_GetPosition(double *lat, double *lon, double *alt, uint8_t *fix) {
@@ -126,7 +141,10 @@ void GNSS_ProcessNMEA(const char *sentence) {
 
 void GNSS_Update(void) {
     uint8_t byte;
-    while (UBLOX_ReadByte(&byte)) {
+    /* Drain the DDC buffer into the NMEA parser. UBLOX_ReadByte
+     * returns UBLOX_OK per available byte and UBLOX_ERR_NO_DATA
+     * when the buffer is empty (or always, under SIMULATION_MODE). */
+    while (UBLOX_ReadByte(&ublox_dev, &byte) == UBLOX_OK) {
         if (byte == '$') {
             nmea_index = 0;
         }
