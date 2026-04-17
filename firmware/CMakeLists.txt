@@ -1,36 +1,60 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(unisat_firmware
-    VERSION 1.0.0
-    DESCRIPTION "UniSat CubeSat Firmware"
-    LANGUAGES C
-)
-
-# Cross-compilation settings for STM32F4
-set(CMAKE_SYSTEM_NAME Generic)
-set(CMAKE_SYSTEM_PROCESSOR arm)
-
-# Toolchain
+#
+# Toolchain detection MUST run before project() so CMake's compiler
+# probes the right compiler. When arm-none-eabi-gcc is on PATH we
+# produce a real STM32F446RE firmware image; otherwise we fall back
+# to a host static library used by the ctest + pytest pipelines.
+#
 find_program(ARM_CC arm-none-eabi-gcc)
 if(ARM_CC)
-    set(CMAKE_C_COMPILER arm-none-eabi-gcc)
-    set(CMAKE_ASM_COMPILER arm-none-eabi-gcc)
-    set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
-    set(CMAKE_SIZE arm-none-eabi-size)
+    set(CMAKE_SYSTEM_NAME      Generic)
+    set(CMAKE_SYSTEM_PROCESSOR arm)
+    set(CMAKE_C_COMPILER       arm-none-eabi-gcc)
+    set(CMAKE_ASM_COMPILER     arm-none-eabi-gcc)
+    set(CMAKE_OBJCOPY          arm-none-eabi-objcopy)
+    set(CMAKE_SIZE             arm-none-eabi-size)
+    # Skip GCC link probe — no crt0 for bare-metal, only .elf output.
+    set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
     set(CROSS_COMPILE ON)
 else()
-    message(WARNING "ARM toolchain not found, building for host (test mode)")
+    message(STATUS "arm-none-eabi-gcc not found — host build (SIMULATION_MODE)")
     set(CROSS_COMPILE OFF)
 endif()
 
-# Compiler flags
+project(unisat_firmware
+    VERSION 1.1.0
+    DESCRIPTION "UniSat CubeSat Firmware"
+    LANGUAGES C ASM
+)
+
+#
+# Compiler flags.
+# Shared: -Wall -Wextra -Wpedantic -std=c11 across both paths so the
+# host build catches any regression the ARM build would also reject.
+# Phase 5 will add -Werror behind an opt-in STRICT=ON gate.
+#
 set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
-set(OPT_FLAGS "-O2 -g")
+set(OPT_FLAGS "-Og -g3")
 
 if(CROSS_COMPILE)
-    set(CMAKE_C_FLAGS "${MCU_FLAGS} ${OPT_FLAGS} -Wall -Wextra -Wpedantic -std=c11")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdata-sections -ffunction-sections")
-    set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -specs=nosys.specs -specs=nano.specs")
+    set(CMAKE_C_FLAGS
+        "${MCU_FLAGS} ${OPT_FLAGS} -Wall -Wextra -Wpedantic -std=c11 \
+        -fdata-sections -ffunction-sections -fstack-usage \
+        -DSTM32F446xx")
+    set(CMAKE_ASM_FLAGS "${MCU_FLAGS} -x assembler-with-cpp")
+
+    # Linker script path is anchored to the Target/ directory next to
+    # the startup.s that knows about these symbols. -Map emits a full
+    # static memory map for the Phase 5 size-budget CI check.
+    set(LINKER_SCRIPT
+        "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Target/STM32F446RETx_FLASH.ld")
+
+    set(CMAKE_EXE_LINKER_FLAGS
+        "${MCU_FLAGS} -T${LINKER_SCRIPT} \
+        -specs=nosys.specs -specs=nano.specs \
+        -Wl,--gc-sections,--print-memory-usage \
+        -Wl,-Map=unisat_firmware.map,--cref")
 else()
     set(CMAKE_C_FLAGS "-Wall -Wextra -Wpedantic -std=c11 -g -DSIMULATION_MODE")
 endif()
@@ -53,11 +77,20 @@ include_directories(
     stm32/EPS
 )
 
-# Source files
-file(GLOB CORE_SOURCES "stm32/Core/Src/*.c")
+# Source files — application + drivers + subsystems (shared by host and ARM).
+file(GLOB CORE_SOURCES   "stm32/Core/Src/*.c")
 file(GLOB DRIVER_SOURCES "stm32/Drivers/*/*.c")
-file(GLOB ADCS_SOURCES "stm32/ADCS/*.c")
-file(GLOB EPS_SOURCES "stm32/EPS/*.c")
+file(GLOB ADCS_SOURCES   "stm32/ADCS/*.c")
+file(GLOB EPS_SOURCES    "stm32/EPS/*.c")
+
+# Target-only sources: LD-anchored vectors, CMSIS SystemInit, clock
+# config, exception handlers, and weak HAL fallback. Globbed separately
+# so the host build never pulls them in (would produce bare-register
+# writes into x86 address space).
+file(GLOB TARGET_C_SOURCES "stm32/Target/*.c")
+set(TARGET_ASM_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Target/startup_stm32f446retx.s"
+)
 
 set(ALL_SOURCES
     ${CORE_SOURCES}
@@ -66,15 +99,76 @@ set(ALL_SOURCES
     ${EPS_SOURCES}
 )
 
-if(CROSS_COMPILE)
-    add_executable(unisat_firmware.elf ${ALL_SOURCES})
+#
+# HAL auto-detect — if scripts/setup_stm32_hal.sh has been run, link
+# the full STM32Cube HAL and drop our weak hal_shim.c (its strong
+# counterparts in HAL_Driver/Src override every symbol we stubbed).
+# If the user has not fetched HAL, the build still succeeds and the
+# shim keeps the linker happy — firmware boots, clocks up, executes,
+# but every sensor/bus call returns HAL_ERROR until HAL is installed.
+#
+set(HAL_DRIVER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Drivers/STM32F4xx_HAL_Driver")
+set(CMSIS_DEVICE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Drivers/CMSIS/Include")
+if(CROSS_COMPILE AND EXISTS "${HAL_DRIVER_DIR}/Src" AND EXISTS "${CMSIS_DEVICE_DIR}")
+    message(STATUS "STM32Cube HAL detected — linking full driver set")
+    file(GLOB HAL_SOURCES "${HAL_DRIVER_DIR}/Src/*.c")
+    list(REMOVE_ITEM HAL_SOURCES
+        "${HAL_DRIVER_DIR}/Src/stm32f4xx_hal_timebase_rtc_alarm_template.c"
+        "${HAL_DRIVER_DIR}/Src/stm32f4xx_hal_timebase_rtc_wakeup_template.c"
+        "${HAL_DRIVER_DIR}/Src/stm32f4xx_hal_timebase_tim_template.c"
+    )
+    list(APPEND TARGET_C_SOURCES ${HAL_SOURCES})
+    list(REMOVE_ITEM TARGET_C_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Target/hal_shim.c")
+    include_directories("${HAL_DRIVER_DIR}/Inc" "${CMSIS_DEVICE_DIR}"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Drivers/CMSIS/CMSIS_Include")
+    set(HAS_FULL_HAL ON)
+else()
+    if(CROSS_COMPILE)
+        message(STATUS "STM32Cube HAL not found — hal_shim.c will be linked")
+        message(STATUS "    run scripts/setup_stm32_hal.sh for a production build")
+    endif()
+    set(HAS_FULL_HAL OFF)
+endif()
 
-    # Generate binary and hex files
+if(CROSS_COMPILE)
+    add_executable(unisat_firmware.elf
+        ${ALL_SOURCES}
+        ${TARGET_C_SOURCES}
+        ${TARGET_ASM_SOURCES}
+    )
+    set_target_properties(unisat_firmware.elf PROPERTIES
+        LINK_DEPENDS "${LINKER_SCRIPT}"
+    )
+
+    # Post-build: .bin + .hex + size report. The --format=berkeley output
+    # is what st-flash consumes; the separate .hex is convenient for
+    # STM32CubeProgrammer / OpenOCD workflows that parse Intel-hex.
     add_custom_command(TARGET unisat_firmware.elf POST_BUILD
-        COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:unisat_firmware.elf> unisat_firmware.bin
-        COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:unisat_firmware.elf> unisat_firmware.hex
-        COMMAND ${CMAKE_SIZE} $<TARGET_FILE:unisat_firmware.elf>
-        COMMENT "Generating binary and hex files"
+        COMMAND ${CMAKE_OBJCOPY} -O binary
+                $<TARGET_FILE:unisat_firmware.elf> unisat_firmware.bin
+        COMMAND ${CMAKE_OBJCOPY} -O ihex
+                $<TARGET_FILE:unisat_firmware.elf> unisat_firmware.hex
+        COMMAND ${CMAKE_SIZE} --format=berkeley
+                $<TARGET_FILE:unisat_firmware.elf>
+        COMMENT "Generating .bin/.hex and printing section sizes"
+    )
+
+    # Convenience targets so `cmake --build build --target flash` works
+    # anywhere arm-none-eabi-gcc + st-flash are installed. Size is a
+    # cheap gate for catching flash/RAM overflow early — Phase 5 wires
+    # it into the CI budget check.
+    add_custom_target(flash
+        COMMAND st-flash write unisat_firmware.bin 0x08000000
+        COMMAND st-flash reset
+        DEPENDS unisat_firmware.elf
+        COMMENT "Flashing firmware to STM32F446RE via ST-Link"
+    )
+
+    add_custom_target(size
+        COMMAND ${CMAKE_SIZE} --format=sysv
+                $<TARGET_FILE:unisat_firmware.elf>
+        DEPENDS unisat_firmware.elf
+        COMMENT "Per-section flash / RAM usage"
     )
 else()
     # Host build for testing. unisat_core aggregates every firmware
