@@ -33,8 +33,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (4022 lines), ADR-001 (no CSP), ADR-002 (style adapter), threat
   model, byte-by-byte walkthrough tutorial, auto-generated
   verification trace matrix.
-- GitHub Actions workflow `.github/workflows/ax25.yml`
-  (linux-only for free-tier economy).
+- `scripts/verify.sh` + `./scripts/verify.sh` — single-command
+  reproducibility inside a pre-built Docker image.
+  (GitHub Actions workflows removed for now — the repo account is
+  locked on billing, see [removal note](#removed).)
+
+### Removed
+
+- `.github/workflows/` directory dropped to avoid red-X indicators
+  from billing-blocked runs. Reviewers should use
+  `./scripts/verify.sh` which runs the same pipeline locally.
 
 ### Added — Track 1b (command authentication primitives)
 
