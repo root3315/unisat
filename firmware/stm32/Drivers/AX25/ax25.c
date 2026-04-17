@@ -71,6 +71,63 @@ size_t ax25_bit_stuff(const uint8_t *in, size_t in_len,
   return (out_bit + 7) / 8;  /* round up to whole bytes */
 }
 
+static int is_valid_callsign_char(char c) {
+  return (c >= 'A' && c <= 'Z') ||
+         (c >= '0' && c <= '9') ||
+         c == ' ';
+}
+
+ax25_status_t ax25_encode_address(const ax25_address_t *addr,
+                                   bool is_last, uint8_t out[7]) {
+  if (addr == NULL || out == NULL) return AX25_ERR_ADDRESS_INVALID;
+  if (addr->ssid > 15) return AX25_ERR_ADDRESS_INVALID;
+
+  char padded[6] = { ' ', ' ', ' ', ' ', ' ', ' ' };
+  size_t n = 0;
+  while (n < 6 && addr->callsign[n] != '\0') {
+    if (!is_valid_callsign_char(addr->callsign[n])) {
+      return AX25_ERR_ADDRESS_INVALID;
+    }
+    padded[n] = addr->callsign[n];
+    n++;
+  }
+  /* If string is ≥7 chars, reject. */
+  if (n == 6 && addr->callsign[6] != '\0') {
+    return AX25_ERR_ADDRESS_INVALID;
+  }
+
+  for (int i = 0; i < 6; i++) {
+    out[i] = (uint8_t)((unsigned char)padded[i] << 1);
+  }
+  /* CRRSSIDH: C=0 (response), RR=11, SSID shifted left 1, H-bit last. */
+  out[6] = (uint8_t)(0x60 | ((addr->ssid & 0x0F) << 1) | (is_last ? 1 : 0));
+  return AX25_OK;
+}
+
+ax25_status_t ax25_decode_address(const uint8_t in[7],
+                                   bool *is_last,
+                                   ax25_address_t *out) {
+  if (in == NULL || out == NULL) return AX25_ERR_ADDRESS_INVALID;
+
+  for (int i = 0; i < 6; i++) {
+    char c = (char)(in[i] >> 1);
+    if (!is_valid_callsign_char(c)) return AX25_ERR_ADDRESS_INVALID;
+    out->callsign[i] = c;
+  }
+  out->callsign[6] = '\0';
+  /* Trim trailing spaces. */
+  for (int i = 5; i >= 0 && out->callsign[i] == ' '; i--) {
+    out->callsign[i] = '\0';
+  }
+
+  uint8_t ssid_byte = in[6];
+  /* RR bits must both be set (standard AX.25 encoding). */
+  if ((ssid_byte & 0x60) != 0x60) return AX25_ERR_ADDRESS_INVALID;
+  out->ssid = (ssid_byte >> 1) & 0x0F;
+  if (is_last) *is_last = (ssid_byte & 1) != 0;
+  return AX25_OK;
+}
+
 size_t ax25_bit_unstuff(const uint8_t *in, size_t in_len,
                         uint8_t *out, size_t out_cap,
                         ax25_status_t *status) {

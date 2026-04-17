@@ -50,4 +50,26 @@ size_t ax25_bit_unstuff(const uint8_t *in, size_t in_len,
                         uint8_t *out, size_t out_cap,
                         ax25_status_t *status);
 
+/**
+ * Encode a 7-byte AX.25 address field per AX.25 v2.2 §3.12.
+ *
+ * Each callsign character is left-shifted by one bit (padded with
+ * ASCII space if shorter than 6). The SSID byte layout is CRRSSIDH
+ * where C=0 (response), RR=11 (reserved), SSID is 4 bits shifted
+ * left by one, and H is set only on the final address in the chain.
+ *
+ * Callsign must be ≤6 ASCII characters from A-Z, 0-9, or space.
+ * SSID must be 0..15.
+ */
+ax25_status_t ax25_encode_address(const ax25_address_t *addr,
+                                  bool is_last, uint8_t out[7]);
+
+/**
+ * Decode a 7-byte AX.25 address field. Trailing space padding is
+ * trimmed from the callsign. Sets *is_last to the H-bit value.
+ */
+ax25_status_t ax25_decode_address(const uint8_t in[7],
+                                  bool *is_last,
+                                  ax25_address_t *out);
+
 #endif /* AX25_H */
