@@ -393,6 +393,16 @@ else()
     target_compile_definitions(test_key_store PRIVATE SIMULATION_MODE)
     add_test(NAME key_store COMMAND test_key_store)
 
+    # Phase 3 — Fault Detection, Isolation, Recovery (FDIR).
+    # Test supplies its own strong FDIR_GetTick so escalation timing
+    # is deterministic without HAL_GetTick.
+    add_executable(test_fdir
+        tests/test_fdir.c
+        stm32/Core/Src/fdir.c
+    )
+    target_compile_definitions(test_fdir PRIVATE SIMULATION_MODE)
+    add_test(NAME fdir COMMAND test_fdir)
+
     # ───────── SITL firmware demo binary ─────────
 
     add_executable(sitl_fw

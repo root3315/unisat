@@ -66,4 +66,20 @@ static const char *unity_current_test = "";
     } \
 } while(0)
 
+#define TEST_ASSERT_NULL(ptr) do { \
+    if ((ptr) != NULL) { \
+        printf("\nFAIL: %s (line %d): expected NULL pointer\n", \
+            unity_current_test, __LINE__); \
+        unity_tests_failed++; return; \
+    } \
+} while(0)
+
+#define TEST_ASSERT_NOT_NULL(ptr) do { \
+    if ((ptr) == NULL) { \
+        printf("\nFAIL: %s (line %d): expected non-NULL pointer\n", \
+            unity_current_test, __LINE__); \
+        unity_tests_failed++; return; \
+    } \
+} while(0)
+
 #endif /* UNITY_H */
