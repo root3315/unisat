@@ -397,6 +397,14 @@ else()
     target_compile_definitions(test_ccsds PRIVATE SIMULATION_MODE)
     add_test(NAME ccsds COMMAND test_ccsds)
 
+    # Extended CCSDS coverage — Parse edges + secondary header.
+    add_executable(test_ccsds_extended
+        tests/test_ccsds_extended.c
+        stm32/Core/Src/ccsds.c
+    )
+    target_compile_definitions(test_ccsds_extended PRIVATE SIMULATION_MODE)
+    add_test(NAME ccsds_extended COMMAND test_ccsds_extended)
+
     add_executable(test_adcs_algorithms
         tests/test_adcs_algorithms.c
         stm32/ADCS/quaternion.c
@@ -415,11 +423,41 @@ else()
     target_link_libraries(test_eps PRIVATE m)
     add_test(NAME eps COMMAND test_eps)
 
+    # Extended EPS coverage — every MPPT P&O branch + battery state.
+    add_executable(test_eps_extended
+        tests/test_eps_extended.c
+        stm32/EPS/mppt.c
+        stm32/EPS/battery_manager.c
+    )
+    target_compile_definitions(test_eps_extended PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_eps_extended PRIVATE m)
+    add_test(NAME eps_extended COMMAND test_eps_extended)
+
     add_executable(test_telemetry
         tests/test_telemetry.c
     )
     target_compile_definitions(test_telemetry PRIVATE SIMULATION_MODE)
     add_test(NAME telemetry_placeholder COMMAND test_telemetry)
+
+    # Phase 7 #5 — per-subsystem telemetry packers.
+    add_executable(test_telemetry_packers
+        tests/test_telemetry_packers.c
+        tests/test_stubs.c
+        stm32/Core/Src/telemetry.c
+        stm32/Core/Src/ccsds.c
+        stm32/Drivers/BoardTemp/board_temp.c
+        stm32/Drivers/TMP117/tmp117.c
+        stm32/Core/Src/fdir.c
+    )
+    target_include_directories(test_telemetry_packers PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/BoardTemp
+        stm32/Drivers/TMP117
+    )
+    target_compile_definitions(test_telemetry_packers PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_telemetry_packers PRIVATE m)
+    add_test(NAME telemetry_packers COMMAND test_telemetry_packers)
 
     add_executable(test_hmac
         tests/test_hmac.c

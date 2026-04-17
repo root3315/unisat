@@ -34,8 +34,9 @@ static ModeManager_Stats_t g_stats  = {0, 0, 0, 0, 0, MODE_BOOT, MODE_REASON_BOO
 __attribute__((weak)) void ModeManager_PlatformReboot(void)
 {
     /* Default no-op. Target firmware override (in stm32f4xx_it.c or
-     * Target/*.c) calls NVIC_SystemReset() after a short delay so the
-     * telemetry task has a chance to flush the last status frame. */
+     * a Target/<impl>.c source file) calls NVIC_SystemReset() after a
+     * short delay so the telemetry task has a chance to flush the
+     * last status frame before the core resets. */
 }
 
 /* ------------------------------------------------------------------
