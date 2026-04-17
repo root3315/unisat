@@ -77,4 +77,19 @@ else()
     # Host build for testing
     add_library(unisat_core STATIC ${ALL_SOURCES})
     target_compile_definitions(unisat_core PUBLIC SIMULATION_MODE)
+
+    # Test targets (host-only)
+    enable_testing()
+
+    add_executable(test_beacon_layout
+        tests/test_beacon_layout.c
+    )
+    target_include_directories(test_beacon_layout PRIVATE
+        tests
+        stm32/Core/Inc
+    )
+    target_compile_definitions(test_beacon_layout PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_beacon_layout PRIVATE unisat_core m)
+
+    add_test(NAME beacon_layout COMMAND test_beacon_layout)
 endif()
