@@ -257,3 +257,121 @@ def decode_ui_frame(body: bytes) -> UiFrame:
             f"expected fcs 0x{wanted:04X}, got 0x{got:04X}"
         )
     return UiFrame(dst, src, ctrl, pid, info, got, fcs_valid)
+
+
+# ---------------------------------------------------------------------------
+# Streaming decoder (REQ-AX25-017/021/023/024).
+# Mirrors firmware/stm32/Drivers/AX25/ax25_decoder.c.
+# ---------------------------------------------------------------------------
+
+
+class _State:
+    HUNT = 0
+    FRAME = 1
+
+
+class Ax25Decoder:
+    """Byte-by-byte AX.25 UI-frame assembler.
+
+    Mirrors firmware/stm32/Drivers/AX25/ax25_decoder.c one-for-one.
+    Not thread-safe — one instance per RX stream.
+    """
+
+    def __init__(self) -> None:
+        self.reset_all()
+
+    def reset_all(self) -> None:
+        """Zero per-frame state AND counters. Called on init."""
+        self._state = _State.HUNT
+        self._buf = bytearray()
+        self._shift = 0
+        self._bit_count = 0
+        self._ones = 0
+        self.frames_ok = 0
+        self.frames_fcs_err = 0
+        self.frames_overflow = 0
+        self.frames_stuffing_err = 0
+        self.frames_other_err = 0
+
+    def _reset_frame(self) -> None:
+        """Reset only the per-frame state; keep counters."""
+        self._state = _State.HUNT
+        self._buf = bytearray()
+        self._shift = 0
+        self._bit_count = 0
+        self._ones = 0
+
+    def _append_bit(self, bit: int) -> bool:
+        self._shift |= (bit & 1) << self._bit_count
+        self._bit_count += 1
+        if self._bit_count == 8:
+            if len(self._buf) >= AX25_MAX_FRAME_BYTES:
+                self.frames_overflow += 1
+                self._reset_frame()
+                return False
+            self._buf.append(self._shift & 0xFF)
+            self._shift = 0
+            self._bit_count = 0
+        return True
+
+    def _emit(self):
+        self._shift = 0
+        self._bit_count = 0
+        if len(self._buf) < 18:
+            self._reset_frame()
+            return None
+        try:
+            frame = decode_ui_frame(bytes(self._buf))
+            self.frames_ok += 1
+        except FcsMismatch:
+            self.frames_fcs_err += 1
+            frame = None
+        except AX25Error:
+            self.frames_other_err += 1
+            frame = None
+        self._reset_frame()
+        return frame
+
+    def push_byte(self, byte: int):
+        """Returns a UiFrame when a valid frame is assembled, else None.
+
+        Malformed frames are counted, the decoder resets to HUNT, but
+        NO exception is raised — this must be robust to noisy RF.
+        """
+        byte &= 0xFF
+        if byte == 0x7E:
+            if self._state == _State.HUNT:
+                # Opening flag.
+                self._state = _State.FRAME
+                self._buf = bytearray()
+                self._shift = 0
+                self._bit_count = 0
+                self._ones = 0
+                return None
+            # Closing flag -> emit, then stay open for next frame.
+            frame = self._emit()
+            self._state = _State.FRAME
+            self._buf = bytearray()
+            self._shift = 0
+            self._bit_count = 0
+            self._ones = 0
+            return frame
+
+        if self._state == _State.HUNT:
+            return None
+
+        # Inside FRAME: consume 8 bits LSB-first with de-stuffing.
+        for b in range(8):
+            bit = (byte >> b) & 1
+            if self._ones == 5:
+                if bit == 0:
+                    self._ones = 0
+                    continue
+                # Six consecutive ones — REQ-AX25-024.
+                self.frames_stuffing_err += 1
+                self._reset_frame()
+                return None
+            if not self._append_bit(bit):
+                return None
+            self._ones = self._ones + 1 if bit == 1 else 0
+        return None

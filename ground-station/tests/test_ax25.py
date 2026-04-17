@@ -12,12 +12,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 import pytest
+from hypothesis import given, strategies as st, settings
 
 from utils.ax25 import (
     fcs_crc16, bit_stuff, bit_unstuff, StuffingViolation,
     Address, encode_address, decode_address, InvalidAddress,
     UiFrame, encode_ui_frame, decode_ui_frame,
     FcsMismatch, InvalidControl, InvalidPid, FrameOverflow,
+    Ax25Decoder, AX25Error,
 )
 
 
@@ -211,3 +213,90 @@ class TestGoldenVectors:
                 decode_ui_frame(bytes.fromhex(v["raw_body_hex"]))
             checked += 1
         assert checked >= 4
+
+
+class TestStreamingDecoder:
+    def test_single_frame(self):
+        dst = Address("CQ", 0)
+        src = Address("UN8SAT", 1)
+        frame = encode_ui_frame(dst, src, 0xF0, b"Hi")
+        dec = Ax25Decoder()
+        frames = [f for b in frame if (f := dec.push_byte(b)) is not None]
+        assert len(frames) == 1
+        assert frames[0].info == b"Hi"
+        assert dec.frames_ok == 1
+
+    def test_idle_flags_ignored(self):
+        dec = Ax25Decoder()
+        for _ in range(10):
+            assert dec.push_byte(0x7E) is None
+        assert dec.frames_ok == 0
+        assert dec.frames_other_err == 0
+
+    def test_back_to_back_frames(self):
+        dst = Address("CQ", 0); src = Address("UN8SAT", 1)
+        a = encode_ui_frame(dst, src, 0xF0, b"A")
+        b = encode_ui_frame(dst, src, 0xF0, b"B")
+        dec = Ax25Decoder()
+        infos = []
+        for byte in a + b:
+            f = dec.push_byte(byte)
+            if f:
+                infos.append(f.info)
+        assert infos == [b"A", b"B"]
+        assert dec.frames_ok == 2
+
+    def test_recovers_after_garbage(self):
+        dec = Ax25Decoder()
+        dec.push_byte(0x7E)
+        for _ in range(50):
+            dec.push_byte(0xFF)
+        # After garbage, decoder MUST be usable again.
+        dst = Address("CQ", 0); src = Address("UN8SAT", 1)
+        frame = encode_ui_frame(dst, src, 0xF0, b"X")
+        good = [f for b in frame if (f := dec.push_byte(b)) is not None]
+        assert len(good) == 1
+        assert good[0].info == b"X"
+
+
+class TestHypothesis:
+    """REQ-AX25-014: decoder never raises uncaught exceptions."""
+
+    @given(
+        dst_call=st.text(
+            alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+            min_size=1, max_size=6),
+        src_call=st.text(
+            alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+            min_size=1, max_size=6),
+        dst_ssid=st.integers(0, 15),
+        src_ssid=st.integers(0, 15),
+        info=st.binary(max_size=200),
+    )
+    @settings(max_examples=200, deadline=None)
+    def test_encode_decode_round_trip_property(
+        self, dst_call, src_call, dst_ssid, src_ssid, info,
+    ):
+        """Encode -> stream through Ax25Decoder -> must recover the
+        original frame. We use the streaming decoder (not raw unstuff)
+        because bit-level stuffing may add a non-byte-aligned pad at
+        the end; the 0x7E flag boundary resolves that."""
+        dst = Address(dst_call, dst_ssid)
+        src = Address(src_call, src_ssid)
+        frame = encode_ui_frame(dst, src, 0xF0, info)
+        dec = Ax25Decoder()
+        frames = [f for b in frame if (f := dec.push_byte(b)) is not None]
+        assert len(frames) == 1
+        assert frames[0].dst == dst
+        assert frames[0].src == src
+        assert frames[0].info == info
+
+    @given(stream=st.binary(max_size=2048))
+    @settings(max_examples=500, deadline=None)
+    def test_decoder_never_crashes_on_garbage(self, stream):
+        dec = Ax25Decoder()
+        try:
+            for b in stream:
+                dec.push_byte(b)
+        except AX25Error:
+            pytest.fail("push_byte must not raise — errors are counted")
