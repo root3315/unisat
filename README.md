@@ -161,27 +161,31 @@ For more granular control:
 | Check | Status |
 |---|---|
 | Firmware host build (all subsystems) | ✅ clean (`unisat_core`) |
-| **Firmware target build (STM32F446RE .elf/.bin/.hex)** | ✅ `make target` |
-| C unit tests (`ctest`) | ✅ **19 / 19 passing** (64+ sub-tests) |
-| Python tests (`pytest`) | ✅ **38+ passing** incl. 200 hypothesis + 500 fuzz + e2e mission + long-soak |
+| Firmware target build (STM32F446RE .elf/.bin/.hex) | ✅ `make target` |
+| C unit tests (`ctest`) | ✅ **25 / 25 passing** (90+ sub-tests) |
+| Python tests (`pytest`) | ✅ **56+ passing** incl. hypothesis + fuzz + e2e + soak + hmac_auth |
 | AX.25 golden vectors cross-validation | ✅ 28/28 byte-identical C ↔ Python |
 | SHA-256 FIPS 180-4 oracle | ✅ `"abc"` + `""` canonical digests |
 | HMAC-SHA256 RFC 4231 vectors | ✅ §4.2 + §4.3 on both C and Python |
 | End-to-end SITL demo | ✅ C encoder → TCP → Python decoder |
-| **E2E mission scenario (startup → nominal → safe)** | ✅ flight-software/tests/test_mission_e2e.py |
-| **Long-soak harness (48 h gated via UNISAT_SOAK_SECONDS)** | ✅ test_long_soak.py |
+| E2E mission scenario (startup → nominal → safe) | ✅ flight-software/tests/test_mission_e2e.py |
+| Long-soak harness (48 h gated via UNISAT_SOAK_SECONDS) | ✅ test_long_soak.py |
 | Driver reality audit | ✅ all 9 drivers verified real (incl. BoardTemp) |
 | Threat T1 (command injection) | ✅ HMAC dispatcher |
-| **Threat T2 (replay)** | ✅ 32-bit counter + 64-bit sliding window |
-| **Persistent key store (A/B + CRC + rotation)** | ✅ 10/10 tests |
-| **FDIR fault advisor + watchdog integration** | ✅ 9/9 tests, 12 fault IDs |
-| **Tboard (TMP117) facade in beacon bytes 14–15** | ✅ 6/6 tests |
-| **cppcheck static-analysis gate** | ✅ clean (`make cppcheck`) |
-| **Line coverage (baseline)** | ✅ 73.6 % (`make coverage`) |
-| **ASAN + UBSAN under ctest** | ✅ 19/19 clean (`make sanitizers`) |
-| **STRICT mode (-Werror -Wshadow -Wconversion)** | ✅ 19/19 clean (`cmake -DSTRICT=ON`) |
-| **Full SRS + traceability CSV** | ✅ docs/requirements/SRS.md |
-| **HIL test plan + characterization templates** | ✅ docs/testing + docs/characterization |
+| Threat T2 (replay) | ✅ 32-bit counter + 64-bit sliding window |
+| Persistent key store (A/B + CRC + rotation) | ✅ 10/10 tests |
+| **Boot-time key_store → dispatcher wiring in main.c** | ✅ 4/4 integration tests |
+| **Python counter-aware HMAC frame builder (CounterSender)** | ✅ 22/22 pytest |
+| FDIR fault advisor + watchdog integration | ✅ 9/9 tests, 12 fault IDs |
+| **FDIR mode supervisor (SAFE/DEGRADED/REBOOT wiring)** | ✅ 9/9 tests |
+| **Persistent fault log (.noinit, survives warm reboot)** | ✅ 6/6 tests |
+| Tboard (TMP117) facade in beacon bytes 14–15 | ✅ 6/6 tests |
+| cppcheck static-analysis gate | ✅ clean (`make cppcheck`) |
+| **Line coverage** | ✅ **84.4 %** / functions 82.7 % (`make coverage`) |
+| ASAN + UBSAN under ctest | ✅ 25/25 clean (`make sanitizers`) |
+| STRICT mode (-Werror -Wshadow -Wconversion) | ✅ 25/25 clean (`cmake -DSTRICT=ON`) |
+| Full SRS + traceability CSV | ✅ docs/requirements/SRS.md |
+| HIL test plan + characterization templates | ✅ docs/testing + docs/characterization |
 | Requirement traceability (AX.25 subset) | ✅ auto-generated (docs/verification/ax25_trace_matrix.md) |
 
 Deferred (not TRL-5 blockers) — see [`docs/GAPS_AND_ROADMAP.md`](docs/GAPS_AND_ROADMAP.md):

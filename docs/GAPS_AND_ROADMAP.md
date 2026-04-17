@@ -48,6 +48,25 @@ target hardware execution proven).
 **Все 6 фаз TRL-5 hardening закрыты** — ветка `feat/trl5-hardening`
 готова к ревью и слиянию с master.
 
+## Phase 7 — TRL-5 integration + coverage push (done)
+
+После TRL-аудита пошедшего за Phase 6 было выделено 5 критичных
+пробелов, которые блокировали честный TRL-5 на ПО-стороне. Все 5
+закрыты:
+
+| # | Тема | Статус |
+|---|---|---|
+| 7.1 | key_store → CommandDispatcher wiring в main.c boot | ✅ 4/4 tests |
+| 7.2 | Python CounterSender + build/verify/parse auth frame | ✅ 22/22 tests |
+| 7.3 | Mode manager в C (FDIR → SAFE/DEGRADED/REBOOT) | ✅ 9/9 tests |
+| 7.4 | Persistent fault log в .noinit (warm-reboot survives) | ✅ 6/6 tests |
+| 7.5 | Coverage push 77.3% → 84.4% lines (через CCSDS/EPS/telemetry) | ✅ SRS REQ-BLD-005 |
+
+**Результат:** все пять 🔴 критичных блокеров закрыты, ПО-сторона
+теперь действительно на уровне TRL 5. Оставшиеся gaps (HIL bench с
+реальным железом, радиация, вибрация, TVAC) принципиально вне scope
+репозитория — см. §"Out of scope" выше.
+
 ---
 
 ## Что ещё можно добавить (приоритизировано)
