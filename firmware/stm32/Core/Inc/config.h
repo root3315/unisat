@@ -83,10 +83,11 @@
 #define SBAND_UART              USART2
 #define SBAND_UART_BAUDRATE     115200
 
-/* I2C/SPI Retry Configuration */
+/* I2C/SPI/UART Retry Configuration */
 #define IO_MAX_RETRIES          3
 #define IO_RETRY_DELAY_MS       10
-#define IO_TIMEOUT_MS           100
+/* 500 ms covers worst-case bit-stuffed AX.25 frame (~266 ms @ 9600 bps). */
+#define IO_TIMEOUT_MS           500
 
 /** Runtime configuration structure */
 typedef struct {
