@@ -181,4 +181,19 @@ else()
     target_compile_definitions(test_ax25_decoder PRIVATE SIMULATION_MODE)
 
     add_test(NAME ax25_decoder COMMAND test_ax25_decoder)
+
+    # Project-style facade (ADR-002).
+    add_executable(test_ax25_api
+        tests/test_ax25_api.c
+        stm32/Drivers/AX25/ax25.c
+        stm32/Drivers/AX25/ax25_decoder.c
+    )
+    target_include_directories(test_ax25_api PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_ax25_api PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_api COMMAND test_ax25_api)
 endif()
