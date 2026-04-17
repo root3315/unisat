@@ -168,16 +168,30 @@ For more granular control:
 | Driver reality audit | ✅ all 8 sensors confirmed real (docs/verification/driver_audit.md) |
 | Requirement traceability | ✅ auto-generated (docs/verification/ax25_trace_matrix.md) |
 
-Open items ([CHANGELOG](CHANGELOG.md)): Track 1b command dispatcher
-wiring (HMAC primitives ready, integration pending).
+| Track 1b command dispatcher (HMAC T1 mitigated) | ✅ wired end-to-end |
 
-### 5. Build firmware
+Open items — see [`docs/GAPS_AND_ROADMAP.md`](docs/GAPS_AND_ROADMAP.md):
+replay protection (T2), Streamlit↔AX.25 live bridge, flight-software
+end-to-end scenario test.
+
+### 6. Build firmware manually (optional)
+
+If you don't want to use Docker:
 
 ```bash
 cd firmware
-mkdir build && cd build
-cmake ..
-make
+cmake -B build -S .
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+Cross-compile for STM32F446 (requires `arm-none-eabi-gcc`):
+
+```bash
+cd firmware
+cmake -B build-arm -S . -DCMAKE_TOOLCHAIN_FILE=arm.cmake
+cmake --build build-arm
+# Output: build-arm/unisat_firmware.{elf,bin,hex}
 ```
 
 ---
@@ -197,13 +211,19 @@ Configure via `mission_config.json` — all subsystems adapt automatically.
 
 ## Competition Adaptation
 
-UniSat is designed to be adapted for various aerospace competitions. See [COMPETITION_GUIDE.md](COMPETITION_GUIDE.md) for detailed instructions:
+Ready-to-submit adaptations for аэрокосмических конкурсов. Подробное
+пошаговое руководство по каждому типу — в [USAGE_GUIDE.md](docs/USAGE_GUIDE.md) §7.
 
-- **CanSat** — Remove orbital modules, add parachute descent
-- **CubeSat Design** — Full configuration, CDR-level documentation
-- **NASA Space Apps** — Focus on Earth observation and data analysis
-- **Aerospace Olympiad** — Theoretical justification with simulation data
-- **Hackathon** — Quick prototype using the web configurator
+| Конкурс | Template | Ключевое | Время подготовки |
+|---|---|---|---|
+| **CanSat** | `mission_templates/cansat_standard.json` | Парашют, IMU, 500 г | 1 вечер |
+| **CubeSat Design** | `mission_templates/cubesat_sso.json` | 3U, CDR docs, HMAC auth | 1 неделя |
+| **NASA Space Apps** | Любой + NDVI analyzer | Earth observation | 48 ч |
+| **Rocket competition** | `mission_templates/rocket_competition.json` | Dual-deploy | 2–3 дня |
+| **HAB** | `mission_templates/hab_standard.json` | GNSS, камера | 1 день |
+| **Aerospace Olympiad** | — | `simulation/analytical_solutions.py` | — |
+
+Also: [COMPETITION_GUIDE.md](COMPETITION_GUIDE.md) (short form).
 
 ---
 
@@ -211,48 +231,84 @@ UniSat is designed to be adapted for various aerospace competitions. See [COMPET
 
 ```
 unisat/
-├── firmware/          # STM32 firmware (C + FreeRTOS)
-├── flight-software/   # Flight controller (Python + asyncio)
-├── ground-station/    # Ground station (Streamlit + Plotly)
-├── simulation/        # Mission simulation tools
-├── configurator/      # Web-based mission configurator
-├── hardware/          # KiCad schematics, mechanical CAD
-├── payloads/          # Swappable payload modules
-├── docs/              # CDR-level documentation
-└── scripts/           # Build, test, deploy scripts
+├── firmware/             # STM32F446 firmware (C11 + FreeRTOS)
+│   ├── stm32/Core/       #   OBC, COMM, GNSS, CCSDS, telemetry,
+│   │                     #   command_dispatcher (HMAC-auth)
+│   ├── stm32/Drivers/    #   9 sensor drivers + AX25 + Crypto +
+│   │                     #   VirtualUART (SITL TCP shim)
+│   ├── stm32/ADCS/       #   B-dot, quaternion, sun/target pointing
+│   ├── stm32/EPS/        #   MPPT, battery manager
+│   └── tests/            #   16 Unity test targets
+├── flight-software/      # Python async flight controller (RPi Zero 2 W)
+├── ground-station/       # Streamlit UI + AX.25 CLI + HMAC tooling
+│   ├── utils/ax25.py     #   AX.25 v2.2 Python mirror
+│   ├── utils/hmac_auth.py#   HMAC-SHA256 mirror (RFC 4231)
+│   ├── cli/              #   ax25_listen / ax25_send TCP tools
+│   └── tests/            #   34 pytest incl. hypothesis + fuzz
+├── simulation/           # 10 simulators (orbit, power, thermal, link)
+├── configurator/         # Web-based mission configurator + BOM gen
+├── hardware/             # KiCad schematics, BOM, mechanical CAD
+├── payloads/             # 5 swappable payload templates
+├── mission_templates/    # 5 ready-to-use mission_config.json
+├── tests/golden/         # Shared AX.25 test vectors (C + Python)
+├── docs/                 # 25+ md docs (USAGE_GUIDE, TECHNICAL_DOC,
+│                         # ADRs, threat model, tutorials, verification)
+├── docker/Dockerfile.ci  # Reusable CI image (cmake + pytest baked)
+├── scripts/verify.sh     # One-command reproducibility
+├── Makefile              # make all / test / demo / ci / help
+├── CHANGELOG.md          # Semantic-versioned history
+└── README.md             # This file
 ```
 
 ---
 
 ## Documentation
 
-All documentation is written to CDR (Critical Design Review) standards:
+**Start here:**
+- [USAGE_GUIDE.md](docs/USAGE_GUIDE.md) — step-by-step от клонирования до подачи на конкурс
+- [TECHNICAL_DOCUMENTATION.md](docs/TECHNICAL_DOCUMENTATION.md) — полная техническая дока (~1100 строк)
+- [GAPS_AND_ROADMAP.md](docs/GAPS_AND_ROADMAP.md) — честный статус + что ещё можно добавить
 
-- [System Architecture](docs/architecture.md)
-- [Mission Design](docs/mission_design.md)
-- [Communication Protocol](docs/communication_protocol.md)
-- [Power Budget](docs/power_budget.md)
-- [Mass Budget](docs/mass_budget.md)
-- [Link Budget](docs/link_budget.md)
-- [Thermal Analysis](docs/thermal_analysis.md)
-- [Orbit Analysis](docs/orbit_analysis.md)
-- [Testing Plan](docs/testing_plan.md)
-- [Assembly Guide](docs/assembly_guide.md)
+**CDR-level design docs:**
+- [System Architecture](docs/architecture.md) · [Mission Design](docs/mission_design.md)
+- [Communication Protocol](docs/communication_protocol.md) (AX.25 + CCSDS wire format)
+- [Power Budget](docs/power_budget.md) · [Mass Budget](docs/mass_budget.md) · [Link Budget](docs/link_budget.md)
+- [Thermal Analysis](docs/thermal_analysis.md) · [Orbit Analysis](docs/orbit_analysis.md)
+- [Testing Plan](docs/testing_plan.md) · [Assembly Guide](docs/assembly_guide.md)
+- [API Reference](docs/API_REFERENCE.md) · [Requirements Traceability](docs/REQUIREMENTS_TRACEABILITY.md)
+
+**Architecture decisions, security, verification:**
+- [ADR-001 — No CSP](docs/adr/ADR-001-no-csp.md) · [ADR-002 — Style Adapter](docs/adr/ADR-002-style-adapter.md)
+- [AX.25 Threat Model](docs/security/ax25_threat_model.md)
+- [AX.25 Walkthrough Tutorial](docs/tutorials/ax25_walkthrough.md) — byte-by-byte beacon разбор
+- [AX.25 Verification Trace Matrix](docs/verification/ax25_trace_matrix.md) (auto-generated)
+- [Driver Reality Audit](docs/verification/driver_audit.md) — все 8 сенсоров verified real
+- [Track 1 Design Spec](docs/superpowers/specs/2026-04-17-track1-ax25-design.md) — 775 lines
+- [Track 1 Implementation Plan](docs/superpowers/plans/2026-04-17-track1-ax25-implementation.md) — 4022 lines
 
 ---
 
 ## Testing
 
+**One command:**
 ```bash
-# Run all Python tests
-./scripts/run_tests.sh
+./scripts/verify.sh   # Docker-based, no local toolchain needed
+```
 
-# Run specific test suites
-pytest flight-software/tests/ -v
-pytest ground-station/tests/ -v
+**Via Makefile:**
+```bash
+make all              # build + test (C + Python)
+make test-c           # ctest only (16 targets)
+make test-py          # pytest only (34 tests + hypothesis/fuzz)
+make demo             # end-to-end SITL AX.25 beacon demo
+make help             # list all targets
+```
 
-# Build and test firmware
-cd firmware/build && cmake .. && make
+**Manual:**
+```bash
+cd firmware && cmake -B build -S . && cmake --build build
+ctest --test-dir build --output-on-failure
+cd ../ground-station && python -m pytest tests/test_ax25.py -v
 ```
 
 ---
