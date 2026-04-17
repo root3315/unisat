@@ -238,11 +238,12 @@ uint16_t Telemetry_PackError(uint8_t *buffer, uint16_t max_size,
     uint16_t offset = 0;
 
     data[offset++] = error_code;
-    uint16_t msg_len = strlen(message);
-    if (msg_len > 34) msg_len = 34;
+    size_t raw_len = strlen(message);
+    if (raw_len > 34U) { raw_len = 34U; }
+    uint16_t msg_len = (uint16_t)raw_len;
     data[offset++] = (uint8_t)msg_len;
     memcpy(&data[offset], message, msg_len);
-    offset += msg_len;
+    offset = (uint16_t)(offset + msg_len);
 
     CCSDS_Packet_t packet;
     CCSDS_BuildPacket(&packet, APID_ERROR_REPORT, CCSDS_TELEMETRY,

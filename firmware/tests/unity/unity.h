@@ -11,7 +11,14 @@ static int unity_tests_run = 0;
 static int unity_tests_failed = 0;
 static const char *unity_current_test = "";
 
-#define UNITY_BEGIN() (unity_tests_run = 0, unity_tests_failed = 0, 0)
+/* UNITY_BEGIN(): reset counters, return 0 (caller ignores). The
+ * compound statement is wrapped so -Wunused-value does not flag
+ * the trailing 0 in a comma-expression under -Werror. */
+#define UNITY_BEGIN() do { \
+    unity_tests_run = 0; \
+    unity_tests_failed = 0; \
+} while (0)
+
 #define UNITY_END() (printf("\n%d Tests, %d Failures\n", \
     unity_tests_run, unity_tests_failed), unity_tests_failed)
 

@@ -49,7 +49,7 @@ Suppressions list is curated — every entry has a short rationale
 in `.cppcheck-suppressions` (e.g. Rule 11.5 is routinely deviated
 because STM32 HAL's `void *handle` convention requires the cast).
 
-### Real issues found during development
+### Real issues found and fixed during development
 
 1. **`comm.c:125` — arrayIndexOutOfBounds** on `dst_call[n]`.
    Cppcheck inferred that callers like `COMM_SendAX25(..., "CQ", ...)`
@@ -57,10 +57,20 @@ because STM32 HAL's `void *handle` convention requires the cast).
    `dst_call[5]`. The code is in fact safe because of the
    `!= '\0'` short-circuit, but cppcheck cannot prove the
    NUL-termination invariant. Suppressed inline with rationale.
-2. **`ccsds.c:68` — badBitmaskCheck** on `flags | 0`. Cosmetic
-   (the `| 0` no-ops), but real — surfaces a typo-level bug
-   that could hide future non-zero constants. Tracked as
-   separate cleanup (not blocking).
+2. **`ccsds.c:68` — badBitmaskCheck** on `(0 << 13) | ...`.
+   The version-field OR with 0 is a no-op; the `(0 << 13)`
+   spelling documented the CCSDS primary-header layout but
+   generated a spurious warning. ✅ Fixed: removed the
+   `0 << 13` and moved the field-layout documentation into a
+   code comment that survives future version-field changes.
+3. **ccsds.c / comm.c / payload.c / telemetry.c / error_handler.c /
+   sbm20.c / virtual_uart.c — `-Wconversion` narrowings.** 12
+   locations where an `int`-promoted arithmetic result was
+   stored into a `uint8_t` / `uint16_t` without an explicit
+   cast. ✅ Fixed: added `(uint8_t)` / `(uint16_t)` casts with
+   explicit unsigned literals (`0xFFU`, `1U`, etc.) so the
+   narrowing is visible in the diff and there is no surprise
+   on a target where `int` is 32-bit.
 
 ## Coverage (lcov + genhtml)
 
@@ -108,15 +118,26 @@ a full stack trace.
 
 `cmake -DSTRICT=ON` enables `-Werror -Wshadow -Wconversion` on
 the host build. Primarily useful during refactoring — drives a
-zero-warning policy for new code without blocking routine
-development on pre-existing `-Wconversion` issues.
+zero-warning policy for new code and catches narrowing bugs
+before they reach the 32-bit MCU.
 
-**Current status:** STRICT does not pass on the unmodified
-codebase — `ccsds.c` lines 111-116 and 131-132 contain explicit
-`int -> uint8_t` narrowing that `-Wconversion` flags. Fixing
-them with explicit `(uint8_t)` casts is straightforward but
-tracked separately so it lands in its own commit rather than
-sneaking into the Phase 5 infrastructure commit.
+**Current status:** ✅ **STRICT passes — 19/19 ctest green.**
+The post-Phase-5 cleanup commit made every narrowing explicit
+(`(uint8_t)((x >> 8) & 0xFFU)` pattern) across `ccsds.c`,
+`comm.c`, `error_handler.c`, `payload.c`, `telemetry.c`,
+`sbm20.c`, and `virtual_uart.c`. The few legitimate exemptions
+(unused static helpers gated behind `#ifndef SIMULATION_MODE`
+in sensor drivers, Unity test framework's comma-expression) are
+demoted to warnings with `-Wno-error=unused-function` /
+`-Wno-error=unused-const-variable`.
+
+Reproduction:
+```
+cmake -B firmware/build-strict -S firmware -DSTRICT=ON
+cmake --build firmware/build-strict
+ctest --test-dir firmware/build-strict --output-on-failure
+# -> 100% tests passed, 0 tests failed out of 19
+```
 
 ## Running everything
 

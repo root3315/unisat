@@ -49,10 +49,10 @@ void CCSDS_Init(void) {
 }
 
 uint16_t CCSDS_CalculateCRC16(const uint8_t *data, uint16_t length) {
-    uint16_t crc = 0xFFFF;
+    uint16_t crc = 0xFFFFU;
     for (uint16_t i = 0; i < length; i++) {
         uint8_t index = (uint8_t)((crc >> 8) ^ data[i]);
-        crc = (crc << 8) ^ crc16_table[index];
+        crc = (uint16_t)((crc << 8) ^ crc16_table[index]);
     }
     return crc;
 }
@@ -64,19 +64,33 @@ uint16_t CCSDS_BuildPacket(CCSDS_Packet_t *packet, uint16_t apid,
         data_len = CCSDS_MAX_DATA_SIZE;
     }
 
-    /* Primary header: version(3) | type(1) | sec_hdr(1) | APID(11) */
-    uint16_t first_word = (0 << 13) | ((type & 1) << 12) | (1 << 11) |
-                          (apid & 0x7FF);
+    /* Primary header layout (CCSDS 133.0-B-2):
+     *   bits 15..13 : version  = 000b (CCSDS version 1)
+     *   bit    12   : type     = TM (0) or TC (1)
+     *   bit    11   : sec_hdr  = 1 (secondary header present)
+     *   bits 10..0  : APID     (11 bits)
+     *
+     * The version field is 0 so it contributes nothing to the OR;
+     * spelling it out as `0 << 13` tripped cppcheck's redundant-OR
+     * check. The version bits are still reserved for a future
+     * migration to CCSDS version 2 — when that lands, introduce a
+     * named macro and keep the document trail via the comment above. */
+    uint16_t first_word =
+        (uint16_t)(((uint16_t)(type & 1U) << 12) |
+                   ((uint16_t)1U             << 11) |
+                   (uint16_t)(apid & 0x7FFU));
     packet->primary.version_type_apid = first_word;
 
-    /* Sequence: flags(2) | count(14) */
-    packet->primary.sequence = (3 << 14) | (sequence_count & 0x3FFF);
-    sequence_count = (sequence_count + 1) & 0x3FFF;
+    /* Sequence: flags(2) | count(14). Flags = 11b (unsegmented). */
+    packet->primary.sequence =
+        (uint16_t)(((uint16_t)3U << 14) |
+                   (uint16_t)(sequence_count & 0x3FFFU));
+    sequence_count = (uint16_t)((sequence_count + 1U) & 0x3FFFU);
 
     /* Data length = secondary header + data + CRC - 1 */
-    uint16_t total_data = CCSDS_SECONDARY_HEADER_SIZE + data_len +
-                          CCSDS_CRC_SIZE;
-    packet->primary.data_length = total_data - 1;
+    uint16_t total_data = (uint16_t)(CCSDS_SECONDARY_HEADER_SIZE +
+                                     data_len + CCSDS_CRC_SIZE);
+    packet->primary.data_length = (uint16_t)(total_data - 1U);
 
     /* Secondary header */
 #ifndef SIMULATION_MODE
@@ -107,29 +121,33 @@ uint16_t CCSDS_Serialize(const CCSDS_Packet_t *packet, uint8_t *buffer,
 
     uint16_t offset = 0;
 
-    /* Primary header (big-endian) */
-    buffer[offset++] = (packet->primary.version_type_apid >> 8) & 0xFF;
-    buffer[offset++] = packet->primary.version_type_apid & 0xFF;
-    buffer[offset++] = (packet->primary.sequence >> 8) & 0xFF;
-    buffer[offset++] = packet->primary.sequence & 0xFF;
-    buffer[offset++] = (packet->primary.data_length >> 8) & 0xFF;
-    buffer[offset++] = packet->primary.data_length & 0xFF;
+    /* Primary header (big-endian). Explicit (uint8_t) casts on every
+     * store silence -Wconversion — the & 0xFF mask already clips the
+     * value, but the promoted int result needs the cast to match the
+     * uint8_t destination without narrowing-warning. */
+    buffer[offset++] = (uint8_t)((packet->primary.version_type_apid >> 8) & 0xFFU);
+    buffer[offset++] = (uint8_t)( packet->primary.version_type_apid       & 0xFFU);
+    buffer[offset++] = (uint8_t)((packet->primary.sequence          >> 8) & 0xFFU);
+    buffer[offset++] = (uint8_t)( packet->primary.sequence                & 0xFFU);
+    buffer[offset++] = (uint8_t)((packet->primary.data_length       >> 8) & 0xFFU);
+    buffer[offset++] = (uint8_t)( packet->primary.data_length             & 0xFFU);
 
-    /* Secondary header */
+    /* Secondary header: 8-byte timestamp, big-endian. */
     for (int i = 7; i >= 0; i--) {
-        buffer[offset++] = (packet->secondary.timestamp >> (i * 8)) & 0xFF;
+        buffer[offset++] =
+            (uint8_t)((packet->secondary.timestamp >> (i * 8)) & 0xFFU);
     }
     buffer[offset++] = packet->secondary.subsystem_id;
     buffer[offset++] = packet->secondary.packet_subtype;
 
     /* Data */
     memcpy(&buffer[offset], packet->data, packet->data_length);
-    offset += packet->data_length;
+    offset = (uint16_t)(offset + packet->data_length);
 
     /* CRC-16 over everything before CRC */
     uint16_t crc = CCSDS_CalculateCRC16(buffer, offset);
-    buffer[offset++] = (crc >> 8) & 0xFF;
-    buffer[offset++] = crc & 0xFF;
+    buffer[offset++] = (uint8_t)((crc >> 8) & 0xFFU);
+    buffer[offset++] = (uint8_t)( crc       & 0xFFU);
 
     return offset;
 }
@@ -141,25 +159,30 @@ bool CCSDS_Parse(const uint8_t *buffer, uint16_t length,
     /* Validate CRC */
     if (!CCSDS_ValidateCRC(buffer, length)) return false;
 
-    /* Parse primary header */
-    packet->primary.version_type_apid = (buffer[0] << 8) | buffer[1];
-    packet->primary.sequence = (buffer[2] << 8) | buffer[3];
-    packet->primary.data_length = (buffer[4] << 8) | buffer[5];
+    /* Parse primary header (big-endian). */
+    packet->primary.version_type_apid =
+        (uint16_t)(((uint16_t)buffer[0] << 8) | (uint16_t)buffer[1]);
+    packet->primary.sequence =
+        (uint16_t)(((uint16_t)buffer[2] << 8) | (uint16_t)buffer[3]);
+    packet->primary.data_length =
+        (uint16_t)(((uint16_t)buffer[4] << 8) | (uint16_t)buffer[5]);
 
     uint16_t offset = CCSDS_PRIMARY_HEADER_SIZE;
 
-    /* Parse secondary header */
+    /* Parse secondary header: 8-byte big-endian timestamp. */
     packet->secondary.timestamp = 0;
     for (int i = 0; i < 8; i++) {
-        packet->secondary.timestamp = (packet->secondary.timestamp << 8) |
-                                       buffer[offset++];
+        packet->secondary.timestamp =
+            (packet->secondary.timestamp << 8) |
+            (uint64_t)buffer[offset++];
     }
     packet->secondary.subsystem_id = buffer[offset++];
     packet->secondary.packet_subtype = buffer[offset++];
 
     /* Extract data */
-    packet->data_length = length - CCSDS_PRIMARY_HEADER_SIZE -
-                          CCSDS_SECONDARY_HEADER_SIZE - CCSDS_CRC_SIZE;
+    packet->data_length = (uint16_t)(length - CCSDS_PRIMARY_HEADER_SIZE -
+                                     CCSDS_SECONDARY_HEADER_SIZE -
+                                     CCSDS_CRC_SIZE);
     if (packet->data_length > CCSDS_MAX_DATA_SIZE) return false;
 
     memcpy(packet->data, &buffer[offset], packet->data_length);
@@ -170,8 +193,10 @@ bool CCSDS_Parse(const uint8_t *buffer, uint16_t length,
 bool CCSDS_ValidateCRC(const uint8_t *buffer, uint16_t length) {
     if (length < CCSDS_CRC_SIZE) return false;
 
-    uint16_t received_crc = (buffer[length - 2] << 8) | buffer[length - 1];
-    uint16_t calculated_crc = CCSDS_CalculateCRC16(buffer, length - 2);
+    uint16_t received_crc = (uint16_t)(((uint16_t)buffer[length - 2] << 8) |
+                                        (uint16_t)buffer[length - 1]);
+    uint16_t calculated_crc = CCSDS_CalculateCRC16(buffer,
+                                                    (uint16_t)(length - 2U));
 
     return received_crc == calculated_crc;
 }

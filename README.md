@@ -179,12 +179,13 @@ For more granular control:
 | **cppcheck static-analysis gate** | ✅ clean (`make cppcheck`) |
 | **Line coverage (baseline)** | ✅ 73.6 % (`make coverage`) |
 | **ASAN + UBSAN under ctest** | ✅ 19/19 clean (`make sanitizers`) |
+| **STRICT mode (-Werror -Wshadow -Wconversion)** | ✅ 19/19 clean (`cmake -DSTRICT=ON`) |
 | **Full SRS + traceability CSV** | ✅ docs/requirements/SRS.md |
 | **HIL test plan + characterization templates** | ✅ docs/testing + docs/characterization |
 | Requirement traceability (AX.25 subset) | ✅ auto-generated (docs/verification/ax25_trace_matrix.md) |
 
 Deferred (not TRL-5 blockers) — see [`docs/GAPS_AND_ROADMAP.md`](docs/GAPS_AND_ROADMAP.md):
-Streamlit↔AX.25 live bridge, CC1125 radio config doc, MISRA backlog cleanup (~1000 Rule 8.7/10.x deviations), STRICT `-Wconversion` cleanup in ccsds.c.
+Streamlit↔AX.25 live bridge, CC1125 radio config doc, MISRA backlog cleanup (~1000 Rule 8.7/10.x style deviations).
 
 ### 6. Build firmware manually (optional)
 

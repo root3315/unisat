@@ -92,7 +92,7 @@ void SBM20_Tick1s(SBM20_Handle_t *dev)
     dev->total_counts += current;
 #endif
 
-    dev->window_idx = (dev->window_idx + 1) % SBM20_WINDOW_SIZE;
+    dev->window_idx = (uint8_t)((dev->window_idx + 1U) % SBM20_WINDOW_SIZE);
     if (dev->window_filled < SBM20_WINDOW_SIZE) {
         dev->window_filled++;
     }

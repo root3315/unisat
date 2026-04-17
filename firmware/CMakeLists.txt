@@ -81,9 +81,16 @@ else()
         # surfaces narrowing casts that matter on the 32-bit MCU.
         # Keep off by default so a regular `make test` during
         # development isn't blocked by a benign third-party warning.
+        #
+        # unused-function is demoted because several sensor drivers
+        # gate their real helpers behind #ifndef SIMULATION_MODE —
+        # the helpers are defined but never referenced in the host
+        # build, which is expected and uninteresting.
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wshadow -Wconversion \
             -Wno-error=unused-variable -Wno-error=unused-parameter \
-            -Wno-error=unused-but-set-variable")
+            -Wno-error=unused-but-set-variable \
+            -Wno-error=unused-function \
+            -Wno-error=unused-const-variable")
     endif()
     if(COVERAGE)
         # --coverage is short for -fprofile-arcs -ftest-coverage on

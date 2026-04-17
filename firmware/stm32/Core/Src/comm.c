@@ -101,7 +101,7 @@ uint16_t COMM_Receive(CommChannel_t channel, uint8_t *buffer,
     uint16_t count = 0;
     while (uhf_rx_tail != uhf_rx_head && count < max_length) {
         buffer[count++] = uhf_rx_buffer[uhf_rx_tail];
-        uhf_rx_tail = (uhf_rx_tail + 1) % COMM_RX_BUFFER_SIZE;
+        uhf_rx_tail = (uint16_t)((uhf_rx_tail + 1U) % COMM_RX_BUFFER_SIZE);
     }
 
     if (count > 0) {
@@ -199,7 +199,7 @@ bool COMM_IsConnected(CommChannel_t channel) {
 
 void COMM_UART_RxCallback(CommChannel_t channel, uint8_t byte) {
     (void)channel;
-    uint16_t next = (uhf_rx_head + 1) % COMM_RX_BUFFER_SIZE;
+    uint16_t next = (uint16_t)((uhf_rx_head + 1U) % COMM_RX_BUFFER_SIZE);
     if (next != uhf_rx_tail) {
         uhf_rx_buffer[uhf_rx_head] = byte;
         uhf_rx_head = next;
@@ -213,7 +213,7 @@ void COMM_ProcessRxBuffer(void) {
      * COMM_Status_t so existing telemetry sees link-layer health. */
     while (uhf_rx_tail != uhf_rx_head) {
         uint8_t byte = uhf_rx_buffer[uhf_rx_tail];
-        uhf_rx_tail = (uhf_rx_tail + 1) % COMM_RX_BUFFER_SIZE;
+        uhf_rx_tail = (uint16_t)((uhf_rx_tail + 1U) % COMM_RX_BUFFER_SIZE);
 
         AX25_UiFrame_t frame;
         bool ready = false;
