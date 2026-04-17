@@ -11,6 +11,7 @@
 #include "command_dispatcher.h"
 #include "key_store.h"
 #include "fdir.h"
+#include "fdir_persistent.h"
 #include "mode_manager.h"
 
 #ifndef SIMULATION_MODE
@@ -81,6 +82,14 @@ int main(void) {
     Telemetry_Init();
     Watchdog_Init();
     Error_Init();
+
+    /* Persistent fault log lives in .noinit SRAM — inspect it BEFORE
+     * FDIR_Init wipes the volatile counters. A "valid survival" result
+     * means the previous boot ended in a soft reset and the pre-reset
+     * fault tail is still available for downlink; first-ever cold
+     * boot returns false and starts with an empty log. */
+    (void)FDIR_Persistent_Init();
+
     FDIR_Init();
     ModeManager_Init();
 

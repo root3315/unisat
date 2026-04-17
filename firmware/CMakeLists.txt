@@ -483,6 +483,16 @@ else()
     target_compile_definitions(test_mode_manager PRIVATE SIMULATION_MODE)
     add_test(NAME mode_manager COMMAND test_mode_manager)
 
+    # Phase 7 #4 — warm-reboot-survivable fault log (.noinit on target,
+    # plain .bss on host). Test links the real implementation and
+    # overrides FDIR_GetTick for deterministic timestamps.
+    add_executable(test_fdir_persistent
+        tests/test_fdir_persistent.c
+        stm32/Core/Src/fdir_persistent.c
+    )
+    target_compile_definitions(test_fdir_persistent PRIVATE SIMULATION_MODE)
+    add_test(NAME fdir_persistent COMMAND test_fdir_persistent)
+
     # Phase 4 — Board-temperature facade (Tboard beacon field).
     # Deliberately DOES NOT link tmp117.c; the test provides its own
     # strong TMP117_Init / TMP117_Read so bus-failure and

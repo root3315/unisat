@@ -144,6 +144,30 @@ SECTIONS
     __bss_end__ = _ebss;
   } >RAM
 
+  /* ---- .noinit : preserved across warm resets ------------------------
+   *
+   * Variables placed here (via __attribute__((section(".noinit")))) are
+   * NOT zeroed by Reset_Handler's BSS-init loop. The SRAM block keeps
+   * its contents across a soft reset (NVIC_SystemReset, watchdog
+   * timeout, HardFault), which lets the FDIR persistent fault log
+   * survive a reboot and land in the next boot's downlink.
+   *
+   * The section is RAM-only (no flash load image), so the values are
+   * undefined on a cold power-on — the consumer must validate with a
+   * magic-number header (see fdir_persistent.c). Placing after .bss
+   * keeps the zero-init sweep from touching it and avoids layout
+   * churn for existing .bss symbols.
+   */
+  .noinit (NOLOAD) :
+  {
+    . = ALIGN(4);
+    _snoinit = .;
+    *(.noinit)
+    *(.noinit.*)
+    . = ALIGN(4);
+    _enoinit = .;
+  } >RAM
+
   /* ---- Heap + main stack region : everything left in RAM ------------- */
   ._user_heap_stack :
   {
