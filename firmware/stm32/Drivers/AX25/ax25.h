@@ -72,4 +72,34 @@ ax25_status_t ax25_decode_address(const uint8_t in[7],
                                   bool *is_last,
                                   ax25_address_t *out);
 
+/**
+ * Encode a complete AX.25 UI frame: flags + addresses + control + PID
+ * + info + FCS, with bit-stuffing applied between flags.
+ *
+ * @p out_cap must be ≥ AX25_MAX_FRAME_BYTES. Returns AX25_OK on success
+ * and writes the final length to *out_len.
+ *
+ * Rejects info longer than AX25_MAX_INFO_LEN and frames whose stuffed
+ * length would exceed AX25_MAX_FRAME_BYTES (REQ-AX25-012).
+ */
+ax25_status_t ax25_encode_ui_frame(
+    const ax25_address_t *dst, const ax25_address_t *src,
+    uint8_t pid,
+    const uint8_t *info, size_t info_len,
+    uint8_t *out, size_t out_cap, size_t *out_len);
+
+/**
+ * Decode a fully-buffered UNSTUFFED UI frame body (no flags, no
+ * bit-stuffing — just addresses + control + PID + info + FCS).
+ *
+ * Used internally by the streaming decoder (Task 4.2) and directly by
+ * unit tests that hand-build a frame body.
+ *
+ * Rejects frames with more than two address fields (REQ-AX25-018 —
+ * digipeater paths not supported).
+ */
+ax25_status_t ax25_decode_ui_frame(
+    const uint8_t *in, size_t in_len,
+    ax25_ui_frame_t *out_frame);
+
 #endif /* AX25_H */

@@ -138,4 +138,17 @@ else()
     target_compile_definitions(test_ax25_address PRIVATE SIMULATION_MODE)
 
     add_test(NAME ax25_address COMMAND test_ax25_address)
+
+    add_executable(test_ax25_frame
+        tests/test_ax25_frame.c
+        stm32/Drivers/AX25/ax25.c
+    )
+    target_include_directories(test_ax25_frame PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_ax25_frame PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_frame COMMAND test_ax25_frame)
 endif()

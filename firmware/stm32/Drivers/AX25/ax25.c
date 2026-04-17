@@ -8,6 +8,7 @@
  */
 
 #include "ax25.h"
+#include <string.h>
 
 /* CRC-16/X.25 per REQ-AX25-006 / REQ-AX25-022.
  *
@@ -125,6 +126,94 @@ ax25_status_t ax25_decode_address(const uint8_t in[7],
   if ((ssid_byte & 0x60) != 0x60) return AX25_ERR_ADDRESS_INVALID;
   out->ssid = (ssid_byte >> 1) & 0x0F;
   if (is_last) *is_last = (ssid_byte & 1) != 0;
+  return AX25_OK;
+}
+
+ax25_status_t ax25_encode_ui_frame(
+    const ax25_address_t *dst, const ax25_address_t *src,
+    uint8_t pid,
+    const uint8_t *info, size_t info_len,
+    uint8_t *out, size_t out_cap, size_t *out_len) {
+
+  if (dst == NULL || src == NULL || out == NULL || out_len == NULL) {
+    return AX25_ERR_BUFFER_OVERFLOW;
+  }
+  if (info_len > AX25_MAX_INFO_LEN) return AX25_ERR_INFO_TOO_LONG;
+  if (info == NULL && info_len > 0) return AX25_ERR_BUFFER_OVERFLOW;
+
+  /* Unstuffed frame body = dst(7) + src(7) + ctrl(1) + pid(1)
+   * + info + fcs(2). Max body size: 14 + 2 + 256 + 2 = 274 B. */
+  uint8_t body[AX25_MAX_INFO_LEN + 20];
+  size_t body_len = 0;
+
+  ax25_status_t st = ax25_encode_address(dst, false, &body[body_len]);
+  if (st != AX25_OK) return st;
+  body_len += 7;
+
+  st = ax25_encode_address(src, true, &body[body_len]);
+  if (st != AX25_OK) return st;
+  body_len += 7;
+
+  body[body_len++] = 0x03;   /* UI control */
+  body[body_len++] = pid;
+
+  if (info_len > 0) memcpy(&body[body_len], info, info_len);
+  body_len += info_len;
+
+  uint16_t fcs = ax25_fcs_crc16(body, body_len);
+  body[body_len++] = (uint8_t)(fcs & 0xFF);
+  body[body_len++] = (uint8_t)((fcs >> 8) & 0xFF);
+
+  /* Wrap with flags and bit-stuff the body. */
+  if (out_cap < 2) return AX25_ERR_BUFFER_OVERFLOW;
+  out[0] = 0x7E;
+  size_t stuffed = ax25_bit_stuff(body, body_len, &out[1], out_cap - 2);
+  if (stuffed == 0) return AX25_ERR_BUFFER_OVERFLOW;
+  size_t total = 1 + stuffed + 1;
+  if (total > AX25_MAX_FRAME_BYTES) return AX25_ERR_FRAME_TOO_LONG;
+  out[1 + stuffed] = 0x7E;
+  *out_len = total;
+  return AX25_OK;
+}
+
+ax25_status_t ax25_decode_ui_frame(const uint8_t *in, size_t in_len,
+                                    ax25_ui_frame_t *out_frame) {
+  if (in == NULL || out_frame == NULL) return AX25_ERR_BUFFER_OVERFLOW;
+  /* Minimum: dst(7) + src(7) + ctrl(1) + pid(1) + fcs(2) = 18 */
+  if (in_len < 18) return AX25_ERR_FLAG_MISSING;
+
+  memset(out_frame, 0, sizeof(*out_frame));
+
+  bool is_last = false;
+  ax25_status_t st = ax25_decode_address(&in[0], &is_last, &out_frame->dst);
+  if (st != AX25_OK) return st;
+  /* Destination MUST NOT have the H-bit set — there is a source after it. */
+  if (is_last) return AX25_ERR_ADDRESS_INVALID;
+
+  st = ax25_decode_address(&in[7], &is_last, &out_frame->src);
+  if (st != AX25_OK) return st;
+  /* REQ-AX25-018: source MUST have H-bit set. Digipeater paths
+   * (more address fields after src) are out of scope. */
+  if (!is_last) return AX25_ERR_ADDRESS_INVALID;
+
+  uint8_t ctrl = in[14];
+  uint8_t pid  = in[15];
+  if (ctrl != 0x03) return AX25_ERR_CONTROL_INVALID;
+  if (pid  != 0xF0) return AX25_ERR_PID_INVALID;
+  out_frame->control = ctrl;
+  out_frame->pid     = pid;
+
+  size_t info_len = in_len - 14 - 2 - 2;  /* addr + ctrl/pid + fcs */
+  if (info_len > AX25_MAX_INFO_LEN) return AX25_ERR_INFO_TOO_LONG;
+  out_frame->info_len = (uint16_t)info_len;
+  if (info_len > 0) memcpy(out_frame->info, &in[16], info_len);
+
+  uint16_t wanted = ax25_fcs_crc16(in, in_len - 2);
+  uint16_t got = (uint16_t)(in[in_len - 2] | (in[in_len - 1] << 8));
+  out_frame->fcs = got;
+  out_frame->fcs_valid = (wanted == got);
+  if (!out_frame->fcs_valid) return AX25_ERR_FCS_MISMATCH;
+
   return AX25_OK;
 }
 
