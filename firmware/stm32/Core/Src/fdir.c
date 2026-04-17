@@ -144,6 +144,16 @@ FDIR_Recovery_t FDIR_GetRecommendedAction(FDIR_FaultId_t id)
     if ((uint32_t)id >= FDIR_FAULT_COUNT) { return RECOVERY_LOG_ONLY; }
     const FDIR_FaultEntry_t *e = &g_table[id];
     const FDIR_FaultState_t *s = &g_state[id];
+
+    /* No activity in the current recent-window: by definition there
+     * is no "recovery needed" for this fault — return LOG_ONLY so
+     * an aggregator (e.g. mode_manager.c worst_action) does not
+     * trip on the primary action of a fault that was never reported.
+     * This also makes ClearRecent idempotent with respect to the
+     * supervisor's decision: once the window is cleared, the
+     * supervisor's next tick sees "no active fault" here. */
+    if (s->recent_count == 0U) { return RECOVERY_LOG_ONLY; }
+
     return (s->recent_count >= e->escalation_threshold)
            ? e->escalation : e->primary;
 }

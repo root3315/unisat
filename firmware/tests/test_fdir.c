@@ -102,12 +102,18 @@ void test_cross_fault_isolation(void)
     TEST_ASSERT_EQUAL(spi->escalation,
                       FDIR_GetRecommendedAction(FAULT_SPI_TIMEOUT));
 
-    /* I2C must still be at primary (default state). */
-    const FDIR_FaultEntry_t *i2c = FDIR_GetEntry(FAULT_I2C_BUS_STUCK);
-    TEST_ASSERT_EQUAL(i2c->primary,
+    /* I2C was never reported in this test — its recent_count is 0
+     * so GetRecommendedAction returns LOG_ONLY (no active fault).
+     * Entry table is still accessible via FDIR_GetEntry for the
+     * static configuration. Cross-fault isolation means SPI
+     * escalation did NOT bump I2C's state, which is what we
+     * actually verify below. */
+    (void)FDIR_GetEntry(FAULT_I2C_BUS_STUCK);
+    TEST_ASSERT_EQUAL(RECOVERY_LOG_ONLY,
                       FDIR_GetRecommendedAction(FAULT_I2C_BUS_STUCK));
     const FDIR_FaultState_t *s = FDIR_GetState(FAULT_I2C_BUS_STUCK);
     TEST_ASSERT_EQUAL(0U, s->total_count);
+    TEST_ASSERT_EQUAL(0U, s->recent_count);
 }
 
 
@@ -155,10 +161,14 @@ void test_clear_recent_preserves_total(void)
 
     FDIR_ClearRecent(FAULT_OVER_TEMPERATURE);
 
+    /* Clearing the recent window resets the supervisor's view — from
+     * the mode manager's perspective the fault is no longer active,
+     * so GetRecommendedAction returns LOG_ONLY (no action needed).
+     * The lifetime total_count is preserved for downlink trend. */
     const FDIR_FaultState_t *s = FDIR_GetState(FAULT_OVER_TEMPERATURE);
     TEST_ASSERT_EQUAL(0U, s->recent_count);
     TEST_ASSERT_EQUAL(e->escalation_threshold, s->total_count);
-    TEST_ASSERT_EQUAL(e->primary,
+    TEST_ASSERT_EQUAL(RECOVERY_LOG_ONLY,
                       FDIR_GetRecommendedAction(FAULT_OVER_TEMPERATURE));
 }
 

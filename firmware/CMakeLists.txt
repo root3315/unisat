@@ -474,6 +474,15 @@ else()
     target_compile_definitions(test_fdir PRIVATE SIMULATION_MODE)
     add_test(NAME fdir COMMAND test_fdir)
 
+    # Phase 3 follow-up — FDIR-driven mode supervisor.
+    add_executable(test_mode_manager
+        tests/test_mode_manager.c
+        stm32/Core/Src/mode_manager.c
+        stm32/Core/Src/fdir.c
+    )
+    target_compile_definitions(test_mode_manager PRIVATE SIMULATION_MODE)
+    add_test(NAME mode_manager COMMAND test_mode_manager)
+
     # Phase 4 — Board-temperature facade (Tboard beacon field).
     # Deliberately DOES NOT link tmp117.c; the test provides its own
     # strong TMP117_Init / TMP117_Read so bus-failure and

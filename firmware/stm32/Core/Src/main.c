@@ -11,6 +11,7 @@
 #include "command_dispatcher.h"
 #include "key_store.h"
 #include "fdir.h"
+#include "mode_manager.h"
 
 #ifndef SIMULATION_MODE
 #include "cmsis_os2.h"
@@ -81,6 +82,7 @@ int main(void) {
     Watchdog_Init();
     Error_Init();
     FDIR_Init();
+    ModeManager_Init();
 
     /* Command-authentication boot sequence.
      *
@@ -176,6 +178,10 @@ int main(void) {
     osThreadNew(PayloadTask, NULL, &payload_attr);
 
     system_state = SYSTEM_STATE_NOMINAL;
+    /* Declare nominal operating mode — from this point on the
+     * FDIR supervisor in WatchdogTask can transition us out to
+     * SAFE / DEGRADED / REBOOT_PEND on its own. */
+    ModeManager_EnterNominal();
 
     /* Start FreeRTOS scheduler */
     osKernelStart();
@@ -294,6 +300,10 @@ void WatchdogTask(void *argument) {
         Watchdog_FeedHardware();
         OBC_UpdateUptime();
         EPS_Update();
+        /* Supervisor poll — walks the FDIR fault table, selects the
+         * worst-case recommendation, and drives SAFE_MODE / DEGRADED /
+         * REBOOT_PEND transitions. No-op when no fault is active. */
+        (void)ModeManager_Tick();
         osDelay(WATCHDOG_FEED_PERIOD_MS);
     }
 }
