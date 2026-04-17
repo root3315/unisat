@@ -11,6 +11,7 @@
 #include "comm.h"
 #include "payload.h"
 #include "config.h"
+#include "board_temp.h"
 #include <string.h>
 #include <math.h>
 
@@ -142,9 +143,15 @@ uint16_t Telemetry_PackBeacon(uint8_t *buffer, uint16_t max_size) {
     uint8_t  soc      = (uint8_t)eps.battery_soc;
     uint16_t psol_mw  = (uint16_t)(eps.solar_power * 1000.0f);
 
-    /* OBC temperatures in 0.1 °C units */
+    /* OBC temperatures in 0.1 °C units.
+     *   tcpu   — die-temperature from the internal ADC channel.
+     *   tboard — PCB-level temperature read from the TMP117 via the
+     *            BoardTemp facade (Phase 4). Returns 0 when the
+     *            sensor hasn't yet produced a valid reading, which
+     *            happens only in the first 1 s after boot before
+     *            SensorTask has polled the bus. */
     int16_t tcpu    = (int16_t)(obc.cpu_temperature * 10.0f);
-    int16_t tboard  = 0; /* No board-temperature sensor in current structs */
+    int16_t tboard  = BoardTemp_GetScaled0p1();
 
     /* ADCS angular-rate magnitude: rad/s → 0.01 deg/s */
     float wx = adcs.angular_rate[0];

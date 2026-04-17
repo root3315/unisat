@@ -73,6 +73,7 @@ include_directories(
     stm32/Drivers/AX25
     stm32/Drivers/VirtualUART
     stm32/Drivers/Crypto
+    stm32/Drivers/BoardTemp
     stm32/ADCS
     stm32/EPS
 )
@@ -402,6 +403,19 @@ else()
     )
     target_compile_definitions(test_fdir PRIVATE SIMULATION_MODE)
     add_test(NAME fdir COMMAND test_fdir)
+
+    # Phase 4 — Board-temperature facade (Tboard beacon field).
+    # Deliberately DOES NOT link tmp117.c; the test provides its own
+    # strong TMP117_Init / TMP117_Read so bus-failure and
+    # out-of-range scenarios are exercised deterministically.
+    add_executable(test_board_temp
+        tests/test_board_temp.c
+        stm32/Drivers/BoardTemp/board_temp.c
+        stm32/Core/Src/fdir.c
+    )
+    target_compile_definitions(test_board_temp PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_board_temp PRIVATE m)
+    add_test(NAME board_temp COMMAND test_board_temp)
 
     # ───────── SITL firmware demo binary ─────────
 
