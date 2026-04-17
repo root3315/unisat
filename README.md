@@ -126,20 +126,43 @@ pip install -r requirements.txt
 python mission_analyzer.py
 ```
 
-### 5. End-to-end AX.25 SITL demo
+### 5. End-to-end AX.25 SITL demo (one command)
 
 ```bash
-# Requires Docker Desktop for reproducible builds without a local gcc.
-docker build -f docker/Dockerfile.ci -t unisat-ci .
-docker run --rm -v "$(pwd):/work" -w /work unisat-ci bash -lc \
-  "cd firmware && cmake -B build -S . && cmake --build build && \
-   ctest --test-dir build --output-on-failure && \
-   python3 scripts/demo.py --port 52100"
+# Requires Docker Desktop running. No local gcc/cmake/pytest needed.
+./scripts/verify.sh
 ```
 
-Expected output: ctest 15/15 passes, then two beacons decoded with
-`fcs_valid: true` and `[demo] SUCCESS — 2 beacons decoded`. This
-exercises the C encoder → TCP → Python `Ax25Decoder` path end-to-end.
+That script builds the `unisat-ci` Docker image once (~30 s), then
+runs the full green pipeline inside it: firmware host build →
+ctest → pytest → end-to-end SITL beacon demo. Expected final line:
+`✓ UniSat green. Ready to submit.`
+
+For more granular control:
+- `make all` — build + tests
+- `make ci` — same, inside Docker
+- `make demo` — just the SITL beacon path
+- `make test-c` / `make test-py` — split suites
+- `make help` — list all targets
+
+---
+
+## Project Status
+
+| Check | Status |
+|---|---|
+| Firmware host build (all subsystems) | ✅ clean (`unisat_core`) |
+| C unit tests (`ctest`) | ✅ **15 / 15 passing** |
+| Python tests (`pytest`) | ✅ **34 / 34 passing** incl. 200 hypothesis + 500 fuzz cases |
+| AX.25 golden vectors cross-validation | ✅ 28/28 byte-identical C ↔ Python |
+| SHA-256 FIPS 180-4 oracle | ✅ `"abc"` + `""` canonical digests |
+| HMAC-SHA256 RFC 4231 vectors | ✅ §4.2 + §4.3 on both C and Python |
+| End-to-end SITL demo | ✅ C encoder → TCP → Python decoder, `fcs_valid: true` |
+| Driver reality audit | ✅ all 8 sensors confirmed real (docs/verification/driver_audit.md) |
+| Requirement traceability | ✅ auto-generated (docs/verification/ax25_trace_matrix.md) |
+
+Open items ([CHANGELOG](CHANGELOG.md)): Track 1b command dispatcher
+wiring (HMAC primitives ready, integration pending).
 
 ### 5. Build firmware
 
