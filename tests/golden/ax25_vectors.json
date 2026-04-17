@@ -1,0 +1,377 @@
+[
+  {
+    "kind": "encode",
+    "description": "canonical beacon-style frame, 48 B info",
+    "reqs": [
+      "REQ-AX25-001",
+      "REQ-AX25-009"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f0000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f40424446484a4c4e50525456585a5c5ee49b017e"
+  },
+  {
+    "kind": "encode",
+    "description": "min-size UI (0 B info)",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f0260b7e"
+  },
+  {
+    "kind": "encode",
+    "description": "max-size UI (256 B info)",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeafb0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f0000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f40424446484a4c4e50525456585a5c5e60626466686a6c6e70727476787a7c7c010a121a222a323a424a525a626a727a828a929aa2aab2bac2cad2dae2eaf2fa04162636465666768696a6b6c6d6e6f606172737475767778797a7b7c7a78faf6f808182838485868788898a8b8c8d8e0f21232527292b2d2f31333537393b3d5f82868a8e92969a9ea2a6aaaeb2b6ba3e858d959da5adb5bdc5cdd5dde5edf5f91638587898b8d8f83072b2f23273b3f365e868e969ea6aebd3d8d9dadbdcdddeb7c1c3c58793979b2f474f579fcedeeebe1d3ebc7c79faf4f6edf1e5d3b78f6f5fdff7e16d007e"
+  },
+  {
+    "kind": "encode",
+    "description": "info contains 0x7E bytes",
+    "reqs": [
+      "REQ-AX25-007"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "7e7e7e",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f0be7cf942bb047e"
+  },
+  {
+    "kind": "encode",
+    "description": "info all 0xFF (worst-case stuffing growth)",
+    "reqs": [
+      "REQ-AX25-007",
+      "REQ-AX25-011"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f07ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77ddff77d5fe0437e"
+  },
+  {
+    "kind": "encode",
+    "description": "info 0xFE pattern (5 ones low nibble)",
+    "reqs": [
+      "REQ-AX25-007",
+      "REQ-AX25-016"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "fefefefefefefefe",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f0be7dfbf6eddbb76fdfe6867e"
+  },
+  {
+    "kind": "encode",
+    "description": "byte-boundary 5-ones runs (REQ-AX25-016)",
+    "reqs": [
+      "REQ-AX25-016"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "1ff81ff81ff81ff8",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f03df07dc0f701df077c48117e"
+  },
+  {
+    "kind": "encode",
+    "description": "alternating 0xFF/0x00",
+    "reqs": [
+      "REQ-AX25-007"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00ff00",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f07d037c07f80ef01de03bc07780ef00df01be037c07f80ef01de03bc07780ef00df014c91007e"
+  },
+  {
+    "kind": "encode",
+    "description": "short callsign padded with spaces",
+    "reqs": [
+      "REQ-AX25-002"
+    ],
+    "dst_callsign": "CT",
+    "dst_ssid": 0,
+    "src_callsign": "UN",
+    "src_ssid": 0,
+    "pid": 240,
+    "info_hex": "58",
+    "encoded_hex": "7e86a84040404060aa9c404040406103f05837be017e"
+  },
+  {
+    "kind": "encode",
+    "description": "ssid 0 both sides",
+    "reqs": [
+      "REQ-AX25-002"
+    ],
+    "dst_callsign": "UN8SAT",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 0,
+    "pid": 240,
+    "info_hex": "58",
+    "encoded_hex": "7eaa9c70a682a860aa9c70a682a86103f0586ff37e"
+  },
+  {
+    "kind": "encode",
+    "description": "ssid 15 both sides",
+    "reqs": [
+      "REQ-AX25-002"
+    ],
+    "dst_callsign": "UN8SAT",
+    "dst_ssid": 15,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 15,
+    "pid": 240,
+    "info_hex": "58",
+    "encoded_hex": "7eaa9c70a682a8be5439e14c0551df0dc0635198027e"
+  },
+  {
+    "kind": "encode",
+    "description": "digits in callsign",
+    "reqs": [
+      "REQ-AX25-002"
+    ],
+    "dst_callsign": "123456",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "58",
+    "encoded_hex": "7e626466686a6c60aa9c70a682a86303f058ecd97e"
+  },
+  {
+    "kind": "encode",
+    "description": "single-char callsigns",
+    "reqs": [
+      "REQ-AX25-002"
+    ],
+    "dst_callsign": "A",
+    "dst_ssid": 7,
+    "src_callsign": "B",
+    "src_ssid": 2,
+    "pid": 240,
+    "info_hex": "58",
+    "encoded_hex": "7e8240404040406e8440404040406503f058a99c7e"
+  },
+  {
+    "kind": "decode_raw",
+    "description": "digipeater path MUST be rejected",
+    "reqs": [
+      "REQ-AX25-018"
+    ],
+    "raw_body_hex": "86a24040404060aa9c70a682a862a48aa08a82a86103f058dfac",
+    "expected_status": "AX25_ERR_ADDRESS_INVALID"
+  },
+  {
+    "kind": "decode_raw",
+    "description": "bad FCS",
+    "reqs": [
+      "REQ-AX25-006"
+    ],
+    "raw_body_hex": "86a24040404060aa9c70a682a86303f04869dead",
+    "expected_status": "AX25_ERR_FCS_MISMATCH"
+  },
+  {
+    "kind": "decode_raw",
+    "description": "control != 0x03",
+    "reqs": [
+      "REQ-AX25-003"
+    ],
+    "raw_body_hex": "86a24040404060aa9c70a682a86399f00bef",
+    "expected_status": "AX25_ERR_CONTROL_INVALID"
+  },
+  {
+    "kind": "decode_raw",
+    "description": "pid != 0xF0",
+    "reqs": [
+      "REQ-AX25-004"
+    ],
+    "raw_body_hex": "86a24040404060aa9c70a682a86303eed9f2",
+    "expected_status": "AX25_ERR_PID_INVALID"
+  },
+  {
+    "kind": "encode",
+    "description": "encode info_len=1",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "07",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f00df001037e"
+  },
+  {
+    "kind": "encode",
+    "description": "encode info_len=2",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "0714",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f00d28b4bb017e"
+  },
+  {
+    "kind": "encode",
+    "description": "encode info_len=4",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "0714212e",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f00d28425ce6a5007e"
+  },
+  {
+    "kind": "encode",
+    "description": "encode info_len=8",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "0714212e3b485562",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f00d28425c7690aac4d672007e"
+  },
+  {
+    "kind": "encode",
+    "description": "encode info_len=16",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "0714212e3b4855626f7c8996a3b0bdca",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f00d28425c7690aac4def8245a8ec2f62a9ba6017e"
+  },
+  {
+    "kind": "encode",
+    "description": "encode info_len=32",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "0714212e3b4855626f7c8996a3b0bdcad7e4f1fe0b1825323f4c596673808d9a",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f00d28425c7690aac4def8245a8ec2f62a9f268ff7bd805122f38529cb6c0eb0511377147e"
+  },
+  {
+    "kind": "encode",
+    "description": "encode info_len=64",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "0714212e3b4855626f7c8996a3b0bdcad7e4f1fe0b1825323f4c596673808d9aa7b4c1cedbe8f5020f1c293643505d6a7784919eabb8c5d2dfecf90613202d3a",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f00d28425c7690aac4def8245a8ec2f62a9f268ff7bd805122f38529cb6c0eb051f39436d8791bbd5ee08123c56608aa4bed8e30d27315b758fa367b3e830990169de97c7e"
+  },
+  {
+    "kind": "encode",
+    "description": "encode info_len=96",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "0714212e3b4855626f7c8996a3b0bdcad7e4f1fe0b1825323f4c596673808d9aa7b4c1cedbe8f5020f1c293643505d6a7784919eabb8c5d2dfecf90613202d3a4754616e7b8895a2afbcc9d6e3f0fd0a1724313e4b5865727f8c99a6b3c0cdda",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f00d28425c7690aac4def8245a8ec2f62a9f268ff7bd805122f38529cb6c0eb051f39436d8791bbd5ee08123c56608aa4bed8e30d27315b758fa367b3e830990169d23aa30b73dc44ad1a7bcc9d6e3f0f92a5c90c4f858c22a93fbc698693a0bdcac4d78097e"
+  },
+  {
+    "kind": "encode",
+    "description": "encode info_len=128",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "0714212e3b4855626f7c8996a3b0bdcad7e4f1fe0b1825323f4c596673808d9aa7b4c1cedbe8f5020f1c293643505d6a7784919eabb8c5d2dfecf90613202d3a4754616e7b8895a2afbcc9d6e3f0fd0a1724313e4b5865727f8c99a6b3c0cddae7f4010e1b2835424f5c697683909daab7c4d1deebf805121f2c394653606d7a",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f00d28425c7690aac4def8245a8ec2f62a9f268ff7bd805122f38529cb6c0eb051f39436d8791bbd5ee08123c56608aa4bed8e30d27315b758fa367b3e830990169d23aa30b73dc44ad1a7bcc9d6e3f0f92a5c90c4f858c22a93fbc698693a0bdcac7d9c3e80c3064a8dd013579add2064a7ea2d71b4f73abe02890f2c394653606d7ad8d97e"
+  },
+  {
+    "kind": "encode",
+    "description": "encode info_len=192",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "0714212e3b4855626f7c8996a3b0bdcad7e4f1fe0b1825323f4c596673808d9aa7b4c1cedbe8f5020f1c293643505d6a7784919eabb8c5d2dfecf90613202d3a4754616e7b8895a2afbcc9d6e3f0fd0a1724313e4b5865727f8c99a6b3c0cddae7f4010e1b2835424f5c697683909daab7c4d1deebf805121f2c394653606d7a8794a1aebbc8d5e2effc091623303d4a5764717e8b98a5b2bfccd9e6f3000d1a2734414e5b6875828f9ca9b6c3d0ddeaf704111e2b3845525f6c798693a0adba",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f00d28425c7690aac4def8245a8ec2f62a9f268ff7bd805122f38529cb6c0eb051f39436d8791bbd5ee08123c56608aa4bed8e30d27315b758fa367b3e830990169d23aa30b73dc44ad1a7bcc9d6e3f0f92a5c90c4f858c22a93fbc698693a0bdcac7d9c3e80c3064a8dd013579add2064a7ea2d71b4f73abe02890f2c394653606d7a8794a1aebbc8d5e2dbf926588cc0f4285d91c5f95ac42c957dcb9c6d3e1ea041e38426c8690bad4ef02167aaed3074b7fa7a82088f159c22a94f6c798693a0adba567d007e"
+  },
+  {
+    "kind": "encode",
+    "description": "encode info_len=200",
+    "reqs": [
+      "REQ-AX25-005"
+    ],
+    "dst_callsign": "CQ",
+    "dst_ssid": 0,
+    "src_callsign": "UN8SAT",
+    "src_ssid": 1,
+    "pid": 240,
+    "info_hex": "0714212e3b4855626f7c8996a3b0bdcad7e4f1fe0b1825323f4c596673808d9aa7b4c1cedbe8f5020f1c293643505d6a7784919eabb8c5d2dfecf90613202d3a4754616e7b8895a2afbcc9d6e3f0fd0a1724313e4b5865727f8c99a6b3c0cddae7f4010e1b2835424f5c697683909daab7c4d1deebf805121f2c394653606d7a8794a1aebbc8d5e2effc091623303d4a5764717e8b98a5b2bfccd9e6f3000d1a2734414e5b6875828f9ca9b6c3d0ddeaf704111e2b3845525f6c798693a0adbac7d4e1eefb081522",
+    "encoded_hex": "7e86a24040404060aa9c70a682a86303f00d28425c7690aac4def8245a8ec2f62a9f268ff7bd805122f38529cb6c0eb051f39436d8791bbd5ee08123c56608aa4bed8e30d27315b758fa367b3e830990169d23aa30b73dc44ad1a7bcc9d6e3f0f92a5c90c4f858c22a93fbc698693a0bdcac7d9c3e80c3064a8dd013579add2064a7ea2d71b4f73abe02890f2c394653606d7a8794a1aebbc8d5e2dbf926588cc0f4285d91c5f95ac42c957dcb9c6d3e1ea041e38426c8690bad4ef02167aaed3074b7fa7a82088f159c22a94f6c798693a0adbac7d4e1eef32154884889017e"
+  }
+]

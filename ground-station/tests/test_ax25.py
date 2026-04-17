@@ -9,6 +9,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+
+
 import pytest
 
 from utils.ax25 import (
@@ -160,3 +162,52 @@ class TestUiFrame:
         body += fcs_crc16(body).to_bytes(2, "little")
         with pytest.raises(InvalidPid):
             decode_ui_frame(body)
+
+
+class TestGoldenVectors:
+    """REQ-AX25-015: C + Python MUST produce bit-identical output
+    against the shared fixture set."""
+
+    @pytest.fixture(scope="class")
+    def vectors(self):
+        import json
+        path = (Path(__file__).resolve().parents[2]
+                / "tests" / "golden" / "ax25_vectors.json")
+        return json.loads(path.read_text())
+
+    def test_vector_file_has_at_least_28_entries(self, vectors):
+        assert len(vectors) >= 28
+
+    def test_encode_vectors_match_generator_output(self, vectors):
+        """Sanity: Python regenerates the same bytes it recorded."""
+        checked = 0
+        for v in vectors:
+            if v["kind"] != "encode":
+                continue
+            frame = encode_ui_frame(
+                Address(v["dst_callsign"], v["dst_ssid"]),
+                Address(v["src_callsign"], v["src_ssid"]),
+                v["pid"],
+                bytes.fromhex(v["info_hex"]),
+            )
+            assert frame.hex() == v["encoded_hex"], v["description"]
+            checked += 1
+        assert checked >= 20
+
+    _STATUS_TO_EXC = {
+        "AX25_ERR_ADDRESS_INVALID": InvalidAddress,
+        "AX25_ERR_FCS_MISMATCH":    FcsMismatch,
+        "AX25_ERR_CONTROL_INVALID": InvalidControl,
+        "AX25_ERR_PID_INVALID":     InvalidPid,
+    }
+
+    def test_decode_raw_vectors(self, vectors):
+        checked = 0
+        for v in vectors:
+            if v["kind"] != "decode_raw":
+                continue
+            expected_exc = self._STATUS_TO_EXC[v["expected_status"]]
+            with pytest.raises(expected_exc):
+                decode_ui_frame(bytes.fromhex(v["raw_body_hex"]))
+            checked += 1
+        assert checked >= 4

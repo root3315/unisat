@@ -151,4 +151,19 @@ else()
     target_compile_definitions(test_ax25_frame PRIVATE SIMULATION_MODE)
 
     add_test(NAME ax25_frame COMMAND test_ax25_frame)
+
+    # Cross-impl golden-vector verification (REQ-AX25-015).
+    add_executable(test_ax25_golden
+        tests/test_ax25_golden.c
+        stm32/Drivers/AX25/ax25.c
+    )
+    target_include_directories(test_ax25_golden PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+        ${CMAKE_SOURCE_DIR}/../tests/golden
+    )
+    target_compile_definitions(test_ax25_golden PRIVATE SIMULATION_MODE)
+
+    add_test(NAME ax25_golden COMMAND test_ax25_golden)
 endif()
