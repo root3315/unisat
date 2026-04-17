@@ -196,4 +196,24 @@ else()
     target_compile_definitions(test_ax25_api PRIVATE SIMULATION_MODE)
 
     add_test(NAME ax25_api COMMAND test_ax25_api)
+
+    # comm.c integration — RX ring -> streaming decoder -> dispatcher.
+    add_executable(test_comm_integration
+        tests/test_comm_integration.c
+        tests/test_stubs.c
+        stm32/Core/Src/comm.c
+        stm32/Core/Src/telemetry.c
+        stm32/Core/Src/ccsds.c
+        stm32/Drivers/AX25/ax25.c
+        stm32/Drivers/AX25/ax25_decoder.c
+    )
+    target_include_directories(test_comm_integration PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/AX25
+    )
+    target_compile_definitions(test_comm_integration PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_comm_integration PRIVATE m)
+
+    add_test(NAME comm_integration COMMAND test_comm_integration)
 endif()

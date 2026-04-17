@@ -31,8 +31,11 @@ SystemConfig_t config = {
     .payload = { .enabled = false },
 };
 
-/* ---- COMM (only COMM_Send needed by Telemetry_SendPacket) ---------- */
+/* ---- COMM (only COMM_Send needed by Telemetry_SendPacket) ----------
+ * Weak so tests that also link the real comm.c do not see a duplicate
+ * symbol (the strong definition wins). */
 
+__attribute__((weak))
 bool COMM_Send(CommChannel_t ch, const uint8_t *data, uint16_t len) {
     (void)ch; (void)data; (void)len;
     return true;

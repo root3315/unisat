@@ -29,6 +29,11 @@ typedef struct {
     int8_t rssi;
     uint32_t last_rx_timestamp;
     uint32_t last_tx_timestamp;
+    /* AX.25 link-layer counters (mirrored from ax25_decoder_t). */
+    uint32_t ax25_frames_ok;
+    uint32_t ax25_fcs_errors;
+    uint32_t ax25_frame_errors;
+    uint32_t ax25_overflow_errors;
 } COMM_Status_t;
 
 void COMM_Init(void);
@@ -41,5 +46,24 @@ int8_t COMM_GetRSSI(CommChannel_t channel);
 bool COMM_IsConnected(CommChannel_t channel);
 void COMM_ProcessRxBuffer(void);
 void COMM_UART_RxCallback(CommChannel_t channel, uint8_t byte);
+
+/**
+ * Encode + transmit a CCSDS-carrying AX.25 UI frame.
+ *
+ * Callers pass raw info bytes (typically a CCSDS Space Packet). This
+ * function builds the AX.25 frame (addresses, control=0x03, pid=0xF0,
+ * FCS, bit-stuffing, flags) and hands the byte stream to COMM_Send().
+ */
+bool COMM_SendAX25(CommChannel_t channel,
+                    const char *dst_call, uint8_t dst_ssid,
+                    const char *src_call, uint8_t src_ssid,
+                    const uint8_t *info, uint16_t info_len);
+
+/**
+ * Start the FreeRTOS comm_rx_task (10 ms period) that drains the UART
+ * ring buffer through the AX.25 streaming decoder. No-op under
+ * SIMULATION_MODE — the test harness or SITL pump drives RX directly.
+ */
+void COMM_StartTask(void);
 
 #endif /* COMM_H */
