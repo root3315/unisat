@@ -278,6 +278,16 @@ else()
     target_compile_definitions(test_hmac PRIVATE SIMULATION_MODE)
     add_test(NAME hmac COMMAND test_hmac)
 
+    # Track 1b — HMAC-authenticated command dispatcher.
+    add_executable(test_command_dispatcher
+        tests/test_command_dispatcher.c
+        stm32/Core/Src/command_dispatcher.c
+        stm32/Drivers/Crypto/sha256.c
+        stm32/Drivers/Crypto/hmac_sha256.c
+    )
+    target_compile_definitions(test_command_dispatcher PRIVATE SIMULATION_MODE)
+    add_test(NAME command_dispatcher COMMAND test_command_dispatcher)
+
     # ───────── SITL firmware demo binary ─────────
 
     add_executable(sitl_fw

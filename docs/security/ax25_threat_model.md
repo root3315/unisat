@@ -28,16 +28,29 @@ syntactically valid CCSDS command packet.
 - Constant-time verification (`hmac_sha256_verify`) to defeat
   timing side-channels.
 
-**Remaining work — command dispatcher wiring:**
+**Mitigation — wired (Track 1b complete):**
 
-- Append 32-byte HMAC tag to every CCSDS command packet on the ground,
-  verify on the satellite before dispatch.
-- Reject packets whose tag fails verification (counter, no reply).
+`firmware/stm32/Core/Src/command_dispatcher.c` provides the strong
+`CCSDS_Dispatcher_Submit` symbol that overrides the weak no-op in
+`comm.c`. Every frame emitted by the AX.25 streaming decoder is now:
 
-**Residual risk today:** until the dispatcher wiring lands, commands
-reach the subsystem without auth. This is mitigated operationally for
-testing by running with command handling disabled; beacon TX is
-read-only.
+1. Split into CCSDS body + 32-byte HMAC tag.
+2. Tag recomputed over the body with the pre-shared key.
+3. Constant-time compared (`hmac_sha256_verify`).
+4. On match → forwarded to the registered command handler;
+   on mismatch → dropped silently, `rejected_bad_tag` counter bumped.
+
+Unit tests (`firmware/tests/test_command_dispatcher.c`):
+
+- Valid tag → handler fired, `accepted` counter +1.
+- Tampered tag → handler NOT fired, `rejected_bad_tag` +1.
+- Truncated frame → `rejected_too_short` +1.
+- No key installed → everything rejected (fail-closed).
+
+**Residual risk:** replay protection (T2) still relies on the CCSDS
+secondary-header sequence window, which the dispatcher currently
+does NOT enforce (only authenticity, not freshness). Wiring the
+freshness check is the remaining Track 1b item.
 
 ### T2 — Replay
 

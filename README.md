@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/root3315/unisat/blob/master/scripts/verify.sh"><img src="https://img.shields.io/badge/verify-.%2Fscripts%2Fverify.sh-brightgreen.svg" alt="Verify"></a>
   <a href="https://github.com/root3315/unisat/blob/master/docs/superpowers/specs/2026-04-17-track1-ax25-design.md"><img src="https://img.shields.io/badge/AX.25-v2.2_full-success.svg" alt="AX.25"></a>
-  <a href="https://github.com/root3315/unisat/blob/master/docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/tests-C_15%20%2B%20Py_34-brightgreen.svg" alt="Tests"></a>
+  <a href="https://github.com/root3315/unisat/blob/master/docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/tests-C_16%20%2B%20Py_34-brightgreen.svg" alt="Tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg?logo=python&logoColor=white" alt="Python"></a>
   <a href="#"><img src="https://img.shields.io/badge/firmware-STM32F4-green.svg?logo=stmicroelectronics" alt="STM32"></a>
@@ -152,7 +152,7 @@ For more granular control:
 | Check | Status |
 |---|---|
 | Firmware host build (all subsystems) | ✅ clean (`unisat_core`) |
-| C unit tests (`ctest`) | ✅ **15 / 15 passing** |
+| C unit tests (`ctest`) | ✅ **16 / 16 passing** |
 | Python tests (`pytest`) | ✅ **34 / 34 passing** incl. 200 hypothesis + 500 fuzz cases |
 | AX.25 golden vectors cross-validation | ✅ 28/28 byte-identical C ↔ Python |
 | SHA-256 FIPS 180-4 oracle | ✅ `"abc"` + `""` canonical digests |

@@ -44,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from billing-blocked runs. Reviewers should use
   `./scripts/verify.sh` which runs the same pipeline locally.
 
-### Added — Track 1b (command authentication primitives)
+### Added — Track 1b (command authentication — now wired end-to-end)
 
 - HMAC-SHA256 library at `firmware/stm32/Drivers/Crypto/` — portable
   C11, zero platform dependencies, suitable for flight-software
@@ -57,6 +57,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   48 B raw (`Telemetry_PackBeacon`) → CCSDS Space Packet
   (`CCSDS_BuildPacket` + `CCSDS_Serialize`) → AX.25 UI frame
   (`COMM_SendAX25`).
+- **Command dispatcher with HMAC verification**
+  (`firmware/stm32/Core/Src/command_dispatcher.c`). Provides the
+  strong `CCSDS_Dispatcher_Submit` that overrides the weak no-op
+  in `comm.c`. Splits incoming frames into CCSDS body + 32-byte
+  tag, verifies the tag in constant time, drops unauthenticated
+  frames silently, forwards authenticated frames to a registered
+  handler. Counters (`accepted`, `rejected_bad_tag`,
+  `rejected_too_short`) exposed for telemetry. Unit tests cover
+  valid / tampered / truncated / no-key cases.
+- **Threat T1 (command injection) — MITIGATED.** Threat model
+  updated accordingly (`docs/security/ax25_threat_model.md`).
 
 ### Fixed
 
