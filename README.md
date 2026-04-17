@@ -5,7 +5,7 @@
 <h1 align="center">UniSat — Universal Modular CubeSat Platform</h1>
 
 <p align="center">
-  <a href="https://github.com/root3315/unisat/actions"><img src="https://img.shields.io/github/actions/workflow/status/root3315/unisat/ax25.yml?branch=master&label=CI&logo=github" alt="CI"></a>
+  <a href="https://github.com/root3315/unisat/blob/master/scripts/verify.sh"><img src="https://img.shields.io/badge/verify-.%2Fscripts%2Fverify.sh-brightgreen.svg" alt="Verify"></a>
   <a href="https://github.com/root3315/unisat/blob/master/docs/superpowers/specs/2026-04-17-track1-ax25-design.md"><img src="https://img.shields.io/badge/AX.25-v2.2_full-success.svg" alt="AX.25"></a>
   <a href="https://github.com/root3315/unisat/blob/master/docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/tests-C_15%20%2B%20Py_34-brightgreen.svg" alt="Tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
