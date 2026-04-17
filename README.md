@@ -162,8 +162,12 @@ For more granular control:
 |---|---|
 | Firmware host build (all subsystems) | ✅ clean (`unisat_core`) |
 | Firmware target build (STM32F446RE .elf/.bin/.hex) | ✅ `make target` |
-| C unit tests (`ctest`) | ✅ **25 / 25 passing** (90+ sub-tests) |
-| Python tests (`pytest`) | ✅ **56+ passing** incl. hypothesis + fuzz + e2e + soak + hmac_auth |
+| C unit tests (`ctest`) | ✅ **27 / 27 passing** (100+ sub-tests) |
+| Python tests (`pytest`) | ✅ **211 passing** (+ 1 skipped) incl. hypothesis + fuzz + e2e + soak + hmac_auth + Streamlit page smoke |
+| **Python coverage (MUST gate)** | ✅ 51 % (`make coverage-py`, ≥ 50 % enforced) |
+| **Streamlit page import smoke** | ✅ 12/13 passing (1 skipped — streamlit not installed) |
+| **SBOM (SPDX)** | ✅ `make sbom` generates `docs/sbom/sbom-summary.md` |
+| **FreeRTOS autodetect in CMake** | ✅ `make setup-freertos` + `make setup-all` |
 | AX.25 golden vectors cross-validation | ✅ 28/28 byte-identical C ↔ Python |
 | SHA-256 FIPS 180-4 oracle | ✅ `"abc"` + `""` canonical digests |
 | HMAC-SHA256 RFC 4231 vectors | ✅ §4.2 + §4.3 on both C and Python |
@@ -181,9 +185,10 @@ For more granular control:
 | **Persistent fault log (.noinit, survives warm reboot)** | ✅ 6/6 tests |
 | Tboard (TMP117) facade in beacon bytes 14–15 | ✅ 6/6 tests |
 | cppcheck static-analysis gate | ✅ clean (`make cppcheck`) |
-| **Line coverage** | ✅ **84.4 %** / functions 82.7 % (`make coverage`) |
-| ASAN + UBSAN under ctest | ✅ 25/25 clean (`make sanitizers`) |
-| STRICT mode (-Werror -Wshadow -Wconversion) | ✅ 25/25 clean (`cmake -DSTRICT=ON`) |
+| **Line coverage (C)** | ✅ **85.3 %** / functions 84.0 % (`make coverage`) |
+| ASAN + UBSAN under ctest | ✅ 27/27 clean (`make sanitizers`) |
+| STRICT mode (-Werror -Wshadow -Wconversion) | ✅ 27/27 clean (`cmake -DSTRICT=ON`) |
+| ADRs for architectural decisions | ✅ **8 ADRs** under `docs/adr/` |
 | Full SRS + traceability CSV | ✅ docs/requirements/SRS.md |
 | HIL test plan + characterization templates | ✅ docs/testing + docs/characterization |
 | Requirement traceability (AX.25 subset) | ✅ auto-generated (docs/verification/ax25_trace_matrix.md) |
@@ -329,17 +334,25 @@ make demo             # end-to-end SITL AX.25 beacon demo
 make help             # list all targets
 ```
 
-**Quality gates (Phase 5):**
+**Quality gates:**
 ```bash
+# C firmware
 make cppcheck         # static-analysis gate (zero issues)
 make cppcheck-strict  # + MISRA-C:2012 advisory report
-make coverage         # lcov html report (baseline 73.6 % lines)
+make coverage         # lcov html report (85.3 % lines)
 make sanitizers       # ASAN + UBSAN under ctest
+
+# Python
+make coverage-py      # pytest + coverage (≥ 50 % MUST gate, 80 % SHOULD)
+make lint-py          # mypy type check on flight-software
+
+# supply-chain
+make sbom             # SPDX bill-of-materials under docs/sbom/
 ```
 
 **STM32 target (Phase 1):**
 ```bash
-make setup-hal        # fetch STM32Cube HAL (one-time)
+make setup-all        # fetch STM32Cube HAL + FreeRTOS kernel (one-time)
 make target           # cross-compile .elf / .bin / .hex
 make size             # per-section flash / RAM usage
 make flash            # st-flash to Nucleo-F446RE

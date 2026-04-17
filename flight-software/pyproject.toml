@@ -33,12 +33,51 @@ dependencies = [
 dev = [
     "pytest>=7.4",
     "pytest-asyncio>=0.21",
+    "pytest-cov>=4.1",
     "mypy>=1.7",
     "ruff>=0.1.6",
+    "hypothesis>=6.0",
 ]
 
 [project.scripts]
 unisat = "flight_controller:main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# pythonpath keeps the existing `sys.path.insert` convention working
+# when pytest is invoked from the repo root or from flight-software/.
+pythonpath = ["."]
+
+[tool.coverage.run]
+# Measure every import from the flight-software tree; exclude the
+# test files themselves and vendor one-liner entry points.
+source = ["core", "modules"]
+branch = true
+omit = [
+    "tests/*",
+    "flight_controller.py",   # entry point; exercised via integration
+    "run_cansat.py",
+]
+
+[tool.coverage.report]
+# MUST-level gate (current baseline). A regression below this
+# threshold fails the CI job that runs `pytest --cov`.
+#
+# Why 50 and not 80?  Current measured coverage is 51 %. The 80 %
+# value is aspirational (SRS REQ-BLD-005 stretch goal) and lives
+# in docs/quality/static_analysis.md, not here, so adding new
+# tests can ratchet this up without opening a "fix the gate"
+# side-PR every time.
+fail_under = 50
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
 
 [tool.ruff]
 target-version = "py311"
@@ -49,3 +88,13 @@ python_version = "3.11"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
+# The project pulls in a few libraries that don't ship type stubs
+# (pyserial, sgp4). Ignore missing imports for those so mypy can
+# still gate the in-tree code.
+ignore_missing_imports = true
+# Tests use Any heavily for fixtures; exempt the tests/ tree from
+# strict to keep the gate actionable on production code first.
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false

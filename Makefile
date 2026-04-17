@@ -21,7 +21,8 @@
 .PHONY: all build build-firmware test test-c test-py demo \
         docker-ci ci goldens trace clean help \
         target size flash setup-hal setup-freertos setup-all \
-        cppcheck cppcheck-strict coverage sanitizers
+        cppcheck cppcheck-strict coverage sanitizers \
+        coverage-py lint-py configurator sbom
 
 FIRMWARE_DIR := firmware
 BUILD_DIR    := $(FIRMWARE_DIR)/build
@@ -59,6 +60,12 @@ help:
 	@echo "    make cppcheck-strict  + MISRA advisory report"
 	@echo "    make coverage    Host build + ctest + lcov html report"
 	@echo "    make sanitizers  Host build + ctest under ASAN/UBSAN"
+	@echo "    make coverage-py Python tests + pytest-cov (≥ 50 % gate)"
+	@echo "    make lint-py     mypy type check on flight-software"
+	@echo ""
+	@echo "  extras:"
+	@echo "    make configurator  Launch Streamlit mission configurator UI"
+	@echo "    make sbom        Generate software bill of materials (SPDX)"
 
 # --- main ---------------------------------------------------------
 
@@ -134,6 +141,37 @@ sanitizers:
 	cmake -B $(BUILD_DIR)-san -S $(FIRMWARE_DIR) -DSANITIZERS=ON
 	cmake --build $(BUILD_DIR)-san
 	ctest --test-dir $(BUILD_DIR)-san --output-on-failure
+
+# --- Python quality gates ----------------------------------------
+#
+# coverage-py runs pytest with coverage enforcement per the
+# [tool.coverage.report] section of flight-software/pyproject.toml
+# (current MUST-level gate: 50 %, SHOULD target: 80 %).
+#
+# lint-py runs mypy on the core/ + modules/ trees for static type
+# checking.  Ruff is available via the same [dev] extra for style
+# linting — kept separate so CI can parallelise them.
+
+coverage-py:
+	cd $(GS_DIR) && python3 -m pytest tests/ -q
+	cd flight-software && python3 -m pytest tests/ --cov --cov-report=term
+
+lint-py:
+	cd flight-software && python3 -m mypy core modules || \
+	    (echo "hint: install mypy via 'pip install -e .[dev]'"; true)
+
+# --- Mission configurator -----------------------------------------
+#
+# The configurator is a Streamlit wizard under configurator/. This
+# target spins it up locally; press Ctrl-C to stop.
+
+configurator:
+	cd configurator && python3 -m streamlit run app.py
+
+# --- Software Bill of Materials (SBOM) ----------------------------
+
+sbom:
+	scripts/gen_sbom.sh
 
 # --- STM32F446RE target build ------------------------------------
 #

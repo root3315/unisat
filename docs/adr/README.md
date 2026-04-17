@@ -15,6 +15,8 @@ taken.
 | [ADR-004](ADR-004-replay-counter-zero-sentinel.md) | Reserve counter = 0 as uninitialised sentinel | 2 | ✅ Accepted |
 | [ADR-005](ADR-005-fdir-advisory-split.md) | FDIR as advisor; mode manager as commander | 3 + 7.3 | ✅ Accepted |
 | [ADR-006](ADR-006-noinit-persistent-log.md) | Warm-reboot-survivable fault log via `.noinit` SRAM | 7.4 | ✅ Accepted |
+| [ADR-007](ADR-007-hal-shim-strategy.md) | Weak HAL shim + optional autodetect | 1 | ✅ Accepted |
+| [ADR-008](ADR-008-command-dispatcher-wire-format.md) | CCSDS-agnostic command-dispatcher wire format | 1b + 2 | ✅ Accepted |
 
 ## Format
 
