@@ -248,8 +248,24 @@ FDIR follows a three-level hierarchy per ECSS-Q-ST-30C:
 | Level | Scope | Response Time | Actor |
 |-------|-------|---------------|-------|
 | L0 - Hardware | Peripheral level | < 1 ms | Watchdog IC, voltage supervisor |
-| L1 - Software autonomous | Subsystem level | < 10 s | Error_Handler(), Watchdog_CheckAll() |
+| L1 - Software autonomous | Subsystem level | < 10 s | `Error_Handler`, `Watchdog_CheckAll`, `fdir.c` advisor |
+| L1.5 - System supervisor | Mode level | < 1 s (watchdog tick) | `mode_manager.c` drives SAFE/DEGRADED/REBOOT from FDIR aggregate |
+| L1.6 - Persistent log | Ring buffer | across warm reboots | `fdir_persistent.c` — .noinit SRAM + CRC |
 | L2 - Ground commanded | System level | Next pass (~90 min) | Ground operator TC |
+
+> **TRL-5 hardening (branch `feat/trl5-hardening`):** the firmware now
+> carries a full software-side FDIR stack under
+> `firmware/stm32/Core/{Inc,Src}/`:
+> * `fdir.c/.h` — table-driven fault advisor, 12 fault IDs, 60 s escalation
+>   window (details in [docs/reliability/fdir.md](reliability/fdir.md))
+> * `mode_manager.c/.h` — polls FDIR at 1 Hz in WatchdogTask and drives
+>   the satellite-level mode transition
+> * `fdir_persistent.c/.h` — warm-reboot-survivable fault ring in .noinit
+> * `key_store.c/.h` — A/B persistent HMAC key with monotonic generation
+> * `command_dispatcher.c/.h` — HMAC + 32-bit replay counter for uplink
+>
+> See [docs/requirements/SRS.md](requirements/SRS.md) for the
+> requirement-level contract and the per-REQ test coverage.
 
 ### 9.2 Fault Table
 

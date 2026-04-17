@@ -212,7 +212,8 @@ waypoint navigation.
 
 ```bash
 make build       # cmake + cmake --build
-make test-c      # ctest 16/16
+make test-c      # ctest 25/25 (post-TRL-5)
+make test-py     # pytest 56+ тестов
 ```
 
 Или вручную:
@@ -224,20 +225,23 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-**Cross-build (для реального STM32F446):**
+**Cross-build для реального STM32F446 (после TRL-5 hardening):**
 
 ```bash
-# Нужен arm-none-eabi-gcc в PATH
-cd firmware
-cmake -B build-arm -S . -DCMAKE_TOOLCHAIN_FILE=arm.cmake
-cmake --build build-arm
-# Результат: firmware/build-arm/unisat_firmware.elf + .bin + .hex
+# Одной командой из корня проекта (нужен arm-none-eabi-gcc):
+make setup-hal   # первый раз — fetch STM32Cube HAL (~15 MB)
+make target      # cross-compile -> build-arm/unisat_firmware.{elf,bin,hex}
+make size        # per-section flash / RAM report
+make flash       # прошить через ST-Link (со 90% footprint-бюджетом)
 ```
 
-Прошивка на плату (ST-Link):
+**Quality gates (запустить локально перед PR):**
 
 ```bash
-st-flash write build-arm/unisat_firmware.bin 0x08000000
+make cppcheck        # static-analysis gate (zero warnings)
+make coverage        # lcov HTML report (≥ 80% lines target)
+make sanitizers      # ASAN + UBSAN под ctest
+cmake -DSTRICT=ON ...; make  # -Werror -Wshadow -Wconversion
 ```
 
 ### 5.2 Flight software
