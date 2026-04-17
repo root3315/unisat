@@ -463,11 +463,45 @@ else()
     target_link_libraries(test_eps_extended PRIVATE m)
     add_test(NAME eps_extended COMMAND test_eps_extended)
 
+    # power_distribution.c — load shedding + channel control.
+    add_executable(test_power_distribution
+        tests/test_power_distribution.c
+        stm32/EPS/power_distribution.c
+    )
+    target_compile_definitions(test_power_distribution PRIVATE SIMULATION_MODE)
+    add_test(NAME power_distribution COMMAND test_power_distribution)
+
+    # error_handler.c — log ring + safe-mode + EEPROM-branch coverage.
+    # Uses its own in-file EPS stubs (not test_stubs.c) so the test
+    # stays standalone — gcov tracks the Error_Log severity branches
+    # without pulling in the full subsystem tree.
+    add_executable(test_error_handler
+        tests/test_error_handler.c
+        stm32/Core/Src/error_handler.c
+    )
+    target_compile_definitions(test_error_handler PRIVATE SIMULATION_MODE)
+    add_test(NAME error_handler COMMAND test_error_handler)
+
+    # Telemetry module smoke tests — deeper coverage is in
+    # test_telemetry_packers.c and test_beacon_layout.c.
     add_executable(test_telemetry
         tests/test_telemetry.c
+        tests/test_stubs.c
+        stm32/Core/Src/telemetry.c
+        stm32/Core/Src/ccsds.c
+        stm32/Drivers/BoardTemp/board_temp.c
+        stm32/Drivers/TMP117/tmp117.c
+        stm32/Core/Src/fdir.c
+    )
+    target_include_directories(test_telemetry PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/BoardTemp
+        stm32/Drivers/TMP117
     )
     target_compile_definitions(test_telemetry PRIVATE SIMULATION_MODE)
-    add_test(NAME telemetry_placeholder COMMAND test_telemetry)
+    target_link_libraries(test_telemetry PRIVATE m)
+    add_test(NAME telemetry_smoke COMMAND test_telemetry)
 
     # Phase 7 #5 — per-subsystem telemetry packers.
     add_executable(test_telemetry_packers
