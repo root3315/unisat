@@ -92,6 +92,16 @@ cp -r "$TMP_DIR/cube/Drivers/CMSIS/Device/ST/STM32F4xx/Include" \
 cp -r "$TMP_DIR/cube/Drivers/CMSIS/Include" \
       "$DRIVERS_DIR/CMSIS/CMSIS_Include"
 
+# CMSIS-RTOSv2 wrapper — ships in the Cube Middlewares tree, lets
+# setup_freertos.sh find it without re-fetching anything. Stage into
+# a parallel directory to match the path the firmware CMake uses.
+CUBE_RTOS_WRAPPER="$TMP_DIR/cube/Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2"
+if [[ -d "$CUBE_RTOS_WRAPPER" ]]; then
+    MW_DIR="$PROJECT_ROOT/firmware/stm32/Middlewares"
+    mkdir -p "$MW_DIR/CMSIS_RTOS_V2"
+    cp -r "$CUBE_RTOS_WRAPPER"/. "$MW_DIR/CMSIS_RTOS_V2/"
+fi
+
 echo "==> done."
 echo "    HAL:   $DRIVERS_DIR/STM32F4xx_HAL_Driver   (~$(du -sh "$DRIVERS_DIR/STM32F4xx_HAL_Driver" | cut -f1))"
 echo "    CMSIS: $DRIVERS_DIR/CMSIS                  (~$(du -sh "$DRIVERS_DIR/CMSIS" | cut -f1))"

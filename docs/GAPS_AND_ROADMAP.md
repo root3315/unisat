@@ -48,6 +48,24 @@ target hardware execution proven).
 **Все 6 фаз TRL-5 hardening закрыты** — ветка `feat/trl5-hardening`
 готова к ревью и слиянию с master.
 
+### Phase 8 — hardware-verification sweep (done)
+
+После Phase 7 проведён code audit + realistic ARM build. Закрыто:
+
+| # | Тема | Результат |
+|---|---|---|
+| 8.1 | C driver unused-function warnings | ✅ `__attribute__((unused))` на все SIM-only helpers |
+| 8.2 | `comm.c` unused TX buffer | ✅ annotated |
+| 8.3 | Python coverage 51 % → 77.24 % | ✅ 4 новых test pack'а, 299 pytest total |
+| 8.4 | **ARM target build verified** | ✅ firmware.elf = 31.6 KB flash (6 %) / 36.3 KB RAM (28 %) |
+| 8.5 | FreeRTOSConfig.h / stm32f4xx_hal_conf.h / stm32_assert.h / peripherals.c | ✅ добавлены под Target/ |
+| 8.6 | setup_stm32_hal.sh теперь тянет CMSIS-RTOSv2 wrapper | ✅ |
+| 8.7 | SysTick conflict между port.c / cmsis_os2.c / stm32f4xx_it.c | ✅ resolved через weak + priority |
+
+**ARM firmware реально собирается под `arm-none-eabi-gcc 13.2.1`
+с зависимостями FreeRTOS V10.6.1 + STM32CubeF4 v1.27.1.** Результат:
+`firmware/build-arm/unisat_firmware.elf` готов к `st-flash write`.
+
 ## Phase 7 — TRL-5 integration + coverage push (done)
 
 После TRL-аудита пошедшего за Phase 6 было выделено 5 критичных

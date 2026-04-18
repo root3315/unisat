@@ -23,7 +23,11 @@ extern UART_HandleTypeDef huart2;
 
 static COMM_Status_t comm_status;
 static uint8_t uhf_rx_buffer[COMM_RX_BUFFER_SIZE];
-static uint8_t uhf_tx_buffer[COMM_TX_BUFFER_SIZE];
+/* TX ring buffer — used by the target-build `COMM_Send` DMA path
+ * (wired in the non-SIM branch). On host it's present but unused;
+ * the attribute silences -Wunused-variable without wrapping the
+ * declaration in #ifndef, keeping the host/target layouts identical. */
+__attribute__((unused)) static uint8_t uhf_tx_buffer[COMM_TX_BUFFER_SIZE];
 static volatile uint16_t uhf_rx_head = 0;
 static volatile uint16_t uhf_rx_tail = 0;
 

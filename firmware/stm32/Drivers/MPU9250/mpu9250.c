@@ -47,7 +47,7 @@ void MPU9250_Platform_Delay(uint32_t ms)
 /**
  * @brief Write a single register via SPI with retry logic.
  */
-static MPU9250_Status_t mpu9250_write_reg(MPU9250_Handle_t *dev,
+__attribute__((unused)) static MPU9250_Status_t mpu9250_write_reg(MPU9250_Handle_t *dev,
                                             uint8_t reg, uint8_t val)
 {
 #ifdef SIMULATION_MODE
@@ -71,7 +71,7 @@ static MPU9250_Status_t mpu9250_write_reg(MPU9250_Handle_t *dev,
 /**
  * @brief Read one or more registers via SPI with retry logic.
  */
-static MPU9250_Status_t mpu9250_read_reg(MPU9250_Handle_t *dev,
+__attribute__((unused)) static MPU9250_Status_t mpu9250_read_reg(MPU9250_Handle_t *dev,
                                            uint8_t reg, uint8_t *buf, uint16_t len)
 {
 #ifdef SIMULATION_MODE

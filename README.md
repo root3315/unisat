@@ -161,10 +161,11 @@ For more granular control:
 | Check | Status |
 |---|---|
 | Firmware host build (all subsystems) | ✅ clean (`unisat_core`) |
-| Firmware target build (STM32F446RE .elf/.bin/.hex) | ✅ `make target` |
+| Firmware target build (STM32F446RE .elf/.bin/.hex) | ✅ **verified:** 31.6 KB flash (6%) / 36.3 KB RAM (28%) under 90% budget |
 | C unit tests (`ctest`) | ✅ **27 / 27 passing** (100+ sub-tests) |
 | Python tests (`pytest`) | ✅ **211 passing** (+ 1 skipped) incl. hypothesis + fuzz + e2e + soak + hmac_auth + Streamlit page smoke |
-| **Python coverage (MUST gate)** | ✅ 51 % (`make coverage-py`, ≥ 50 % enforced) |
+| **Python coverage (MUST gate)** | ✅ **77.24 %** (`make coverage-py`, ≥ 75 % enforced) |
+| Python test count | ✅ 299 passing (4 new test files: GNSS, health, scheduler ext, coverage pack) |
 | **Streamlit page import smoke** | ✅ 12/13 passing (1 skipped — streamlit not installed) |
 | **SBOM (SPDX)** | ✅ `make sbom` generates `docs/sbom/sbom-summary.md` |
 | **FreeRTOS autodetect in CMake** | ✅ `make setup-freertos` + `make setup-all` |

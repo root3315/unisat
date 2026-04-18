@@ -69,8 +69,13 @@ static volatile uint32_t s_uwTick = 0U;
 
 /* ------------------------------------------------------------------
  *  Helper: drop into the .cfsr / .hfsr style dump and halt.
+ *
+ *  NOT static — the naked-asm fault thunks below branch directly
+ *  into this symbol, which requires external linkage because the
+ *  inline asm doesn't know about static-local visibility rules.
  * ------------------------------------------------------------------ */
-static void fault_capture(uint32_t *stack_frame, uint32_t kind)
+void fault_capture(uint32_t *stack_frame, uint32_t kind);
+void fault_capture(uint32_t *stack_frame, uint32_t kind)
 {
     g_last_fault.r0   = stack_frame[0];
     g_last_fault.r1   = stack_frame[1];
@@ -176,7 +181,11 @@ void DebugMon_Handler(void)
  *  code (SystemClock_Config flash-latency settle, MX_I2C_Init
  *  bus reset) has a real ms tick.
  * ------------------------------------------------------------------ */
-void SysTick_Handler(void)
+/* SysTick_Handler — FreeRTOS port.c + CMSIS-RTOSv2 cmsis_os2.c both
+ * provide a strong definition when the full kernel is linked. When
+ * neither is present (bare-metal smoke build) this weak fallback
+ * keeps s_uwTick advancing so boot-time Delay() calls still work. */
+__attribute__((weak)) void SysTick_Handler(void)
 {
     s_uwTick++;
 }

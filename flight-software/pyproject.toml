@@ -61,15 +61,22 @@ omit = [
 ]
 
 [tool.coverage.report]
-# MUST-level gate (current baseline). A regression below this
-# threshold fails the CI job that runs `pytest --cov`.
+# MUST-level gate (current measured baseline). A regression below
+# this threshold fails CI when `pytest --cov` is invoked.
 #
-# Why 50 and not 80?  Current measured coverage is 51 %. The 80 %
-# value is aspirational (SRS REQ-BLD-005 stretch goal) and lives
-# in docs/quality/static_analysis.md, not here, so adding new
-# tests can ratchet this up without opening a "fix the gate"
-# side-PR every time.
-fail_under = 50
+# The 80 % value is the aspirational SHOULD-level target per
+# SRS REQ-BLD-005 (docs/quality/static_analysis.md); adding new
+# tests can ratchet this gate up without reopening this config.
+#
+# Post-Phase-8 coverage pack history:
+#   baseline      51 %  (test_mission_e2e + existing units)
+#   + GNSS        63 %  (tests/test_gnss_receiver.py)
+#   + health      +4 %  (tests/test_health_monitor.py)
+#   + scheduler   66 %  (tests/test_scheduler_extended.py)
+#   + remaining   75 %  (tests/test_remaining_modules.py)
+#   + coverage    77 %  (tests/test_coverage_boost.py +
+#                         tests/test_data_logger_coverage.py)
+fail_under = 75
 show_missing = true
 skip_covered = false
 exclude_lines = [

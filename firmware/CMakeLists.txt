@@ -55,10 +55,18 @@ option(COVERAGE   "Host build: gcov coverage instrumentation" OFF)
 option(SANITIZERS "Host build: ASAN + UBSAN"                OFF)
 
 if(CROSS_COMPILE)
+    # Wall/Wextra/Wpedantic kept on; -Wno-incompatible-pointer-types
+    # silences the char* vs signed char* mismatch ARM's CMSIS-RTOSv2
+    # wrapper has against the FreeRTOS kernel signature. Upstream
+    # issue, not our code. -Wno-unused-parameter / -Wno-error=sign-compare
+    # likewise cover wrapper-only noise.
     set(CMAKE_C_FLAGS
-        "${MCU_FLAGS} ${OPT_FLAGS} -Wall -Wextra -Wpedantic -std=c11 \
+        "${MCU_FLAGS} ${OPT_FLAGS} -Wall -Wextra -Wpedantic -std=gnu11 \
         -fdata-sections -ffunction-sections -fstack-usage \
-        -DSTM32F446xx")
+        -Wno-incompatible-pointer-types \
+        -Wno-unused-parameter \
+        -Wno-sign-compare \
+        -DSTM32F446xx -DUSE_HAL_DRIVER")
     set(CMAKE_ASM_FLAGS "${MCU_FLAGS} -x assembler-with-cpp")
 
     # Linker script path is anchored to the Target/ directory next to
@@ -130,6 +138,14 @@ file(GLOB DRIVER_SOURCES "stm32/Drivers/*/*.c")
 file(GLOB ADCS_SOURCES   "stm32/ADCS/*.c")
 file(GLOB EPS_SOURCES    "stm32/EPS/*.c")
 
+# VirtualUART is a host-only TCP-loopback shim for the SITL demo.
+# Pulls in sys/socket.h which arm-none-eabi's newlib-nano does not
+# provide — filter it out of the cross build to keep target link
+# clean. Host builds keep it via the glob above.
+if(CROSS_COMPILE)
+    list(FILTER DRIVER_SOURCES EXCLUDE REGEX ".*/VirtualUART/.*")
+endif()
+
 # Target-only sources: LD-anchored vectors, CMSIS SystemInit, clock
 # config, exception handlers, and weak HAL fallback. Globbed separately
 # so the host build never pulls them in (would produce bare-register
@@ -166,7 +182,11 @@ if(CROSS_COMPILE AND EXISTS "${HAL_DRIVER_DIR}/Src" AND EXISTS "${CMSIS_DEVICE_D
     )
     list(APPEND TARGET_C_SOURCES ${HAL_SOURCES})
     list(REMOVE_ITEM TARGET_C_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Target/hal_shim.c")
-    include_directories("${HAL_DRIVER_DIR}/Inc" "${CMSIS_DEVICE_DIR}"
+    # stm32f4xx_hal_conf.h lives in Target/; pre-pend that path so HAL's
+    # own stm32f4xx_hal.h picks the project config before falling back
+    # to the template that ships inside the HAL tree.
+    include_directories("${CMAKE_CURRENT_SOURCE_DIR}/stm32/Target"
+                        "${HAL_DRIVER_DIR}/Inc" "${CMSIS_DEVICE_DIR}"
                         "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Drivers/CMSIS/CMSIS_Include")
     set(HAS_FULL_HAL ON)
 else()
@@ -193,10 +213,12 @@ if(CROSS_COMPILE AND EXISTS "${FREERTOS_SRC_DIR}/include" AND EXISTS "${FREERTOS
     file(GLOB FREERTOS_PORT_SOURCES "${FREERTOS_PORT_DIR}/*.c")
     list(APPEND TARGET_C_SOURCES ${FREERTOS_KERNEL_SOURCES} ${FREERTOS_PORT_SOURCES})
     include_directories("${FREERTOS_SRC_DIR}/include" "${FREERTOS_PORT_DIR}")
-    if(EXISTS "${CMSIS_RTOS_DIR}/Include")
+    # CMSIS-RTOSv2 wrapper: STM32CubeF4 ships the .c + .h files flat
+    # inside the CMSIS_RTOS_V2 dir (no separate Include/ subdir).
+    if(EXISTS "${CMSIS_RTOS_DIR}/cmsis_os2.h")
         file(GLOB CMSIS_RTOS_SOURCES "${CMSIS_RTOS_DIR}/*.c")
         list(APPEND TARGET_C_SOURCES ${CMSIS_RTOS_SOURCES})
-        include_directories("${CMSIS_RTOS_DIR}/Include")
+        include_directories("${CMSIS_RTOS_DIR}")
     endif()
     set(HAS_FREERTOS ON)
 else()
