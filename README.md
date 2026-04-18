@@ -5,13 +5,20 @@
 <h1 align="center">UniSat — Universal Modular CubeSat Platform</h1>
 
 <p align="center">
-  <a href="https://github.com/root3315/unisat/blob/master/scripts/verify.sh"><img src="https://img.shields.io/badge/verify-.%2Fscripts%2Fverify.sh-brightgreen.svg" alt="Verify"></a>
-  <a href="https://github.com/root3315/unisat/blob/master/docs/superpowers/specs/2026-04-17-track1-ax25-design.md"><img src="https://img.shields.io/badge/AX.25-v2.2_full-success.svg" alt="AX.25"></a>
-  <a href="https://github.com/root3315/unisat/blob/master/docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/tests-C_27%20%2B%20Py_314-brightgreen.svg" alt="Tests"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-blue.svg" alt="License"></a>
+  <a href="scripts/verify.sh"><img src="https://img.shields.io/badge/verify-.%2Fscripts%2Fverify.sh-brightgreen.svg" alt="Verify"></a>
+  <a href="docs/security/ax25_threat_model.md"><img src="https://img.shields.io/badge/AX.25-v2.2_full-success.svg" alt="AX.25"></a>
+  <a href="docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/ctest-27%2F27-brightgreen.svg" alt="C tests"></a>
+  <a href="flight-software/tests"><img src="https://img.shields.io/badge/pytest-329%20passing-brightgreen.svg" alt="Python tests"></a>
+  <a href="docs/quality/static_analysis.md"><img src="https://img.shields.io/badge/coverage-C%2085.3%25%20%2F%20Py%2085.2%25-brightgreen.svg" alt="Coverage"></a>
+  <a href="firmware/build-arm"><img src="https://img.shields.io/badge/ARM%20build-31.6KB%20%2F%2036.3KB-success.svg" alt="ARM"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg?logo=python&logoColor=white" alt="Python"></a>
   <a href="#"><img src="https://img.shields.io/badge/firmware-STM32F4-green.svg?logo=stmicroelectronics" alt="STM32"></a>
   <a href="#"><img src="https://img.shields.io/badge/platform-CubeSat_1U--6U-orange.svg" alt="CubeSat"></a>
+</p>
+
+<p align="center">
+  <b>Version 1.2.0 — TRL-5 hardened</b>
 </p>
 
 <p align="center">
@@ -33,6 +40,74 @@ Designed to be competition-ready for CanSat, CubeSat Design, NASA Space Apps, an
 **UniSat** — полноценная модульная программная платформа для спутников формата CubeSat (1U–6U). Покрывает весь стек ПО спутника: от прошивки STM32 на FreeRTOS до наземной станции на Python с визуализацией телеметрии в реальном времени.
 
 Проект готов к участию в конкурсах: CanSat, CubeSat Design, NASA Space Apps, аэрокосмические олимпиады и хакатоны. При этом код профессионального уровня, пригодный для реальных миссий.
+
+---
+
+## 🔒 What's new in v1.2.0 — TRL-5 hardening
+
+Version 1.2.0 landed an eight-phase hardening sweep (75 commits
+on `feat/trl5-hardening`) that promotes UniSat from "competition-
+ready template" to **TRL-5-capable software platform**. Full
+details in [CHANGELOG.md](CHANGELOG.md) — summary:
+
+### Phase 1 — Real ARM target build
+- STM32F446RE LD script, startup.s, SystemInit/clock at 168 MHz
+- FreeRTOS kernel + CMSIS-RTOSv2 + HAL autodetect in CMake
+- `make setup-all && make target` produces a real `.elf`
+- **Verified footprint:** 31.6 KB flash (6 %) / 36.3 KB RAM (28 %)
+
+### Phase 2 — Security (T1 + T2 both closed)
+- **T1 (injection):** HMAC-SHA256 + constant-time verify
+- **T2 (replay):** 32-bit counter + 64-bit sliding-window bitmap
+- Persistent key store (A/B flash slots + CRC + monotonic gen)
+- Python `CounterSender` — thread-safe ground-side pair
+
+### Phase 3 — FDIR (NASA-style three-tier)
+- 12 fault IDs + 60s escalation window + 6-level severity ladder
+- Advisor (`fdir.c`) / commander (`mode_manager.c`) split (ADR-005)
+- Persistent fault log in `.noinit` SRAM — survives warm reboot
+
+### Phase 4 — Tboard + mission scenario
+- Live TMP117 reading in beacon bytes 14-15 (was zero-padded)
+- End-to-end mission lifecycle test (startup → nominal → safe →
+  recovery) + 48-hour soak harness
+
+### Phase 5 — Quality gates
+- `make cppcheck` (CI-blocking) + MISRA advisory
+- `make coverage` — **85.3 %** C lines
+- `make sanitizers` — ASAN + UBSAN clean
+- `cmake -DSTRICT=ON` — `-Werror -Wshadow -Wconversion` clean
+
+### Phase 6 — Documentation (CDR-level)
+- **SRS** with 44 REQ + traceability CSV
+- **8 ADRs** for architectural decisions
+- HIL test plan + characterization templates
+- Threat model v2 with T1+T2 closed
+
+### Phase 7 — Python + release plumbing
+- `make coverage-py` — **85.15 %** Python lines (gate ≥ 80 % MUST)
+- `make lint-py` — mypy strict clean across 21 files
+- `make sbom` — auto-generated SPDX bill of materials
+- `make pin-docker` — release-engineering digest pin
+
+### Phase 8 — Final polish
+- ARM build fully verified end-to-end
+- Zero warnings in any build profile
+- **Total tests: 27 C + 329 Python = 356 checks**
+- **Migrated MIT → Apache 2.0** for patent-grant protection (§3)
+
+### Test + coverage progression
+
+| | Before (v1.1.0) | After (v1.2.0) |
+|---|---:|---:|
+| C test executables | 16 | **27** |
+| Python tests | 34 | **329** |
+| C line coverage | not measured | **85.3 %** |
+| Python line coverage | not measured | **85.15 %** |
+| ARM target `.elf` | not verified | **6 % flash / 28 % RAM** |
+| ADRs | 2 | **8** |
+| Quality gates | 1 | **9** (all green) |
+| License | MIT | **Apache 2.0** |
 
 ---
 
