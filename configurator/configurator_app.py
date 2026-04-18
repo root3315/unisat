@@ -197,8 +197,8 @@ elif platform_name == "Drone / UAV":
 st.markdown("---")
 st.markdown("### Budget Validation")
 
-from validators.mass_validator import validate_mass, FORM_FACTOR_LIMITS
-from validators.volume_validator import validate_volume, FORM_FACTOR_VOLUMES
+from validators.mass_validator import validate_mass  # noqa: E402
+from validators.volume_validator import validate_volume  # noqa: E402
 
 mass_result = validate_mass(form_factor, enabled)
 vol_result = validate_volume(form_factor, enabled)

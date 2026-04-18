@@ -1,6 +1,5 @@
 """Report Generator — Generate PDF mission report."""
 
-import json
 from pathlib import Path
 
 

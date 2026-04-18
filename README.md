@@ -2,23 +2,23 @@
   <img src="docs/diagrams/system_block_diagram.svg" alt="UniSat Logo" width="600">
 </p>
 
-<h1 align="center">UniSat — Universal Modular CubeSat Platform</h1>
+<h1 align="center">UniSat — Universal Modular Satellite Platform</h1>
 
 <p align="center">
   <a href="scripts/verify.sh"><img src="https://img.shields.io/badge/verify-.%2Fscripts%2Fverify.sh-brightgreen.svg" alt="Verify"></a>
   <a href="docs/security/ax25_threat_model.md"><img src="https://img.shields.io/badge/AX.25-v2.2_full-success.svg" alt="AX.25"></a>
-  <a href="docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/ctest-27%2F27-brightgreen.svg" alt="C tests"></a>
-  <a href="flight-software/tests"><img src="https://img.shields.io/badge/pytest-329%20passing-brightgreen.svg" alt="Python tests"></a>
+  <a href="docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/ctest-28%2F28-brightgreen.svg" alt="C tests"></a>
+  <a href="flight-software/tests"><img src="https://img.shields.io/badge/pytest-420%20passing-brightgreen.svg" alt="Python tests"></a>
   <a href="docs/quality/static_analysis.md"><img src="https://img.shields.io/badge/coverage-C%2085.3%25%20%2F%20Py%2085.2%25-brightgreen.svg" alt="Coverage"></a>
   <a href="firmware/build-arm"><img src="https://img.shields.io/badge/ARM%20build-31.6KB%20%2F%2036.3KB-success.svg" alt="ARM"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg?logo=python&logoColor=white" alt="Python"></a>
   <a href="#"><img src="https://img.shields.io/badge/firmware-STM32F4-green.svg?logo=stmicroelectronics" alt="STM32"></a>
-  <a href="#"><img src="https://img.shields.io/badge/platform-CubeSat_1U--12U_%7C_CanSat-orange.svg" alt="Platforms"></a>
+  <a href="#"><img src="https://img.shields.io/badge/platform-CanSat_%7C_CubeSat_1U--12U_%7C_HAB_%7C_Rocket-orange.svg" alt="Platforms"></a>
 </p>
 
 <p align="center">
-  <b>Version 1.3.0 — Universal Platform (CanSat + CubeSat 1U–12U)</b>
+  <b>Version 1.3.1 — Universal Platform (CanSat + CubeSat 1U–12U + HAB + Rocket + Drone + Rover)</b>
 </p>
 
 <p align="center">
@@ -245,11 +245,11 @@ For more granular control:
 |---|---|
 | Firmware host build (all subsystems) | ✅ clean (`unisat_core`) |
 | Firmware target build (STM32F446RE .elf/.bin/.hex) | ✅ **verified:** 31.6 KB flash (6%) / 36.3 KB RAM (28%) under 90% budget |
-| C unit tests (`ctest`) | ✅ **27 / 27 passing** (100+ sub-tests) |
-| Python tests (`pytest`) | ✅ **211 passing** (+ 1 skipped) incl. hypothesis + fuzz + e2e + soak + hmac_auth + Streamlit page smoke |
-| **Python coverage (MUST gate)** | ✅ **77.24 %** (`make coverage-py`, ≥ 75 % enforced) |
-| Python test count | ✅ 299 passing (4 new test files: GNSS, health, scheduler ext, coverage pack) |
+| C unit tests (`ctest`) | ✅ **28 / 28 passing** (100+ sub-tests) |
+| Python tests (`pytest`, full suite) | ✅ **420 passing** — 262 flight-software + 82 ground-station + 57 simulation + 19 configurator |
+| **Python coverage (MUST gate)** | ✅ **85.15 %** (`make coverage-py`, ≥ 80 % enforced) |
 | **Streamlit page import smoke** | ✅ 12/13 passing (1 skipped — streamlit not installed) |
+| **Universal platform (v1.3.1)** | ✅ 14 form factors: CanSat min/std/adv + CubeSat 1U/1.5U/2U/3U/6U/12U + rocket/HAB/drone/rover/custom |
 | **SBOM (SPDX)** | ✅ `make sbom` generates `docs/sbom/sbom-summary.md` |
 | **FreeRTOS autodetect in CMake** | ✅ `make setup-freertos` + `make setup-all` |
 | AX.25 golden vectors cross-validation | ✅ 28/28 byte-identical C ↔ Python |
@@ -270,8 +270,8 @@ For more granular control:
 | Tboard (TMP117) facade in beacon bytes 14–15 | ✅ 6/6 tests |
 | cppcheck static-analysis gate | ✅ clean (`make cppcheck`) |
 | **Line coverage (C)** | ✅ **85.3 %** / functions 84.0 % (`make coverage`) |
-| ASAN + UBSAN under ctest | ✅ 27/27 clean (`make sanitizers`) |
-| STRICT mode (-Werror -Wshadow -Wconversion) | ✅ 27/27 clean (`cmake -DSTRICT=ON`) |
+| ASAN + UBSAN under ctest | ✅ 28/28 clean (`make sanitizers`) |
+| STRICT mode (-Werror -Wshadow -Wconversion) | ✅ 28/28 clean (`cmake -DSTRICT=ON`) |
 | ADRs for architectural decisions | ✅ **8 ADRs** under `docs/adr/` |
 | Full SRS + traceability CSV | ✅ docs/requirements/SRS.md |
 | HIL test plan + characterization templates | ✅ docs/testing + docs/characterization |
@@ -387,18 +387,23 @@ unisat/
 │   │                     #   VirtualUART (SITL TCP shim)
 │   ├── stm32/ADCS/       #   B-dot, quaternion, sun/target pointing
 │   ├── stm32/EPS/        #   MPPT, battery manager
-│   └── tests/            #   16 Unity test targets
+│   └── tests/            #   28 Unity test targets
 ├── flight-software/      # Python async flight controller (RPi Zero 2 W)
+│   ├── core/             #   form_factors.py, feature_flags.py, mission_types.py
+│   └── tests/            #   262 pytest incl. e2e + soak + hypothesis
 ├── ground-station/       # Streamlit UI + AX.25 CLI + HMAC tooling
 │   ├── utils/ax25.py     #   AX.25 v2.2 Python mirror
 │   ├── utils/hmac_auth.py#   HMAC-SHA256 mirror (RFC 4231)
+│   ├── utils/profile_gate.py #  hides orbit/image/ADCS pages by profile
 │   ├── cli/              #   ax25_listen / ax25_send TCP tools
-│   └── tests/            #   34 pytest incl. hypothesis + fuzz
-├── simulation/           # 10 simulators (orbit, power, thermal, link)
-├── configurator/         # Web-based mission configurator + BOM gen
-├── hardware/             # KiCad schematics, BOM, mechanical CAD
+│   └── tests/            #   82 pytest incl. hypothesis + fuzz
+├── simulation/           # 10 simulators (orbit, power, thermal, link) — 57 tests
+├── configurator/         # Web-based mission configurator + BOM gen — 19 tests
+├── hardware/
+│   ├── bom/by_form_factor/  # 7 per-class BOMs with real masses
+│   └── kicad/              # 4 KiCad boards (OBC, EPS, Comm, Sensor)
 ├── payloads/             # 5 swappable payload templates
-├── mission_templates/    # 5 ready-to-use mission_config.json
+├── mission_templates/    # 8 ready-to-use presets (CanSat min/std/adv + CubeSat 1U-12U)
 ├── tests/golden/         # Shared AX.25 test vectors (C + Python)
 ├── docs/                 # 25+ md docs (USAGE_GUIDE, TECHNICAL_DOC,
 │                         # ADRs, threat model, tutorials, verification)
@@ -460,8 +465,8 @@ unisat/
 **Via Makefile:**
 ```bash
 make all              # build + test (C + Python)
-make test-c           # ctest only (19 targets, 64+ sub-tests)
-make test-py          # pytest only (38+ tests incl. e2e mission + soak)
+make test-c           # ctest only (28 targets, 100+ sub-tests)
+make test-py          # pytest only (420 tests across all 4 Python packages)
 make demo             # end-to-end SITL AX.25 beacon demo
 make help             # list all targets
 ```

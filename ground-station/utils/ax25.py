@@ -129,7 +129,7 @@ def bit_unstuff(data: bytes) -> bytes:
 # Address encode/decode (REQ-AX25-002, AX.25 v2.2 §3.12).
 # ---------------------------------------------------------------------------
 
-from dataclasses import dataclass
+from dataclasses import dataclass  # noqa: E402
 
 
 @dataclass(frozen=True)

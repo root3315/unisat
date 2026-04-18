@@ -6,7 +6,6 @@ a priority queue and configurable triggers.
 
 from __future__ import annotations
 
-import asyncio
 import heapq
 import time
 from dataclasses import dataclass, field

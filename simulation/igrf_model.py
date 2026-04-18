@@ -16,7 +16,6 @@ Reference:
 """
 
 import math
-import numpy as np
 from dataclasses import dataclass
 
 # Earth reference radius for IGRF (km)

@@ -77,7 +77,7 @@ cd unisat
 Что происходит:
 
 1. Docker собирает образ `unisat-ci` (30 сек, один раз).
-2. Внутри контейнера: `cmake` → `make` → `ctest` (16/16) → `pytest` (34/34).
+2. Внутри контейнера: `cmake` → `make` → `ctest` (28/28) → `pytest` (420/420 по всем 4 пакетам).
 3. Запускается end-to-end SITL-демо: C-кодер шлёт AX.25-пакеты по
    TCP, Python-декодер принимает, сверяет CRC.
 
@@ -561,7 +561,7 @@ unisat/
 │   ├── cli/
 │   │   ├── ax25_listen.py ← TCP listener
 │   │   └── ax25_send.py   ← TCP sender
-│   └── tests/             ← 34 pytest-теста (hypothesis + golden)
+│   └── tests/             ← 82 pytest-теста (hypothesis + golden + profile-gate)
 │
 ├── simulation/            ← 10 симуляторов
 ├── configurator/          ← web-конфигуратор миссии

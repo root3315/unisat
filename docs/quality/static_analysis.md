@@ -155,5 +155,5 @@ make cppcheck-strict
 `scripts/verify.sh` exercises the whole pipeline end-to-end
 inside the `unisat-ci` Docker image — cppcheck and lcov steps
 are best-effort, they print a note and skip when the tool is
-missing from the image so the existing green-path (16/16 ctest +
-34/34 pytest + SITL) keeps working on stripped-down CI images.
+missing from the image so the existing green-path (28/28 ctest +
+420/420 pytest + SITL) keeps working on stripped-down CI images.

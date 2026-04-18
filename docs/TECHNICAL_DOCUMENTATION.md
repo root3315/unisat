@@ -1,9 +1,13 @@
 # UniSat — Полная техническая документация
 
-**Версия:** 1.2.0 (после TRL-5 hardening + Phase 7/8)
+**Версия:** 1.3.1 — Universal Platform polish (14 форм-факторов, form-factor registry как единый источник правды)
 **Дата:** Апрель 2026
 **Лицензия:** Apache License, Version 2.0 (ранее MIT до 2026-04-18)
 **Репозиторий:** https://github.com/root3315/unisat
+
+**Что нового с v1.2.0:**
+- **v1.3.0** — универсальная платформа: реестр форм-факторов (`form_factors.py`), feature-flag резолвер (`feature_flags.py`), compile-time профили firmware через `mission_profile.h` (9 билд-целей `make target-<profile>`), Streamlit profile gate.
+- **v1.3.1** — configurator-валидаторы подключены к `core.form_factors` (единый источник правды вместо параллельных словарей), CanSat-масштабные дефолты компонентов, 5 новых configurator-шаблонов, `docs/OPERATIONS_GUIDE.md` (12 секций от выбора профиля до сдачи на конкурс), фикс flaky `test_long_soak`.
 
 ---
 
@@ -1241,4 +1245,4 @@ ax25_vectors.*`). Python генератор — `scripts/gen_golden_vectors.py`
 
 ---
 
-*Документация обновлена: Апрель 2026 (v1.1 — Track 1 + Track 1b primitives)*
+*Документация обновлена: Апрель 2026 (v1.3.1 — Universal Platform polish)*

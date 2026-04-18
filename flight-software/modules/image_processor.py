@@ -6,9 +6,6 @@ coordinates in EXIF, and thumbnail generation for downlink optimization.
 
 from __future__ import annotations
 
-import struct
-import time
-from io import BytesIO
 from pathlib import Path
 from typing import Any
 

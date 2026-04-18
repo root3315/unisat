@@ -1,7 +1,6 @@
 """Orbit Simulator — Keplerian propagation with J2 perturbation."""
 
 import math
-import numpy as np
 from dataclasses import dataclass
 
 MU_EARTH = 398600.4418  # km^3/s^2

@@ -6,9 +6,6 @@ database rotation at configurable size thresholds, and time-range queries.
 
 from __future__ import annotations
 
-import asyncio
-import csv
-import os
 import sqlite3
 import time
 from pathlib import Path

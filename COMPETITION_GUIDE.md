@@ -8,30 +8,56 @@ UniSat is designed to be easily adapted for various aerospace competitions. This
 
 **Focus:** Atmospheric descent with sensor data collection.
 
-### Configuration Changes
+Since v1.3.0 CanSat is a **first-class profile** — no hand-editing
+needed. Three variants ship out of the box:
 
-1. **mission_config.json:**
-   - Set `form_factor` to `"1U"` or `"custom"`
-   - Disable `adcs` (no attitude control needed)
-   - Disable `gnss` or keep for GPS tracking
-   - Disable `s_band` (use only UHF or LoRa)
-   - Set `orbit.type` to `"suborbital"`
-   - Set `orbit.altitude_km` to launch altitude (e.g., 1.0)
+| Profile | Regulation | Envelope | Use |
+|---|---|---|---|
+| `cansat_minimal` | ≤350 g | Ø66 × 115 mm | Telemetry-only, first CanSat |
+| `cansat_standard` | ≤500 g, CDS | Ø68 × 80 mm | Standard ESERO / AAS |
+| `cansat_advanced` | ≤500 g | Ø68 × 115 mm | Pyro parachute + camera |
 
-2. **Add parachute module:**
-   - Create `payloads/parachute/` with descent rate calculations
-   - Modify `flight_controller.py` to include deployment sequence
+### Setup
 
-3. **Simplify ground station:**
-   - Focus on `02_telemetry.py` for real-time data
-   - Remove orbit tracker (not applicable)
-   - Add descent trajectory visualization
+```bash
+cp mission_templates/cansat_standard.json mission_config.json
+# Edit mission.name, mission.operator — that's it.
 
-### Key Deliverables
-- Sensor data collection (temperature, pressure, humidity, GPS)
-- Real-time telemetry transmission
-- Post-flight data analysis
-- Parachute deployment logic
+make target-cansat_standard   # firmware binary for the chosen profile
+make configurator             # optional: Streamlit UI to tweak subsystems
+```
+
+### What you get automatically
+
+- Parachute deployment logic (`payloads/cansat_descent/`) with
+  configurable descent rate, deploy altitude, and drogue chute.
+- Sensor-driven phase transitions (launch → apogee → descent → landed)
+  in `flight-software/flight_controller.py`.
+- Ground-station dashboard hides orbit / imagery / ADCS pages for
+  CanSat profiles — you see only what's relevant.
+- Reference BOM at `hardware/bom/by_form_factor/cansat_standard.csv`
+  (≈170 g kit, ≈330 g payload headroom under the 500 g limit).
+
+### Competition scoring coverage (regulation 2026)
+
+| Criterion | Max | What UniSat already gives you |
+|---|---:|---|
+| Documentation | 15 | `docs/universal_platform.md`, SRS, traceability CSV |
+| Hardware design | 10 | Reference BOM + KiCad boards + mechanical spec |
+| Software | 10 | FDIR, HMAC auth, 262 flight-software tests |
+| Data collection / tx | 20 | LoRa + GNSS + IMU + baro, CSV logger, 10 Hz beacon |
+| Science mission | 15 | *You provide the hypothesis and the extra sensor* |
+| Test flight | 10 | SITL simulator (`run_cansat.py`) + HIL plan |
+| Presentation | 20 | `docs/POSTER_TEMPLATE.md`, PDF/PNG export |
+
+### Key deliverables (what judges expect)
+
+- Sensor data collection (temperature, pressure, humidity, GPS, IMU)
+- Real-time telemetry transmission (LoRa 433/868 MHz)
+- Post-flight CSV dump + trajectory / descent-rate analysis
+- Parachute deployment logic (built-in) with descent rate in the
+  competition band (6–11 m/s)
+- Mass check ≤ 500 g with 15 % margin — validator in `make configurator`
 
 ---
 

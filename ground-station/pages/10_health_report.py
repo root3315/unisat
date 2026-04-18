@@ -1,6 +1,5 @@
 """Health Report — System diagnostics and anomaly detection."""
 
-import random
 import streamlit as st
 import pandas as pd
 
