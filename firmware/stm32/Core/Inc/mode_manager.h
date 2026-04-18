@@ -47,7 +47,8 @@ typedef enum {
     MODE_REASON_FDIR_REBOOT     = 3,
     MODE_REASON_FDIR_DISABLE    = 4,
     MODE_REASON_COMM_LOSS       = 5,
-    MODE_REASON_MANUAL_GROUND   = 6
+    MODE_REASON_MANUAL_GROUND   = 6,
+    MODE_REASON_REBOOT_LOOP     = 7   /* too many warm resets observed */
 } ModeReason_t;
 
 /** Cumulative transition accounting for downlink telemetry. */
@@ -80,6 +81,18 @@ void ModeManager_EnterNominal(void);
 void ModeManager_EnterSafe(ModeReason_t reason);
 void ModeManager_EnterDegraded(ModeReason_t reason);
 void ModeManager_RequestReboot(ModeReason_t reason);
+
+/** Reboot-loop guard.
+ *
+ *  Call with suppress=true after persistent storage shows an
+ *  excessive warm-reset count (see FDIR_Persistent_GetMeta().
+ *  reboot_count).  While suppression is active, ModeManager_Tick
+ *  downgrades every RECOVERY_REBOOT recommendation from FDIR to
+ *  a SAFE-mode entry and direct RequestReboot calls are ignored.
+ *  Ground clears the flag explicitly once the underlying fault
+ *  is diagnosed. */
+void ModeManager_SuppressReboot(bool suppress);
+bool ModeManager_IsRebootSuppressed(void);
 
 /** Current mode query (also exported through GetStats). */
 SystemMode_t ModeManager_GetMode(void);

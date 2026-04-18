@@ -93,6 +93,22 @@ int main(void) {
     FDIR_Init();
     ModeManager_Init();
 
+    /* Reboot-loop guard: if the .noinit reboot_count shows more than
+     * FDIR_REBOOT_LOOP_THRESHOLD consecutive warm resets, engage the
+     * reboot-suppression flag so FDIR recommendations of
+     * RECOVERY_REBOOT are diverted to SAFE mode. Ground has to clear
+     * the flag (and typically the .noinit ring via a diag command)
+     * once the faulty subsystem is isolated — otherwise a board-level
+     * intermittent takes the vehicle down in a tight reset loop with
+     * no chance for operator intervention. */
+    {
+        FDIR_PersistentMeta_t meta = FDIR_Persistent_GetMeta();
+        if (meta.reboot_count >= FDIR_REBOOT_LOOP_THRESHOLD) {
+            ModeManager_SuppressReboot(true);
+            ModeManager_EnterSafe(MODE_REASON_REBOOT_LOOP);
+        }
+    }
+
     /* Command-authentication boot sequence.
      *
      * key_store_init() reads the A/B flash slots, picks the highest-

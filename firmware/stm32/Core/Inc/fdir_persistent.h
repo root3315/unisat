@@ -46,6 +46,19 @@
  *  SRAM" after a cold boot. Printable ASCII 'F' 'D' 'I' 'R' LE. */
 #define FDIR_PERSISTENT_MAGIC     0x52494446UL
 
+/** Reboot-loop detection threshold.
+ *
+ *  Once the persistent ``reboot_count`` has advanced this high
+ *  without a successful ground-side clear, main() engages the
+ *  mode-supervisor's reboot suppression: further RECOVERY_REBOOT
+ *  recommendations are diverted to SAFE mode so an intermittent
+ *  fault at boot cannot trap the vehicle in an infinite reset
+ *  cycle.  Three is chosen conservatively — two warm resets after
+ *  a cold boot are plausible in a bad-cosmic-ray scenario, but a
+ *  third strongly suggests a systematic fault that ground needs
+ *  to see. */
+#define FDIR_REBOOT_LOOP_THRESHOLD 3U
+
 /** One event entry — 16 bytes. */
 typedef struct {
     uint32_t       timestamp_ms;    /* FDIR_GetTick at Record time   */
