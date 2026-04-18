@@ -61,6 +61,15 @@ help:
 	@echo "    make setup-freertos Fetch FreeRTOS kernel + CMSIS-RTOSv2 port"
 	@echo "    make setup-all   Run both setup steps (one-time)"
 	@echo ""
+	@echo "  per-profile firmware (CanSat + CubeSat 1U-12U):"
+	@echo "    make target-cansat-minimal"
+	@echo "    make target-cansat-standard"
+	@echo "    make target-cansat-advanced"
+	@echo "    make target-cubesat-1u   target-cubesat-1-5u"
+	@echo "    make target-cubesat-2u   target-cubesat-3u"
+	@echo "    make target-cubesat-6u   target-cubesat-12u"
+	@echo "    make target-all-profiles  — build every profile"
+	@echo ""
 	@echo "  quality gates (Phase 5):"
 	@echo "    make cppcheck    Static-analysis gate (error/warning/portability)"
 	@echo "    make cppcheck-strict  + MISRA advisory report"
@@ -205,6 +214,67 @@ target:
 size: target
 	cmake --build $(ARM_BUILD) --target size
 
+# --- Per-profile firmware builds ---------------------------------
+#
+# Each target below configures the firmware build with a single
+# MISSION_PROFILE_<NAME> macro defined, producing an image with only
+# the drivers and FDIR policy for that vehicle compiled in. The
+# build directory is suffixed so profiles can coexist.
+#
+#   make target-cansat-standard
+#   make target-cubesat-3u
+#   make target-cubesat-6u
+#
+# All profile names map 1:1 to mission_templates/<name>.json and to
+# flight-software MissionType values.
+
+.PHONY: target-cansat-minimal target-cansat-standard target-cansat-advanced \
+        target-cubesat-1u target-cubesat-1-5u target-cubesat-2u \
+        target-cubesat-3u target-cubesat-6u target-cubesat-12u \
+        target-all-profiles
+
+PROFILE_BUILD = $(FIRMWARE_DIR)/build-arm-$(1)
+define build_profile
+	cmake -B $(call PROFILE_BUILD,$(1)) -S $(FIRMWARE_DIR) \
+	      -DCMAKE_BUILD_TYPE=Release \
+	      -DCMAKE_C_FLAGS="-DMISSION_PROFILE_$(2)=1"
+	cmake --build $(call PROFILE_BUILD,$(1)) --target unisat_firmware.elf -j
+endef
+
+target-cansat-minimal:
+	$(call build_profile,cansat-minimal,CANSAT_MINIMAL)
+
+target-cansat-standard:
+	$(call build_profile,cansat-standard,CANSAT_STANDARD)
+
+target-cansat-advanced:
+	$(call build_profile,cansat-advanced,CANSAT_ADVANCED)
+
+target-cubesat-1u:
+	$(call build_profile,cubesat-1u,CUBESAT_1U)
+
+target-cubesat-1-5u:
+	$(call build_profile,cubesat-1-5u,CUBESAT_1_5U)
+
+target-cubesat-2u:
+	$(call build_profile,cubesat-2u,CUBESAT_2U)
+
+target-cubesat-3u:
+	$(call build_profile,cubesat-3u,CUBESAT_3U)
+
+target-cubesat-6u:
+	$(call build_profile,cubesat-6u,CUBESAT_6U)
+
+target-cubesat-12u:
+	$(call build_profile,cubesat-12u,CUBESAT_12U)
+
+target-all-profiles: target-cansat-minimal target-cansat-standard \
+                     target-cansat-advanced target-cubesat-1u \
+                     target-cubesat-1-5u target-cubesat-2u \
+                     target-cubesat-3u target-cubesat-6u \
+                     target-cubesat-12u
+	@echo "==> all 9 mission profiles built"
+
 flash:
 	scripts/flash_stm32.sh
 
@@ -221,5 +291,6 @@ setup-all: setup-hal setup-freertos
 
 clean:
 	rm -rf $(BUILD_DIR) $(ARM_BUILD)
+	rm -rf $(FIRMWARE_DIR)/build-arm-*
 	find . -name "__pycache__" -type d -prune -exec rm -rf {} +
 	find . -name "*.pyc" -delete

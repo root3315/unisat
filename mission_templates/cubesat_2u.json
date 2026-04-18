@@ -1,0 +1,61 @@
+{
+  "mission": {
+    "name": "CubeSat 2U Mission",
+    "version": "1.0.0",
+    "description": "2U CubeSat: UHF + payload experiment, coarse pointing",
+    "mission_type": "cubesat_2u",
+    "platform": "cubesat",
+    "operator": "Team Name",
+    "telemetry_hz": 0.5
+  },
+  "satellite": {
+    "form_factor": "cubesat_2u",
+    "mass_kg": 2.6,
+    "dimensions_mm": [100, 100, 227.0]
+  },
+  "orbit": {
+    "type": "LEO",
+    "altitude_km": 500,
+    "inclination_deg": 51.6,
+    "expected_lifetime_years": 2
+  },
+  "subsystems": {
+    "obc": {"enabled": true, "mcu": "STM32F446RE", "clock_mhz": 180,
+            "ram_kb": 128, "flash_kb": 512},
+    "eps": {"enabled": true, "solar_panels": 4, "panel_type": "GaAs_triple_junction",
+            "panel_efficiency": 0.295, "battery_type": "Li-ion_18650",
+            "battery_capacity_wh": 20, "battery_cells": 2, "bus_voltage": 5.0},
+    "comm": {
+      "enabled": true,
+      "uhf": {"enabled": true, "frequency_mhz": 437.0, "power_w": 1.0,
+              "data_rate_bps": 9600, "protocol": "AX.25"}
+    },
+    "adcs": {
+      "enabled": true,
+      "tier": "magnetorquer_plus_sensors",
+      "magnetorquers": 3,
+      "magnetometer": "LIS3MDL",
+      "imu": "MPU9250",
+      "sun_sensors": 6,
+      "pointing_accuracy_deg": 5.0
+    },
+    "gnss": {"enabled": true, "receiver": "u-blox_MAX-M10S"},
+    "imu": {"enabled": true, "sensor_type": "MPU9250", "sample_rate_hz": 50},
+    "camera": {"enabled": false},
+    "payload": {"enabled": true, "type": "experiment"}
+  },
+  "features": {
+    "orbit_predictor": true,
+    "magnetorquers": true,
+    "reaction_wheels": false,
+    "eclipse_fdir": true,
+    "solar_panels": true,
+    "gnss": true,
+    "camera": false,
+    "descent_controller": false
+  },
+  "ground_station": {
+    "antenna": {"type": "yagi", "gain_dbi": 14, "frequency_mhz": 437},
+    "tnc": "direwolf", "network_port": 5001
+  }
+}

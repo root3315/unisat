@@ -1,0 +1,83 @@
+{
+  "mission": {
+    "name": "CubeSat 12U Mission",
+    "version": "1.0.0",
+    "description": "12U CubeSat: research-class instruments, Ka/optical downlink",
+    "mission_type": "cubesat_12u",
+    "platform": "cubesat",
+    "operator": "Team Name",
+    "telemetry_hz": 5.0
+  },
+  "satellite": {
+    "form_factor": "cubesat_12u",
+    "mass_kg": 16.0,
+    "dimensions_mm": [226.3, 226.3, 366]
+  },
+  "orbit": {
+    "type": "LEO",
+    "altitude_km": 600,
+    "inclination_deg": 51.6,
+    "expected_lifetime_years": 5
+  },
+  "subsystems": {
+    "obc": {"enabled": true, "mcu": "STM32H743", "clock_mhz": 480,
+            "ram_kb": 1024, "flash_kb": 2048,
+            "co_processor": "Jetson-Orin-Nano"},
+    "eps": {"enabled": true, "solar_panels": 16, "deployable_panels": 6,
+            "panel_type": "GaAs_triple_junction", "panel_efficiency": 0.30,
+            "battery_type": "Li-ion_21700", "battery_capacity_wh": 160,
+            "battery_cells": 12, "bus_voltage": 28.0},
+    "comm": {
+      "enabled": true,
+      "uhf": {"enabled": true, "frequency_mhz": 437.0, "power_w": 2.0,
+              "data_rate_bps": 9600, "protocol": "AX.25"},
+      "s_band": {"enabled": true, "frequency_mhz": 2400, "power_w": 5.0,
+                 "data_rate_mbps": 4},
+      "x_band": {"enabled": true, "frequency_mhz": 8400, "power_w": 10.0,
+                 "data_rate_mbps": 150},
+      "ka_band": {"enabled": true, "frequency_mhz": 26000, "power_w": 10.0,
+                  "data_rate_mbps": 500},
+      "optical": {"enabled": false, "wavelength_nm": 1550,
+                  "data_rate_gbps": 1.0}
+    },
+    "adcs": {
+      "enabled": true,
+      "tier": "star_tracker_fine_pointing",
+      "magnetorquers": 3, "reaction_wheels": 4, "sun_sensors": 12,
+      "star_trackers": 3, "magnetometer": "RM3100", "imu": "ADIS16497",
+      "pointing_accuracy_deg": 0.02,
+      "modes": ["detumbling", "sun_pointing", "nadir_pointing",
+                "target_pointing", "fine_inertial", "sliding_target"]
+    },
+    "gnss": {"enabled": true, "receiver": "NovAtel_OEM719"},
+    "imu": {"enabled": true, "sensor_type": "ADIS16497", "sample_rate_hz": 500},
+    "camera": {"enabled": true, "resolution_mp": 50, "gsd_m": 2,
+               "spectral_bands": ["R", "G", "B", "NIR", "SWIR", "TIR"],
+               "compression": "JPEG2000", "storage_gb": 1024},
+    "payload": {"enabled": true, "type": "multi_instrument_platform"},
+    "propulsion": {"enabled": true, "type": "electric_hall",
+                   "delta_v_m_s": 200, "propellant_g": 400}
+  },
+  "features": {
+    "orbit_predictor": true,
+    "magnetorquers": true,
+    "reaction_wheels": true,
+    "star_tracker": true,
+    "eclipse_fdir": true,
+    "solar_panels": true,
+    "gnss": true,
+    "camera": true,
+    "image_processor": true,
+    "s_band_radio": true,
+    "x_band_radio": true,
+    "optical_comm": false,
+    "propulsion": true,
+    "descent_controller": false
+  },
+  "ground_station": {
+    "location": {"name": "Tashkent GS", "latitude": 41.2995,
+                 "longitude": 69.2401, "altitude_m": 455},
+    "antenna": {"type": "dish_7m", "gain_dbi": 55, "frequency_mhz": 26000},
+    "tnc": "direwolf", "network_port": 5001
+  }
+}

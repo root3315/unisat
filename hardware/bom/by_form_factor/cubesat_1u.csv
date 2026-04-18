@@ -1,0 +1,17 @@
+Category,Component,Part Number,Qty,Unit Price (USD),Mass (g),Supplier,Notes
+OBC,STM32F446RE Nucleo Board,NUCLEO-F446RE,1,15.00,30,ST,Main MCU
+OBC,SD Card Module,MicroSD-SPI,1,3.00,3,Generic,Data storage
+EPS,Solar Cell 30x60mm GaAs,SC-3G30A-SM,4,35.00,40,SpectroLab,Triple-junction body-mounted
+EPS,18650 Li-ion Cell 3400mAh,NCR18650B,2,8.00,100,Panasonic,Battery pack (2P)
+EPS,MPPT Charge Controller,SPV1040,1,5.00,2,ST,Solar charger IC
+COMM,UHF Transceiver 437MHz,CC1125,1,12.00,3,TI,AX.25 compatible
+COMM,UHF Antenna (deployable),DPLA-437,1,25.00,20,Custom,Quarter-wave monopole
+ADCS,Magnetometer LIS3MDL,LIS3MDLTR,1,3.50,1,ST,Passive attitude sense
+ADCS,IMU MPU-9250,MPU-9250,1,8.00,1,InvenSense,9-DOF
+Sensor,BME280 Environmental,BME280,1,4.00,1,Bosch,Temp/Press/Humidity
+Sensor,TMP117 Precision Temp,TMP117,2,5.00,2,TI,±0.1°C accuracy
+Structure,CubeSat Frame 1U,CS-1U-AL,1,120.00,180,Custom,7075-T6 Aluminium
+Structure,PCB Spacers M3,M3-SPACER,12,0.50,6,Generic,Brass standoffs
+Thermal,MLI Blanket 5-layer,MLI-5L,1,25.00,15,Custom,Kapton/Mylar
+Harness,Wire Harness Kit,AWG30-KIT,1,20.00,15,Custom,Kapton insulated
+,,,,TOTAL,419,,~1.33 kg with mass reserve for payload

@@ -1,0 +1,27 @@
+Category,Component,Part Number,Qty,Unit Price (USD),Mass (g),Supplier,Notes
+OBC,STM32F446RE Nucleo Board,NUCLEO-F446RE,1,15.00,30,ST,Main MCU
+OBC,SD Card Module,MicroSD-SPI,1,3.00,3,Generic,Data storage
+EPS,Solar Cell 40x80mm GaAs,SC-3G30A,6,45.00,60,SpectroLab,Triple junction 29.5%
+EPS,18650 Li-ion Cell 3400mAh,NCR18650B,4,8.00,200,Panasonic,Battery pack 4P
+EPS,MPPT Charge Controller,SPV1040,1,5.00,2,ST,Solar charger IC
+COMM,UHF Transceiver 437MHz,CC1125,1,12.00,3,TI,AX.25 compatible
+COMM,S-band Transceiver,XR-Sband,1,150.00,60,Custom,2400 MHz high-rate
+COMM,UHF Antenna (deployable),DPLA-437,1,25.00,20,Custom,Quarter-wave monopole
+COMM,Patch Antenna S-band,PATCH-SBAND,1,80.00,25,Custom,Nadir-pointing
+ADCS,Magnetorquer Coil Set,MTQ-3X,3,15.00,60,Custom,Air-core coils
+ADCS,Reaction Wheel Assembly,RW-MICRO,3,120.00,150,Custom,Brushless motor + flywheel
+ADCS,Magnetometer LIS3MDL,LIS3MDLTR,1,3.50,1,ST,3-axis digital
+ADCS,IMU MPU-9250,MPU-9250,1,8.00,1,InvenSense,9-DOF
+ADCS,Sun Sensor Photodiode,BPW34,6,1.50,6,Osram,One per face
+GNSS,u-blox MAX-M10S,MAX-M10S,1,15.00,3,u-blox,Multi-GNSS receiver
+GNSS,Patch Antenna,ANT-GPS,1,5.00,6,Generic,Ceramic 25x25 mm
+Sensor,BME280 Environmental,BME280,1,4.00,1,Bosch,Temp/Press/Humidity
+Sensor,TMP117 Precision Temp,TMP117,2,5.00,2,TI,±0.1°C accuracy
+Sensor,Geiger Tube SBM-20,SBM-20,1,20.00,30,Centronic,Radiation monitor
+Sensor,ADC MCP3008,MCP3008-I/P,1,3.00,1,Microchip,8-ch 10-bit SPI
+Camera,Camera Module 8MP,IMX219,1,25.00,15,Sony,MIPI CSI-2
+Structure,CubeSat Frame 3U,CS-3U-AL,1,200.00,500,Custom,7075-T6 Aluminium
+Structure,PCB Spacers M3,M3-SPACER,20,0.50,10,Generic,Brass standoffs
+Thermal,MLI Blanket 10-layer,MLI-10L,1,50.00,60,Custom,Kapton/Mylar
+Harness,Wire Harness Kit,AWG30-KIT,1,30.00,30,Custom,Kapton insulated
+,,,,TOTAL,1279,,~4 kg with imaging + propulsion reserve

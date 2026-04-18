@@ -1,0 +1,34 @@
+Category,Component,Part Number,Qty,Unit Price (USD),Mass (g),Supplier,Notes
+OBC,STM32H743 Nucleo,NUCLEO-H743ZI2,1,40.00,60,ST,Supervisor MCU
+OBC,Jetson Orin Nano,JET-ORIN-NANO,1,500.00,300,NVIDIA,Payload processor
+OBC,NVMe SSD 1 TB,SSD-NVME-1T,1,120.00,60,Generic,Bulk data
+EPS,Solar Cell 40x80mm GaAs,SC-3G30A,16,45.00,160,SpectroLab,Deployable arrays
+EPS,Deployable wings 2-stage,WING-2S-6,2,400.00,600,Custom,Larger wings
+EPS,21700 Li-ion 5000 mAh,INR21700-50E,12,10.00,900,Samsung,Larger pack
+EPS,MPPT + BMS 28V,EPS-12U,1,600.00,350,Custom,28V bus
+COMM,UHF Transceiver 437MHz,CC1125,1,12.00,3,TI,AX.25 TT&C
+COMM,S-band Transceiver,XR-Sband,1,150.00,60,Custom,HR TT&C
+COMM,X-band Transmitter,XTX-Xband,1,450.00,350,Syrlinks,150 Mbps
+COMM,Ka-band Transmitter,KTX-KaBand,1,2500.00,800,Custom,500 Mbps
+COMM,UHF dipole,DIPOLE-437,1,25.00,30,Custom,Deployable
+COMM,Gimballed X/Ka antenna,GIMBAL-XKA,1,3500.00,600,Custom,2-axis pointing
+ADCS,Magnetorquer Coil Set,MTQ-3X,3,15.00,60,Custom,Air-core coils
+ADCS,Reaction Wheel,RW-LARGE,4,800.00,1600,Custom,50 mNms
+ADCS,Star Tracker,ST-FINE,3,4500.00,540,Blue-Canyon,Arcsec
+ADCS,Sun Sensor,BPW34,12,1.50,12,Osram,Two per face
+ADCS,IMU ADIS16497,ADIS16497,1,1200.00,65,Analog Devices,Navigation-grade
+GNSS,NovAtel OEM719,OEM719,1,1200.00,45,NovAtel,Multi-freq
+GNSS,Active patch ant.,ACT-PATCH,1,80.00,30,Generic,With LNA
+Sensor,TMP117 Precision Temp,TMP117,12,5.00,12,TI,Structural survey
+Sensor,Pressure transducer,PT-VAC,2,50.00,30,Omega,Vacuum sensing
+Camera,Camera 50 MP (multispectral),S50-MS,1,800.00,250,Custom,Science imager
+Payload,Multi-instrument platform,MIP-12U,1,20000.00,3500,Custom,Science payload
+Propulsion,Hall thruster,HALL-1N,1,25000.00,2200,Custom,Electric propulsion
+Propulsion,Xenon tank + feed,XFS-200,1,6000.00,1500,Custom,200 g propellant
+Structure,CubeSat Frame 12U,CS-12U-AL,1,4500.00,5000,Innovative-Solutions-In-Space,12U frame
+Structure,PCB set (6-layer),PCB-12U,10,250.00,600,Custom,Full bus + payload
+Thermal,Thermal loop heat-pipe,HP-4,4,400.00,400,Custom,Payload cooling
+Thermal,MLI Blanket 20-layer,MLI-20L,1,300.00,240,Custom,Kapton/Mylar
+Thermal,Deployable radiator,RAD-DEPL,2,600.00,400,Custom,Large heat rejection
+Harness,Wire Harness Kit,AWG28-KIT,1,200.00,160,Custom,Kapton insulated
+,,,,TOTAL,20917,,~16 kg CBE — research-class budget

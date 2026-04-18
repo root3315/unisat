@@ -14,32 +14,40 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg?logo=python&logoColor=white" alt="Python"></a>
   <a href="#"><img src="https://img.shields.io/badge/firmware-STM32F4-green.svg?logo=stmicroelectronics" alt="STM32"></a>
-  <a href="#"><img src="https://img.shields.io/badge/platform-CubeSat_1U--6U-orange.svg" alt="CubeSat"></a>
+  <a href="#"><img src="https://img.shields.io/badge/platform-CubeSat_1U--12U_%7C_CanSat-orange.svg" alt="Platforms"></a>
 </p>
 
 <p align="center">
-  <b>Version 1.2.0 — TRL-5 hardened</b>
+  <b>Version 1.3.0 — Universal Platform (CanSat + CubeSat 1U–12U)</b>
 </p>
 
 <p align="center">
-  <b>Professional open-source CubeSat software platform for competitions and real missions</b>
+  <b>Professional open-source flight software for any small-satellite class</b>
 </p>
 
 ---
 
 ## Overview
 
-**UniSat** is a complete, modular software platform for CubeSat satellites supporting form factors from 1U to 6U. It covers the entire satellite software stack: from STM32 firmware running FreeRTOS to a Python-based ground station with real-time telemetry visualization.
+**UniSat** is a complete, modular flight-software platform that targets the full spectrum of student and research vehicles in a single codebase:
 
-Designed to be competition-ready for CanSat, CubeSat Design, NASA Space Apps, and similar aerospace competitions, while maintaining professional-grade code quality suitable for real missions.
+- CanSat — minimal / standard / advanced (≤350 g, ≤500 g)
+- CubeSat — 1U, 1.5U, 2U, 3U, 6U, 12U
+- Suborbital rockets, high-altitude balloons, drones and rovers
+
+The same STM32 firmware, the same Python flight controller, and the same Streamlit ground station reconfigure themselves automatically from `mission_config.json`. A form-factor registry enforces mass/volume/power envelopes (CDS Rev. 14 for CubeSats, ESA CanSat regulations for CanSats), and a deterministic feature-flag resolver gates every optional subsystem so the build contains only what the mission actually needs.
 
 ---
 
 ## Обзор (Русский)
 
-**UniSat** — полноценная модульная программная платформа для спутников формата CubeSat (1U–6U). Покрывает весь стек ПО спутника: от прошивки STM32 на FreeRTOS до наземной станции на Python с визуализацией телеметрии в реальном времени.
+**UniSat** — универсальная программная платформа, которая из одного репозитория запускает:
 
-Проект готов к участию в конкурсах: CanSat, CubeSat Design, NASA Space Apps, аэрокосмические олимпиады и хакатоны. При этом код профессионального уровня, пригодный для реальных миссий.
+- **CanSat** — minimal / standard / advanced (≤350 г и ≤500 г);
+- **CubeSat** — 1U, 1.5U, 2U, 3U, 6U, 12U;
+- суборбитальные ракеты, стратосферные зонды, БПЛА и роверы.
+
+Одна и та же прошивка STM32, один и тот же полётный контроллер на Python и одна и та же наземная станция на Streamlit сами подстраиваются под активную миссию через `mission_config.json`. Реестр форм-факторов проверяет массу/объём/энергетику (CDS Rev. 14 для CubeSat, правила ESA для CanSat), а детерминированный резолвер фич-флагов включает только те подсистемы, которые нужны конкретному аппарату.
 
 ---
 
@@ -296,30 +304,73 @@ cmake --build build-arm
 
 ## Supported Form Factors
 
-| Form Factor | Mass Limit | Dimensions (mm) | Solar Panels | Use Case |
-|-------------|-----------|------------------|--------------|----------|
-| **1U** | 1.33 kg | 100 × 100 × 113.5 | 4 | Education, CanSat |
-| **2U** | 2.66 kg | 100 × 100 × 227.0 | 4 | Technology demo |
-| **3U** | 4.00 kg | 100 × 100 × 340.5 | 6 | Earth observation |
-| **6U** | 12.00 kg | 100 × 226.3 × 340.5 | 8 | Full mission |
+| Form factor | Max mass | Dimensions (mm) | ADCS tiers | Typical radios | Reference BOM |
+|---|---:|---|---|---|---|
+| **CanSat minimal** | 350 g | Ø66 × 115 cyl. | none | ISM 433/868/915, LoRa | [`cansat_minimal.csv`](hardware/bom/by_form_factor/cansat_minimal.csv) |
+| **CanSat standard** | 500 g | Ø68 × 80 cyl. | none | ISM, LoRa | [`cansat_standard.csv`](hardware/bom/by_form_factor/cansat_standard.csv) |
+| **CanSat advanced** | 500 g | Ø68 × 115 cyl. | passive-spin | ISM, UHF amateur | [`cansat_advanced.csv`](hardware/bom/by_form_factor/cansat_advanced.csv) |
+| **CubeSat 1U** | 2.0 kg | 100 × 100 × 113.5 | passive-magnetic | VHF/UHF amateur | [`cubesat_1u.csv`](hardware/bom/by_form_factor/cubesat_1u.csv) |
+| **CubeSat 1.5U** | 3.0 kg | 100 × 100 × 170.25 | magnetorquer | UHF amateur | — |
+| **CubeSat 2U** | 4.0 kg | 100 × 100 × 227.0 | magnetorquer + sensors | UHF + optional S-band | — |
+| **CubeSat 3U** | 6.0 kg | 100 × 100 × 340.5 | reaction wheels 3-axis | UHF + S-band + X-band | [`cubesat_3u.csv`](hardware/bom/by_form_factor/cubesat_3u.csv) |
+| **CubeSat 6U** | 12.0 kg | 226.3 × 100 × 366 | star tracker fine-pointing | UHF + S + X + Ka | [`cubesat_6u.csv`](hardware/bom/by_form_factor/cubesat_6u.csv) |
+| **CubeSat 12U** | 24.0 kg | 226.3 × 226.3 × 366 | star tracker + propulsion | UHF + S + X + Ka + optical | [`cubesat_12u.csv`](hardware/bom/by_form_factor/cubesat_12u.csv) |
 
-Configure via `mission_config.json` — all subsystems adapt automatically.
+Every envelope above is enforced at runtime by `flight-software/core/form_factors.py`. The matching mission templates live in [`mission_templates/`](mission_templates/) — copy the one you want into `mission_config.json` and the flight controller, firmware, and ground station all follow along.
+
+### Picking a profile
+
+```bash
+# 1. Choose a template (CanSat, CubeSat 1U … 12U, rocket, HAB, drone).
+cp mission_templates/cubesat_3u.json mission_config.json
+
+# 2. Build the matching firmware image.
+make target-cubesat-3u       # → firmware/build-arm-cubesat-3u/
+
+# 3. Launch the flight controller and ground station — they read
+#    mission_config.json and configure themselves automatically.
+cd flight-software && python3 flight_controller.py
+cd ground-station && streamlit run app.py
+```
+
+Build every profile at once with `make target-all-profiles` (produces
+nine separate `build-arm-<profile>/` trees).
+
+### Feature flags
+
+`mission_config.json` accepts a top-level `features` block whose keys
+are defined in `flight-software/core/feature_flags.py`. The resolver
+combines explicit overrides with platform / form-factor / ADCS-tier /
+radio-band gates so the final enabled set is deterministic and logged.
+Examples:
+
+```json
+"features": {
+    "orbit_predictor": true,         // CubeSat-only → disabled for CanSat
+    "reaction_wheels": true,         // requires 2U+ and an RW tier
+    "star_tracker":   false,         // explicit disable always wins
+    "descent_controller": true,      // CanSat / rocket / HAB only
+    "parachute_pyro": true,
+    "s_band_radio":   true           // requires s_band radio configured
+}
+```
 
 ---
 
 ## Competition Adaptation
 
-Ready-to-submit adaptations for аэрокосмических конкурсов. Подробное
-пошаговое руководство по каждому типу — в [USAGE_GUIDE.md](docs/USAGE_GUIDE.md) §7.
+Ready-to-submit adaptations for aerospace competitions. Detailed step-by-step guides live in [USAGE_GUIDE.md](docs/USAGE_GUIDE.md) §7.
 
-| Конкурс | Template | Ключевое | Время подготовки |
+| Competition | Template | Highlights | Prep time |
 |---|---|---|---|
-| **CanSat** | `mission_templates/cansat_standard.json` | Парашют, IMU, 500 г | 1 вечер |
-| **CubeSat Design** | `mission_templates/cubesat_sso.json` | 3U, CDR docs, HMAC auth | 1 неделя |
-| **NASA Space Apps** | Любой + NDVI analyzer | Earth observation | 48 ч |
-| **Rocket competition** | `mission_templates/rocket_competition.json` | Dual-deploy | 2–3 дня |
-| **HAB** | `mission_templates/hab_standard.json` | GNSS, камера | 1 день |
-| **Aerospace Olympiad** | — | `simulation/analytical_solutions.py` | — |
+| **CanSat (beginner)** | `mission_templates/cansat_minimal.json` | RP2040, ISM 433 MHz, ≤350 g | 1 evening |
+| **CanSat (standard)** | `mission_templates/cansat_standard.json` | Parachute, IMU, Ø68 × 80 mm, ≤500 g | 2–3 days |
+| **CanSat (advanced)** | `mission_templates/cansat_advanced.json` | Pyro deploy, camera, guided descent | 1 week |
+| **CubeSat Design** | `mission_templates/cubesat_3u.json` | 3U LEO, CDR docs, HMAC auth | 1 week |
+| **CubeSat 6U/12U research** | `mission_templates/cubesat_6u.json` / `cubesat_12u.json` | X/Ka-band, propulsion slot | 2–3 weeks |
+| **NASA Space Apps** | Any template + NDVI analyzer | Earth observation | 48 h |
+| **Rocket competition** | `mission_templates/rocket_competition.json` | Dual-deploy | 2–3 days |
+| **HAB** | `mission_templates/hab_standard.json` | GNSS + camera | 1 day |
 
 Also: [COMPETITION_GUIDE.md](COMPETITION_GUIDE.md) (short form).
 

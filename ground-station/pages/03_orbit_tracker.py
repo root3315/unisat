@@ -4,7 +4,16 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
+from utils.profile_gate import page_applies
+
 st.set_page_config(page_title="Orbit Tracker", layout="wide")
+
+page_applies(
+    platforms=("cubesat",),
+    requires_orbit=True,
+    page_label="Orbit Tracker",
+)
+
 st.title("🌍 Orbit Tracker")
 
 # Generate ISS-like ground track (SSO ~97.6° inclination, 550 km)

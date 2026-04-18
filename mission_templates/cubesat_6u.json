@@ -1,0 +1,80 @@
+{
+  "mission": {
+    "name": "CubeSat 6U Mission",
+    "version": "1.0.0",
+    "description": "6U CubeSat: X-band downlink, fine pointing, research payload",
+    "mission_type": "cubesat_6u",
+    "platform": "cubesat",
+    "operator": "Team Name",
+    "telemetry_hz": 2.0
+  },
+  "satellite": {
+    "form_factor": "cubesat_6u",
+    "mass_kg": 8.0,
+    "dimensions_mm": [226.3, 100, 366]
+  },
+  "orbit": {
+    "type": "SSO",
+    "altitude_km": 550,
+    "inclination_deg": 97.6,
+    "ltan": "10:30",
+    "expected_lifetime_years": 3
+  },
+  "subsystems": {
+    "obc": {"enabled": true, "mcu": "STM32F446RE", "clock_mhz": 180,
+            "ram_kb": 128, "flash_kb": 512,
+            "co_processor": "Jetson-Nano"},
+    "eps": {"enabled": true, "solar_panels": 12, "panel_type": "GaAs_triple_junction",
+            "panel_efficiency": 0.295, "deployable_panels": 4,
+            "battery_type": "Li-ion_18650", "battery_capacity_wh": 80,
+            "battery_cells": 8, "bus_voltage": 12.0},
+    "comm": {
+      "enabled": true,
+      "uhf": {"enabled": true, "frequency_mhz": 437.0, "power_w": 2.0,
+              "data_rate_bps": 9600, "protocol": "AX.25"},
+      "s_band": {"enabled": true, "frequency_mhz": 2400, "power_w": 2.0,
+                 "data_rate_kbps": 1024},
+      "x_band": {"enabled": true, "frequency_mhz": 8400, "power_w": 5.0,
+                 "data_rate_mbps": 50}
+    },
+    "adcs": {
+      "enabled": true,
+      "tier": "star_tracker_fine_pointing",
+      "magnetorquers": 3, "reaction_wheels": 4, "sun_sensors": 6,
+      "star_trackers": 2, "magnetometer": "LIS3MDL", "imu": "ADIS16460",
+      "pointing_accuracy_deg": 0.05,
+      "modes": ["detumbling", "sun_pointing", "nadir_pointing",
+                "target_pointing", "fine_inertial"]
+    },
+    "gnss": {"enabled": true, "receiver": "NovAtel_OEM719"},
+    "imu": {"enabled": true, "sensor_type": "ADIS16460", "sample_rate_hz": 200},
+    "camera": {"enabled": true, "resolution_mp": 20, "gsd_m": 5,
+               "spectral_bands": ["R", "G", "B", "NIR", "SWIR"],
+               "compression": "JPEG2000", "storage_gb": 256},
+    "payload": {"enabled": true, "type": "hyperspectral_imager"},
+    "propulsion": {"enabled": false, "type": "cold_gas",
+                   "delta_v_m_s": 30, "propellant_g": 200}
+  },
+  "features": {
+    "orbit_predictor": true,
+    "magnetorquers": true,
+    "reaction_wheels": true,
+    "star_tracker": true,
+    "eclipse_fdir": true,
+    "solar_panels": true,
+    "gnss": true,
+    "camera": true,
+    "image_processor": true,
+    "s_band_radio": true,
+    "x_band_radio": true,
+    "optical_comm": false,
+    "propulsion": false,
+    "descent_controller": false
+  },
+  "ground_station": {
+    "location": {"name": "Tashkent GS", "latitude": 41.2995,
+                 "longitude": 69.2401, "altitude_m": 455},
+    "antenna": {"type": "dish_3m", "gain_dbi": 32, "frequency_mhz": 8400},
+    "tnc": "direwolf", "network_port": 5001
+  }
+}

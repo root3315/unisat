@@ -1,0 +1,57 @@
+{
+  "mission": {
+    "name": "CubeSat 1.5U Mission",
+    "version": "1.0.0",
+    "description": "1.5U CubeSat: UHF/VHF beacon + imaging experiment",
+    "mission_type": "cubesat_1_5u",
+    "platform": "cubesat",
+    "operator": "Team Name",
+    "telemetry_hz": 0.5
+  },
+  "satellite": {
+    "form_factor": "cubesat_1_5u",
+    "mass_kg": 2.0,
+    "dimensions_mm": [100, 100, 170.25]
+  },
+  "orbit": {
+    "type": "LEO",
+    "altitude_km": 500,
+    "inclination_deg": 51.6,
+    "expected_lifetime_years": 1
+  },
+  "subsystems": {
+    "obc": {"enabled": true, "mcu": "STM32F446RE", "clock_mhz": 120,
+            "ram_kb": 128, "flash_kb": 512},
+    "eps": {"enabled": true, "solar_panels": 4, "panel_type": "GaAs_triple_junction",
+            "panel_efficiency": 0.295, "battery_type": "Li-ion_18650",
+            "battery_capacity_wh": 15, "battery_cells": 2, "bus_voltage": 3.3},
+    "comm": {
+      "enabled": true,
+      "uhf": {"enabled": true, "frequency_mhz": 437.0, "power_w": 0.5,
+              "data_rate_bps": 4800, "protocol": "AX.25"}
+    },
+    "adcs": {
+      "enabled": true,
+      "tier": "magnetorquer",
+      "magnetorquers": 3, "magnetometer": "LIS3MDL",
+      "pointing_accuracy_deg": 8.0
+    },
+    "gnss": {"enabled": false},
+    "imu": {"enabled": true, "sensor_type": "MPU9250", "sample_rate_hz": 20},
+    "camera": {"enabled": true, "resolution_mp": 2, "storage_gb": 4},
+    "payload": {"enabled": false}
+  },
+  "features": {
+    "orbit_predictor": true,
+    "magnetorquers": true,
+    "reaction_wheels": false,
+    "eclipse_fdir": true,
+    "solar_panels": true,
+    "camera": true,
+    "descent_controller": false
+  },
+  "ground_station": {
+    "antenna": {"type": "yagi", "gain_dbi": 14, "frequency_mhz": 437},
+    "tnc": "direwolf", "network_port": 5001
+  }
+}

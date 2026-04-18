@@ -1,0 +1,78 @@
+{
+  "mission": {
+    "name": "CanSat Advanced",
+    "version": "1.0.0",
+    "description": "Advanced CanSat (≤500 g) — active descent + imaging payload",
+    "mission_type": "cansat_advanced",
+    "platform": "cansat",
+    "operator": "Team Name",
+    "telemetry_hz": 20.0,
+    "competition": {
+      "type": "cansat",
+      "name": "CanSat Advanced Class",
+      "descent_rate_range_m_s": [6.0, 11.0],
+      "max_landing_velocity_m_s": 12.0,
+      "min_telemetry_samples": 200,
+      "max_cansat_mass_g": 500,
+      "max_cansat_outer_diameter_mm": 68,
+      "max_cansat_inner_diameter_mm": 64,
+      "max_cansat_height_mm": 115
+    }
+  },
+  "satellite": {
+    "form_factor": "cansat_advanced",
+    "mass_kg": 0.49,
+    "dimensions_mm": {"outer_diameter_mm": 68, "inner_diameter_mm": 64,
+                      "height_mm": 115}
+  },
+  "subsystems": {
+    "obc": {"enabled": true, "mcu": "STM32F446RE", "clock_mhz": 180,
+            "ram_kb": 128, "flash_kb": 512},
+    "imu": {"enabled": true, "sensor_type": "BMI088",
+            "sample_rate_hz": 200, "accel_range_g": 24,
+            "gyro_range_dps": 2000, "has_magnetometer": false,
+            "simulate": false},
+    "barometer": {"enabled": true, "sensor_type": "MS5611",
+                  "sample_rate_hz": 50, "ref_pressure_pa": 101325,
+                  "ground_altitude_m": 0, "simulate": false},
+    "gnss": {"enabled": true, "receiver": "u-blox_MAX-M10S",
+             "antenna": "patch"},
+    "comm": {
+      "enabled": true,
+      "uhf": {"enabled": true, "frequency_mhz": 433.0, "power_w": 0.1,
+              "data_rate_bps": 19200, "protocol": "custom"}
+    },
+    "camera": {"enabled": true, "resolution_mp": 5,
+               "storage_gb": 8, "sensor": "OV5647"},
+    "descent_controller": {
+      "enabled": true,
+      "deploy_altitude_m": 500,
+      "target_descent_rate_m_s": 8.0,
+      "min_descent_rate_m_s": 6.0,
+      "max_descent_rate_m_s": 11.0,
+      "landing_speed_threshold_m_s": 12.0,
+      "deploy_delay_s": 1.0,
+      "min_telemetry_samples": 200,
+      "pyro_enabled": true,
+      "pyro_channel": 1
+    },
+    "payload": {"enabled": true, "type": "autorotator",
+                "description": "Guided-descent autorotator with image downlink"}
+  },
+  "features": {
+    "orbit_predictor": false,
+    "descent_controller": true,
+    "parachute_pyro": true,
+    "barometer": true,
+    "imu": true,
+    "gnss": true,
+    "camera": true,
+    "image_processor": true,
+    "solar_panels": false
+  },
+  "ground_station": {
+    "location": {"name": "Launch Site", "latitude": 0.0, "longitude": 0.0,
+                 "altitude_m": 0},
+    "antenna": {"type": "yagi_small", "gain_dbi": 9, "frequency_mhz": 433}
+  }
+}
