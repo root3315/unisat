@@ -42,7 +42,21 @@ static FDIR_PersistentHeader_t  g_hdr NOINIT_ATTR;
 static FDIR_PersistentEntry_t   g_ring[FDIR_PERSISTENT_CAPACITY] NOINIT_ATTR;
 
 /* ------------------------------------------------------------------
- *  CRC-32 (same polynomial as key_store.c — IEEE 802.3).
+ *  CRC-32 / ISO-HDLC (also known as CRC-32B or "IEEE 802.3 CRC-32").
+ *
+ *      poly     = 0x04C11DB7       (reflected: 0xEDB88320)
+ *      init     = 0xFFFFFFFF
+ *      refin    = true
+ *      refout   = true
+ *      xorout   = 0xFFFFFFFF
+ *      check    = CRC-32("123456789") == 0xCBF43926
+ *
+ *  Same variant as key_store.c — picking ISO-HDLC avoids the need for
+ *  a project-local lookup table and matches what any off-the-shelf
+ *  Python (`zlib.crc32`), C (`libz`), or ground-station tool computes
+ *  by default. Do NOT swap this for CRC-32C (Castagnoli) without a
+ *  coordinated ground-side change — the ground parser is expected to
+ *  use the same polynomial when replaying fault logs.
  * ------------------------------------------------------------------ */
 static uint32_t crc32_update(uint32_t crc, const uint8_t *buf, size_t len)
 {

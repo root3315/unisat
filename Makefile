@@ -18,12 +18,17 @@
 #   make setup-hal   — fetch upstream STM32Cube HAL for production build
 # ------------------------------------------------------------------
 
-.PHONY: all build build-firmware test test-c test-py demo \
-        docker-ci ci goldens trace clean help \
+.PHONY: help all build build-firmware test test-c test-py demo \
+        docker-ci ci goldens trace clean \
         target size flash setup-hal setup-freertos setup-all \
         cppcheck cppcheck-strict coverage sanitizers \
         coverage-py lint-py configurator sbom \
         pin-docker pin-docker-unpin
+
+# Default target: show the help block so a new contributor running
+# `make` without arguments sees the menu instead of kicking off a
+# full build by accident.
+.DEFAULT_GOAL := help
 
 FIRMWARE_DIR := firmware
 BUILD_DIR    := $(FIRMWARE_DIR)/build

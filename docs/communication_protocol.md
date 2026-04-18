@@ -2,6 +2,31 @@
 
 Reference: CCSDS 133.0-B-2 (Space Packet Protocol), CCSDS 132.0-B-2 (TM Space Data Link), AX.25 Link Access Procedure v2.2
 
+## Wire-format compatibility contract
+
+Every byte layout described in this document — the beacon, the
+authenticated command frame, the CCSDS header fields — is
+**frozen within a major version** per [Semantic Versioning][sv].
+
+[sv]: https://semver.org/spec/v2.0.0.html
+
+- **Any additive change** (new field appended after the last one,
+  new APID value, new flag bit in a reserved range) → minor bump
+  (`1.2.x → 1.3.0`). Backwards-compatible receivers must ignore
+  unknown trailing bytes / unknown APIDs.
+- **Any breaking change** (reorder, resize, or remove an existing
+  field; redefine a reserved bit; switch endianness) → **major
+  bump** (`1.x → 2.0.0`).
+- All multi-byte integer fields in this document are
+  **big-endian** on the wire, matching CCSDS and ITU convention.
+  This includes the 4-byte replay counter in the command frame
+  (`command_dispatcher.h`).
+
+Ground stations, flight firmware, and third-party decoders that
+follow this contract can be mixed and matched across patch
+releases without coordination.
+
+
 ## 1. Protocol Architecture
 
 ### 1.1 Protocol Stack
