@@ -5,6 +5,91 @@ All notable changes to UniSat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-04-18 — Universal Platform (branch `feature/universal-platform`)
+
+Expands the platform coverage from "3U CubeSat LEO + a handful of
+templates" to a single codebase that configures itself for every
+supported vehicle class — CanSat (minimal/standard/advanced), CubeSat
+1U-12U, sounding rocket, HAB, drone, and rover.
+
+### Added — Form-factor registry (`flight-software/core/form_factors.py`)
+
+- Authoritative mass / volume / power envelopes for 14 form factors
+  aligned with CDS Rev. 14 (CubeSats) and ESA CanSat regulations.
+- Helpers `check_mass()`, `is_adcs_tier_supported()`,
+  `is_comm_band_supported()` used by the configurator and runtime
+  guards.
+- Per-class allowed ADCS tiers and radio bands so invalid
+  configurations fail fast instead of silently misbehaving in flight.
+
+### Added — Feature-flag resolver (`flight-software/core/feature_flags.py`)
+
+- Declarative registry of 17 optional features with platform /
+  form-factor / ADCS / radio-band gates.
+- Deterministic resolution pipeline: explicit override → platform →
+  form factor → ADCS tier → radio band → default.
+- `ResolvedFlags.as_dict()` exposes the full decision trail for UI
+  rendering and CI logs.
+
+### Added — New mission profiles (`flight-software/core/mission_types.py`)
+
+- CubeSat 1U, 1.5U, 2U, 3U, 6U, 12U profiles reusing the LEO phase
+  graph with size-appropriate telemetry rates and module lists.
+- CanSat minimal (≤350 g) and CanSat advanced (≤500 g guided descent)
+  variants alongside the existing CanSat standard.
+
+### Added — Mission templates (`mission_templates/`)
+
+- Eight new ready-to-copy JSON templates: `cansat_minimal`,
+  `cansat_advanced`, `cubesat_1u`, `cubesat_1_5u`, `cubesat_2u`,
+  `cubesat_3u`, `cubesat_6u`, `cubesat_12u`.
+- Each carries explicit `features` block and form-factor key for
+  deterministic downstream resolution.
+
+### Added — Reference BOMs (`hardware/bom/by_form_factor/`)
+
+- Seven per-class BOMs sized to stay inside the regulatory mass limit
+  of each form factor, each with part number, price, mass, and
+  supplier.
+
+### Added — Compile-time firmware profile selector
+
+- `firmware/stm32/Core/Inc/mission_profile.h` — single header that
+  turns `-DMISSION_PROFILE_<NAME>=1` into `PROFILE_FEATURE_*` and
+  `PROFILE_TELEMETRY_HZ` macros mirroring the Python resolver.
+- Nine new Makefile targets (`target-cansat-minimal` …
+  `target-cubesat-12u`) producing isolated `build-arm-<profile>/`
+  trees; `target-all-profiles` builds every image in one shot.
+
+### Added — Ground-station page gating
+
+- `ground-station/utils/profile_gate.py` — declarative `page_applies()`
+  helper that reads `mission_config.json` and hides pages irrelevant
+  to the active mission.
+- `03_orbit_tracker`, `04_image_viewer`, `05_adcs_monitor` now
+  auto-hide with a short notice when the mission does not need them.
+
+### Added — Tests (56 new tests, all passing)
+
+- `test_form_factors.py` — envelope checks against the reference
+  regulations.
+- `test_feature_flags.py` — resolver pipeline, explicit-override
+  precedence, unknown-flag warnings.
+- `test_new_profiles.py` — every CubeSat size and CanSat variant,
+  including round-trip of the JSON template through
+  `build_profile_from_config()`.
+- `test_profile_gate.py` — ground-station page visibility for CanSat
+  vs CubeSat 3U configurations.
+
+### Added — Documentation
+
+- `docs/universal_platform.md` — architectural reference for the three
+  registries and end-to-end flow.
+- README "Supported Form Factors" rewritten with the full 9-profile
+  matrix, BOM links, and quickstart commands.
+- README "Competition Adaptation" table expanded to cover all three
+  CanSat classes and the 6U/12U research use cases.
+
 ## [1.2.0] - 2026-04-18 — TRL-5 hardening (branch `feat/trl5-hardening`)
 
 Eight-phase hardening sweep covering security, reliability,
