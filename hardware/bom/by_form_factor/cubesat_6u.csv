@@ -1,0 +1,31 @@
+Category,Component,Part Number,Qty,Unit Price (USD),Mass (g),Supplier,Notes
+OBC,STM32F446RE Board,NUCLEO-F446RE,1,15.00,30,ST,Supervisor MCU
+OBC,Jetson Nano module,JETSON-NANO,1,99.00,140,NVIDIA,Payload co-processor
+OBC,SD Card + SSD,SSD-M2,1,60.00,40,Generic,Data storage 256 GB
+EPS,Solar Cell 40x80mm GaAs,SC-3G30A,12,45.00,120,SpectroLab,Body + deployable
+EPS,Deployable wings 2x (each 4 cells),WING-4P,2,180.00,280,Custom,Single-axis
+EPS,18650 Li-ion Cell 3400mAh,NCR18650B,8,8.00,400,Panasonic,Battery pack 8P
+EPS,MPPT + BMS,EPS-6U,1,250.00,180,Custom,12V bus
+COMM,UHF Transceiver 437MHz,CC1125,1,12.00,3,TI,AX.25 TT&C
+COMM,S-band Transceiver,XR-Sband,1,150.00,60,Custom,High-rate TT&C
+COMM,X-band Transmitter,XTX-Xband,1,450.00,350,Syrlinks,50 Mbps
+COMM,UHF dipole,DIPOLE-437,1,25.00,30,Custom,Deployable
+COMM,Patch S-band,PATCH-SBAND,1,80.00,25,Custom,Nadir
+COMM,Patch X-band array,PATCH-XBAND,1,300.00,80,Custom,Gimballed
+ADCS,Magnetorquer Coil Set,MTQ-3X,3,15.00,60,Custom,Air-core coils
+ADCS,Reaction Wheel Assembly,RW-MID,4,300.00,400,Custom,10 mNms
+ADCS,Star Tracker,ST-MICRO,2,3500.00,280,Blue-Canyon,Arcsec-class
+ADCS,Sun Sensor Photodiode,BPW34,12,1.50,12,Osram,Two per face
+ADCS,IMU ADIS16460,ADIS16460,1,500.00,50,Analog Devices,Tactical-grade
+GNSS,NovAtel OEM719,OEM719,1,1200.00,45,NovAtel,Multi-freq
+GNSS,Active patch ant.,ACT-PATCH,1,80.00,30,Generic,With LNA
+Sensor,BME280 Environmental,BME280,1,4.00,1,Bosch,Temp/Press/Humidity
+Sensor,TMP117 Precision Temp,TMP117,6,5.00,6,TI,Structural survey
+Camera,Camera 20 MP,SC2210,1,120.00,80,SmartSens,Hyperspectral-ready
+Payload,Hyperspectral sensor,HS-VNIR,1,2500.00,900,Custom,Science instrument
+Structure,CubeSat Frame 6U,CS-6U-AL,1,1500.00,2800,Innovative-Solutions-In-Space,6U frame
+Structure,PCB set (4-layer),PCB-6U,6,100.00,300,Custom,Bus + payload PCBs
+Thermal,MLI Blanket 15-layer,MLI-15L,1,150.00,120,Custom,Kapton/Mylar
+Thermal,Radiator panel,RAD-PANEL,2,200.00,180,Custom,Dissipates payload heat
+Harness,Wire Harness Kit,AWG28-KIT,1,80.00,80,Custom,Kapton insulated
+,,,,TOTAL,7080,,~8 kg — room for propulsion or bigger payload

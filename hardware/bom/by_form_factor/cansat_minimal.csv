@@ -1,0 +1,15 @@
+Category,Component,Part Number,Qty,Unit Price (USD),Mass (g),Supplier,Notes
+OBC,Raspberry Pi Pico (RP2040),PICO-1,1,4.00,5,Raspberry Pi,Dual-core Cortex-M0+ main MCU
+OBC,microSD Card Module,SD-SPI,1,3.00,2,Generic,Telemetry logging
+Power,LiPo 3.7V 600 mAh,LP-603450,1,8.00,15,Generic,Single-cell battery
+Power,TPS61200 Boost Reg,TPS61200,1,2.00,2,TI,3.3V rail
+Sensor,IMU 6-DOF,LSM6DS3,1,4.00,1,ST,Accel + gyro
+Sensor,Barometer,BMP280,1,2.00,1,Bosch,Pressure/temp
+Sensor,Environmental,BME280,1,4.00,1,Bosch,Temp/humidity/pressure
+Comm,LoRa Module 433 MHz,RA-01,1,3.00,3,Ai-Thinker,Low-power telemetry
+Comm,Wire antenna (λ/4),WIRE-17cm,1,0.50,1,Generic,173 mm wire
+Structure,Aluminium can housing,CAN-65x115,1,12.00,80,Custom,Ø65x115 mm
+Structure,Parachute 250 mm,CHUTE-250,1,5.00,12,Custom,Passive deploy
+Structure,Foam padding,FOAM,1,1.00,5,Generic,Impact cushion
+Harness,AWG30 wire kit,WIRE-30,1,3.00,2,Generic,Internal wiring
+,,,,TOTAL,130,,Within 350 g mass budget
