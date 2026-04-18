@@ -304,19 +304,24 @@ cmake --build build-arm
 
 ## Supported Form Factors
 
-| Form factor | Max mass | Dimensions (mm) | ADCS tiers | Typical radios | Reference BOM |
-|---|---:|---|---|---|---|
-| **CanSat minimal** | 350 g | Ø66 × 115 cyl. | none | ISM 433/868/915, LoRa | [`cansat_minimal.csv`](hardware/bom/by_form_factor/cansat_minimal.csv) |
-| **CanSat standard** | 500 g | Ø68 × 80 cyl. | none | ISM, LoRa | [`cansat_standard.csv`](hardware/bom/by_form_factor/cansat_standard.csv) |
-| **CanSat advanced** | 500 g | Ø68 × 115 cyl. | passive-spin | ISM, UHF amateur | [`cansat_advanced.csv`](hardware/bom/by_form_factor/cansat_advanced.csv) |
-| **CubeSat 1U** | 2.0 kg | 100 × 100 × 113.5 | passive-magnetic | VHF/UHF amateur | [`cubesat_1u.csv`](hardware/bom/by_form_factor/cubesat_1u.csv) |
-| **CubeSat 1.5U** | 3.0 kg | 100 × 100 × 170.25 | magnetorquer | UHF amateur | — |
-| **CubeSat 2U** | 4.0 kg | 100 × 100 × 227.0 | magnetorquer + sensors | UHF + optional S-band | — |
-| **CubeSat 3U** | 6.0 kg | 100 × 100 × 340.5 | reaction wheels 3-axis | UHF + S-band + X-band | [`cubesat_3u.csv`](hardware/bom/by_form_factor/cubesat_3u.csv) |
-| **CubeSat 6U** | 12.0 kg | 226.3 × 100 × 366 | star tracker fine-pointing | UHF + S + X + Ka | [`cubesat_6u.csv`](hardware/bom/by_form_factor/cubesat_6u.csv) |
-| **CubeSat 12U** | 24.0 kg | 226.3 × 226.3 × 366 | star tracker + propulsion | UHF + S + X + Ka + optical | [`cubesat_12u.csv`](hardware/bom/by_form_factor/cubesat_12u.csv) |
+UniSat's [form-factor registry](flight-software/core/form_factors.py) is the single source of truth for every supported class. Every envelope in the tables below is enforced at runtime; each row also ships a mission template, a hardware BOM, a compile-time firmware profile, and a dedicated [ops guide](docs/ops/).
 
-Every envelope above is enforced at runtime by `flight-software/core/form_factors.py`. The matching mission templates live in [`mission_templates/`](mission_templates/) — copy the one you want into `mission_config.json` and the flight controller, firmware, and ground station all follow along.
+| Form factor | Max mass | Dimensions (mm) | ADCS tiers | Typical radios | BOM | Ops guide |
+|---|---:|---|---|---|---|---|
+| **CanSat minimal** | 350 g | Ø66 × 115 cyl. | none | ISM 433/868/915, LoRa | [`cansat_minimal.csv`](hardware/bom/by_form_factor/cansat_minimal.csv) | [cansat_minimal.md](docs/ops/cansat_minimal.md) |
+| **CanSat standard** | 500 g | Ø68 × 80 cyl. | none | ISM, LoRa | [`cansat_standard.csv`](hardware/bom/by_form_factor/cansat_standard.csv) | [cansat_standard.md](docs/ops/cansat_standard.md) |
+| **CanSat advanced** | 500 g | Ø68 × 115 cyl. | passive-spin | ISM, UHF amateur | [`cansat_advanced.csv`](hardware/bom/by_form_factor/cansat_advanced.csv) | [cansat_advanced.md](docs/ops/cansat_advanced.md) |
+| **CubeSat 1U** | 2.0 kg | 100 × 100 × 113.5 | passive-magnetic | VHF/UHF amateur | [`cubesat_1u.csv`](hardware/bom/by_form_factor/cubesat_1u.csv) | [cubesat_1u.md](docs/ops/cubesat_1u.md) |
+| **CubeSat 1.5U** | 3.0 kg | 100 × 100 × 170.25 | magnetorquer | UHF amateur | [`cubesat_1_5u.csv`](hardware/bom/by_form_factor/cubesat_1_5u.csv) | [cubesat_1_5u.md](docs/ops/cubesat_1_5u.md) |
+| **CubeSat 2U** | 4.0 kg | 100 × 100 × 227.0 | magnetorquer + sensors | UHF + optional S-band | [`cubesat_2u.csv`](hardware/bom/by_form_factor/cubesat_2u.csv) | [cubesat_2u.md](docs/ops/cubesat_2u.md) |
+| **CubeSat 3U** ← TRL-5 ref | 6.0 kg | 100 × 100 × 340.5 | reaction wheels 3-axis | UHF + S-band + X-band | [`cubesat_3u.csv`](hardware/bom/by_form_factor/cubesat_3u.csv) | [cubesat_3u.md](docs/ops/cubesat_3u.md) |
+| **CubeSat 6U** | 12.0 kg | 226.3 × 100 × 366 | star tracker fine-pointing | UHF + S + X + Ka | [`cubesat_6u.csv`](hardware/bom/by_form_factor/cubesat_6u.csv) | [cubesat_6u.md](docs/ops/cubesat_6u.md) |
+| **CubeSat 12U** | 24.0 kg | 226.3 × 226.3 × 366 | star tracker + propulsion | UHF + S + X + Ka + optical | [`cubesat_12u.csv`](hardware/bom/by_form_factor/cubesat_12u.csv) | [cubesat_12u.md](docs/ops/cubesat_12u.md) |
+| **Rocket payload** | 10 kg | Ø100 × 300 cyl. | none / passive-spin | ISM, UHF, S-band | — | [rocket_avionics.md](docs/ops/rocket_avionics.md) |
+| **HAB payload** | 4 kg | 150 × 150 × 150 | none | ISM, APRS, UHF amateur | — | [hab_payload.md](docs/ops/hab_payload.md) |
+| **Small drone (UAS)** | 5 kg | 500 × 500 × 200 | IMU attitude control | ISM 2.4 GHz | — | [drone.md](docs/ops/drone.md) |
+
+Mission templates live in [`mission_templates/`](mission_templates/) — copy the one you want into `mission_config.json` and the flight controller, firmware, and ground station all follow along. Profile-selection flowchart + trade-offs in [docs/ops/README.md](docs/ops/README.md).
 
 ### Picking a profile
 
@@ -359,20 +364,21 @@ Examples:
 
 ## Competition Adaptation
 
-Ready-to-submit adaptations for aerospace competitions. Detailed step-by-step guides live in [USAGE_GUIDE.md](docs/USAGE_GUIDE.md) §7.
+Ready-to-submit adaptations for aerospace competitions. Detailed per-profile guides live in [`docs/ops/`](docs/ops/) (one file per form factor) + short form in [USAGE_GUIDE.md](docs/USAGE_GUIDE.md) §7.
 
-| Competition | Template | Highlights | Prep time |
-|---|---|---|---|
-| **CanSat (beginner)** | `mission_templates/cansat_minimal.json` | RP2040, ISM 433 MHz, ≤350 g | 1 evening |
-| **CanSat (standard)** | `mission_templates/cansat_standard.json` | Parachute, IMU, Ø68 × 80 mm, ≤500 g | 2–3 days |
-| **CanSat (advanced)** | `mission_templates/cansat_advanced.json` | Pyro deploy, camera, guided descent | 1 week |
-| **CubeSat Design** | `mission_templates/cubesat_3u.json` | 3U LEO, CDR docs, HMAC auth | 1 week |
-| **CubeSat 6U/12U research** | `mission_templates/cubesat_6u.json` / `cubesat_12u.json` | X/Ka-band, propulsion slot | 2–3 weeks |
-| **NASA Space Apps** | Any template + NDVI analyzer | Earth observation | 48 h |
-| **Rocket competition** | `mission_templates/rocket_competition.json` | Dual-deploy | 2–3 days |
-| **HAB** | `mission_templates/hab_standard.json` | GNSS + camera | 1 day |
+| Competition | Template | Highlights | Ops guide | Prep time |
+|---|---|---|---|---|
+| **CanSat (beginner)** | `cansat_minimal.json` | RP2040, ISM 433 MHz, ≤350 g | [cansat_minimal.md](docs/ops/cansat_minimal.md) | 1 evening |
+| **ESERO / national CanSat** | `cansat_standard.json` | Parachute, IMU, Ø68 × 80 mm, ≤500 g | [cansat_standard.md](docs/ops/cansat_standard.md) | 2–3 days |
+| **NASA CanSat** | `cansat_advanced.json` | Pyro deploy, camera, guided descent | [cansat_advanced.md](docs/ops/cansat_advanced.md) | 1 week |
+| **CubeSat Design** | `cubesat_3u.json` | 3U LEO, CDR docs, HMAC auth | [cubesat_3u.md](docs/ops/cubesat_3u.md) | 1 week |
+| **CubeSat 6U/12U research** | `cubesat_6u.json` / `cubesat_12u.json` | X/Ka-band, propulsion slot | [cubesat_6u.md](docs/ops/cubesat_6u.md) | 2–3 weeks |
+| **NASA Space Apps** | Any CubeSat + NDVI | Earth observation | [cubesat_6u.md](docs/ops/cubesat_6u.md) | 48 h |
+| **IREC / SA Cup rocket** | `rocket_competition.json` | Dual-deploy, HMAC telemetry | [rocket_avionics.md](docs/ops/rocket_avionics.md) | 2–3 days |
+| **HAB flight** | `hab_standard.json` | GNSS + camera | [hab_payload.md](docs/ops/hab_payload.md) | 1 day |
+| **UAV survey** | `drone_survey.json` | Mission planner | [drone.md](docs/ops/drone.md) | 1–2 days |
 
-Also: [COMPETITION_GUIDE.md](COMPETITION_GUIDE.md) (short form).
+Also: [COMPETITION_GUIDE.md](COMPETITION_GUIDE.md) (short form), [docs/ops/README.md](docs/ops/README.md) (profile-selection flowchart).
 
 ---
 
