@@ -50,3 +50,42 @@ budgets above sum to ≤ 600 000 µs across 1 s = 60 % CPU.
 * SWO pin (PB3) routed to ST-Link V2-1 SWV, 2 MHz tracing.
 * Ground-side unpacker: `scripts/parse_wcet_tlm.py` (Phase 6
   follow-up).
+
+---
+
+## Host baseline — algorithmic primitives (available today)
+
+The FreeRTOS-task table above waits on the HIL bench. In the
+meantime, the four time-critical *algorithmic* primitives
+(`encode_ui_frame`, `decoder_push_byte`, `decode_ui_frame`,
+`hmac_sha256`) are measured on the host via `bench_ax25` —
+10 000 iterations each, ~10 seconds total.
+
+| Primitive | Host mean (µs) | Host min (µs) | Budget (µs) | Status |
+|---|---:|---:|---:|:---:|
+| `ax25_encode_ui_frame` (48 B) | **5.75** | 3.86 | 5 000 | ✅ |
+| `ax25_decoder_push_byte` (whole frame) | **7.16** | 4.14 | 2 000 | ✅ |
+| `ax25_decode_ui_frame` (pure) | **1.53** | 1.24 | 2 000 | ✅ |
+| `hmac_sha256` (48 B beacon) | **6.37** | 3.98 | 5 000 | ✅ |
+
+Raw JSON:
+[`host_wcet_baseline.json`](host_wcet_baseline.json).
+
+**Host ≠ target**. Cortex-M4 at 168 MHz runs pure-C integer code
+roughly 10-20× slower than an x86_64 desktop. Projected ARM
+upper bounds (20× host mean) stay 14-65× below budget, so the
+algorithms themselves are not the bottleneck — any budget violation
+found on HIL will come from task-scheduling jitter, interrupt
+latency, or HAL wait-states, not from these primitives.
+
+### How to regenerate
+
+```bash
+cd firmware
+cmake -B build -S .
+cmake --build build --target bench_ax25
+./build/bench_ax25 | tee ../docs/characterization/host_wcet_baseline.json
+```
+
+Commit the updated JSON and the table above together in one PR so
+the baseline stays honest.

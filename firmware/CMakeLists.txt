@@ -597,6 +597,18 @@ else()
     target_compile_definitions(test_command_dispatcher PRIVATE SIMULATION_MODE)
     add_test(NAME command_dispatcher COMMAND test_command_dispatcher)
 
+    # Host WCET micro-benchmark (NOT a ctest target — run manually).
+    # Produces a JSON report on stdout; the characterization doc
+    # under docs/characterization/ tracks the latest baseline.
+    add_executable(bench_ax25
+        tests/bench_ax25.c
+        stm32/Drivers/AX25/ax25.c
+        stm32/Drivers/AX25/ax25_decoder.c
+        stm32/Drivers/Crypto/sha256.c
+        stm32/Drivers/Crypto/hmac_sha256.c
+    )
+    target_compile_definitions(bench_ax25 PRIVATE SIMULATION_MODE)
+
     # Phase 2 / M1a — persistent HMAC key store with rotation.
     # Test file supplies its own strong platform_read/write/erase
     # hooks (fault-injection for corrupt-slot and backend-fail cases),
