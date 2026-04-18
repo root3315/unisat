@@ -6,8 +6,27 @@ cmake_minimum_required(VERSION 3.20)
 # produce a real STM32F446RE firmware image; otherwise we fall back
 # to a host static library used by the ctest + pytest pipelines.
 #
+#
+# COVERAGE / SANITIZERS / STRICT are host-only — gcov needs native
+# libgcov, ASAN/UBSAN need a POSIX runtime, STRICT is a warnings
+# gate on the production-like host build. If any of them is ON we
+# skip the ARM auto-detect even when arm-none-eabi-gcc is on PATH.
+# Set FORCE_HOST=ON explicitly to get the same effect without
+# enabling a specific gate.
+#
+option(FORCE_HOST  "Force host build even if arm-none-eabi-gcc is on PATH" OFF)
+option(STRICT      "Host build: -Werror + extra warnings" OFF)
+option(COVERAGE    "Host build: gcov coverage instrumentation" OFF)
+option(SANITIZERS  "Host build: ASAN + UBSAN" OFF)
+
+if(FORCE_HOST OR STRICT OR COVERAGE OR SANITIZERS)
+    set(_unisat_force_host ON)
+else()
+    set(_unisat_force_host OFF)
+endif()
+
 find_program(ARM_CC arm-none-eabi-gcc)
-if(ARM_CC)
+if(ARM_CC AND NOT _unisat_force_host)
     set(CMAKE_SYSTEM_NAME      Generic)
     set(CMAKE_SYSTEM_PROCESSOR arm)
     set(CMAKE_C_COMPILER       arm-none-eabi-gcc)
@@ -18,7 +37,12 @@ if(ARM_CC)
     set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
     set(CROSS_COMPILE ON)
 else()
-    message(STATUS "arm-none-eabi-gcc not found — host build (SIMULATION_MODE)")
+    if(_unisat_force_host)
+        message(STATUS "Host build forced (FORCE_HOST / COVERAGE / "
+                       "SANITIZERS / STRICT flag set)")
+    else()
+        message(STATUS "arm-none-eabi-gcc not found — host build (SIMULATION_MODE)")
+    endif()
     set(CROSS_COMPILE OFF)
 endif()
 
@@ -50,9 +74,8 @@ set(OPT_FLAGS "-Og -g3")
 #                        negative value, etc. Host-only — the target
 #                        toolchain has no runtime for these.
 #
-option(STRICT     "Host build: -Werror + extra warnings"    OFF)
-option(COVERAGE   "Host build: gcov coverage instrumentation" OFF)
-option(SANITIZERS "Host build: ASAN + UBSAN"                OFF)
+# (STRICT / COVERAGE / SANITIZERS options are declared above the
+# toolchain detection so they can force the host path.)
 
 if(CROSS_COMPILE)
     # Wall/Wextra/Wpedantic kept on; -Wno-incompatible-pointer-types
@@ -465,6 +488,17 @@ else()
     target_compile_definitions(test_adcs_algorithms PRIVATE SIMULATION_MODE)
     target_link_libraries(test_adcs_algorithms PRIVATE m)
     add_test(NAME adcs_algorithms COMMAND test_adcs_algorithms)
+
+    # Extended ADCS coverage — Conjugate/FromAxisAngle/FromDCM/
+    # Integrate/RotateVector/Error + BDot_IsDetumbled/Reset.
+    add_executable(test_quaternion_extended
+        tests/test_quaternion_extended.c
+        stm32/ADCS/quaternion.c
+        stm32/ADCS/bdot.c
+    )
+    target_compile_definitions(test_quaternion_extended PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_quaternion_extended PRIVATE m)
+    add_test(NAME quaternion_extended COMMAND test_quaternion_extended)
 
     add_executable(test_eps
         tests/test_eps.c
