@@ -29,12 +29,23 @@ class PlatformCategory(Enum):
 class MissionType(Enum):
     """Specific mission types with pre-built profiles."""
 
-    # CubeSat variants
+    # CubeSat variants by orbit / role
     CUBESAT_LEO = "cubesat_leo"
     CUBESAT_SSO = "cubesat_sso"
     CUBESAT_TECH_DEMO = "cubesat_tech_demo"
 
+    # CubeSat variants by physical size (1U-12U).
+    # These share the LEO phase graph but bring form-factor-specific module
+    # lists and resource envelopes loaded through the FormFactor registry.
+    CUBESAT_1U = "cubesat_1u"
+    CUBESAT_1_5U = "cubesat_1_5u"
+    CUBESAT_2U = "cubesat_2u"
+    CUBESAT_3U = "cubesat_3u"
+    CUBESAT_6U = "cubesat_6u"
+    CUBESAT_12U = "cubesat_12u"
+
     # CanSat variants
+    CANSAT_MINIMAL = "cansat_minimal"
     CANSAT_STANDARD = "cansat_standard"
     CANSAT_ADVANCED = "cansat_advanced"
 
@@ -460,6 +471,156 @@ def _drone_survey_profile() -> MissionProfile:
 
 
 # ---------------------------------------------------------------------------
+# CubeSat size variants
+# ---------------------------------------------------------------------------
+#
+# Each size shares the LEO phase graph (startup → deployment → detumbling →
+# nominal → …) but tunes the module list, telemetry rate, and safe-mode
+# parameters to match the energy budget and typical payload fit of that
+# physical size.  The form-factor registry is the authoritative source for
+# mass / volume / power envelopes — these profiles only carry *software*
+# defaults.
+
+
+def _cubesat_sized_profile(
+    mission_type: MissionType,
+    form_factor_key: str,
+    *,
+    telemetry_hz: float,
+    optional_modules: list[str],
+) -> MissionProfile:
+    """Build a size-specific CubeSat profile reusing the LEO phase graph.
+
+    Args:
+        mission_type: The MissionType enum value for this profile.
+        form_factor_key: The form-factor key (``"cubesat_1u"`` …).
+        telemetry_hz: Default telemetry rate; smaller units downlink slower.
+        optional_modules: Module names that may be enabled on this size.
+    """
+    leo = _cubesat_leo_profile()
+    return MissionProfile(
+        mission_type=mission_type,
+        platform=PlatformCategory.CUBESAT,
+        phases=leo.phases,
+        initial_phase=leo.initial_phase,
+        core_modules=list(leo.core_modules),
+        optional_modules=list(optional_modules),
+        default_telemetry_hz=telemetry_hz,
+        safe_mode_config=dict(leo.safe_mode_config),
+        power_config=dict(leo.power_config),
+        competition={"form_factor": form_factor_key},
+    )
+
+
+def _cubesat_1u_profile() -> MissionProfile:
+    return _cubesat_sized_profile(
+        MissionType.CUBESAT_1U, "cubesat_1u",
+        telemetry_hz=0.2,
+        optional_modules=["comm", "gnss"],
+    )
+
+
+def _cubesat_1_5u_profile() -> MissionProfile:
+    return _cubesat_sized_profile(
+        MissionType.CUBESAT_1_5U, "cubesat_1_5u",
+        telemetry_hz=0.5,
+        optional_modules=["comm", "gnss", "camera"],
+    )
+
+
+def _cubesat_2u_profile() -> MissionProfile:
+    return _cubesat_sized_profile(
+        MissionType.CUBESAT_2U, "cubesat_2u",
+        telemetry_hz=0.5,
+        optional_modules=["comm", "adcs", "gnss", "camera", "payload"],
+    )
+
+
+def _cubesat_3u_profile() -> MissionProfile:
+    return _cubesat_sized_profile(
+        MissionType.CUBESAT_3U, "cubesat_3u",
+        telemetry_hz=1.0,
+        optional_modules=["comm", "adcs", "gnss", "camera", "payload",
+                          "orbit_predictor", "image_processor"],
+    )
+
+
+def _cubesat_6u_profile() -> MissionProfile:
+    return _cubesat_sized_profile(
+        MissionType.CUBESAT_6U, "cubesat_6u",
+        telemetry_hz=2.0,
+        optional_modules=["comm", "adcs", "gnss", "camera", "payload",
+                          "orbit_predictor", "image_processor"],
+    )
+
+
+def _cubesat_12u_profile() -> MissionProfile:
+    return _cubesat_sized_profile(
+        MissionType.CUBESAT_12U, "cubesat_12u",
+        telemetry_hz=5.0,
+        optional_modules=["comm", "adcs", "gnss", "camera", "payload",
+                          "orbit_predictor", "image_processor"],
+    )
+
+
+# ---------------------------------------------------------------------------
+# CanSat variants
+# ---------------------------------------------------------------------------
+
+
+def _cansat_minimal_profile() -> MissionProfile:
+    """Lightweight CanSat (≤350 g) — telemetry only, no parachute pyro."""
+    base = _cansat_standard_profile()
+    return MissionProfile(
+        mission_type=MissionType.CANSAT_MINIMAL,
+        platform=PlatformCategory.CANSAT,
+        phases=base.phases,
+        initial_phase=base.initial_phase,
+        core_modules=["telemetry", "data_logger", "health", "imu", "barometer"],
+        optional_modules=["comm", "gnss"],
+        default_telemetry_hz=4.0,
+        safe_mode_config=dict(base.safe_mode_config),
+        power_config={"soc_low": 20.0, "soc_critical": 10.0},
+        competition={
+            "type": "cansat",
+            "form_factor": "cansat_minimal",
+            "max_mass_g": 350,
+            "outer_diameter_mm": 66,
+            "inner_diameter_mm": 64,
+            "height_mm": 115,
+            "descent_rate_range_m_s": [5.0, 15.0],
+        },
+    )
+
+
+def _cansat_advanced_profile() -> MissionProfile:
+    """Advanced CanSat with autorotator, secondary payload, guided descent."""
+    base = _cansat_standard_profile()
+    return MissionProfile(
+        mission_type=MissionType.CANSAT_ADVANCED,
+        platform=PlatformCategory.CANSAT,
+        phases=base.phases,
+        initial_phase=base.initial_phase,
+        core_modules=list(base.core_modules) + ["descent_controller"],
+        optional_modules=["comm", "camera", "payload", "gnss", "image_processor"],
+        default_telemetry_hz=20.0,
+        safe_mode_config=dict(base.safe_mode_config),
+        power_config={"soc_low": 25.0, "soc_critical": 12.0},
+        competition={
+            "type": "cansat",
+            "form_factor": "cansat_advanced",
+            "max_mass_g": 500,
+            "outer_diameter_mm": 68,
+            "inner_diameter_mm": 64,
+            "height_mm": 115,
+            "descent_rate_range_m_s": [6.0, 11.0],
+            "max_landing_velocity_m_s": 12.0,
+            "min_telemetry_samples": 200,
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
 # Profile registry
 # ---------------------------------------------------------------------------
 
@@ -470,7 +631,15 @@ def _register_builtins() -> None:
     """Register all built-in mission profiles."""
     for factory in [
         _cubesat_leo_profile,
+        _cubesat_1u_profile,
+        _cubesat_1_5u_profile,
+        _cubesat_2u_profile,
+        _cubesat_3u_profile,
+        _cubesat_6u_profile,
+        _cubesat_12u_profile,
+        _cansat_minimal_profile,
         _cansat_standard_profile,
+        _cansat_advanced_profile,
         _rocket_competition_profile,
         _hab_standard_profile,
         _drone_survey_profile,
