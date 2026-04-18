@@ -10,6 +10,7 @@
 
 #include "unity/unity.h"
 #include "comm.h"
+#include <string.h>
 #include "ax25_api.h"
 
 void setUp(void) {}

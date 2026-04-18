@@ -88,4 +88,21 @@ See `payloads/README.md` for the payload plugin interface. Each payload module s
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be
+licensed under the **Apache License, Version 2.0** — see the
+[LICENSE](LICENSE) and [NOTICE](NOTICE) files in the repository
+root for the full terms.
+
+Under Apache-2.0 §5 (*Submission of Contributions*), any patch
+you submit is automatically offered under Apache-2.0 terms
+unless you explicitly state otherwise in the PR description.
+Per §3 (*Grant of Patent License*), every contribution carries
+an implicit patent-license grant from the contributor to
+every user of the project.
+
+> **License history:** the project was originally published
+> under MIT (2026-02-15 — 2026-04-18). It migrated to Apache-2.0
+> on 2026-04-18. Copies obtained during the MIT window stay
+> MIT-licensed for their recipients — that's a fundamental
+> property of open-source licences and cannot be retroactively
+> changed.

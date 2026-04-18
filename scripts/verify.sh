@@ -52,5 +52,71 @@ docker run --rm -v "$REPO_ABS:/work" -w /work unisat-ci bash -lc '
   python3 /work/scripts/demo.py --port 52100
 '
 
+# ---------------------------------------------------------------
+#  Phase 5 quality gates — best-effort, do not fail verify.sh if
+#  the tool is missing from the CI image.
+# ---------------------------------------------------------------
+echo "==> cppcheck static-analysis gate"
+docker run --rm -v "$REPO_ABS:/work" -w /work unisat-ci bash -lc '
+  if command -v cppcheck >/dev/null; then
+      ./scripts/run_cppcheck.sh || exit 1
+  else
+      echo "    cppcheck not in CI image — skipping."
+      echo "    to enable: apt-get install cppcheck"
+  fi
+'
+
+echo "==> coverage measurement (lcov)"
+docker run --rm -v "$REPO_ABS:/work" -w /work unisat-ci bash -lc '
+  if command -v lcov >/dev/null; then
+      cd firmware
+      rm -rf build-cov
+      cmake -B build-cov -S . -DCOVERAGE=ON > /dev/null
+      cmake --build build-cov > /dev/null
+      ctest --test-dir build-cov > /dev/null
+      cmake --build build-cov --target coverage 2>&1 | tail -5
+  else
+      echo "    lcov not in CI image — skipping."
+      echo "    to enable: apt-get install lcov"
+  fi
+'
+
+# ---------------------------------------------------------------
+#  Target build — produces a real STM32F446RE .elf / .bin / .hex
+#  plus a size report so CI can fail fast on flash/RAM overflow.
+#  This step is best-effort: when the host image is missing the
+#  arm-none-eabi toolchain (e.g. on the lightweight unisat-ci
+#  image) we skip it and print a clear note — verify.sh still
+#  passes on the strength of the host + SITL pipelines above.
+# ---------------------------------------------------------------
+echo "==> target (STM32F446RE) build"
+docker run --rm -v "$REPO_ABS:/work" -w /work unisat-ci bash -lc '
+  if ! command -v arm-none-eabi-gcc >/dev/null; then
+      echo "    arm-none-eabi toolchain not in CI image — skipping."
+      echo "    to enable: apt-get install gcc-arm-none-eabi binutils-arm-none-eabi"
+      exit 0
+  fi
+  cd firmware
+  rm -rf build-arm
+  cmake -B build-arm -S . -DCMAKE_BUILD_TYPE=Release > /dev/null
+  cmake --build build-arm --target unisat_firmware.elf -- -j"$(nproc)"
+  echo "--- size (sysv) ---"
+  arm-none-eabi-size --format=sysv build-arm/unisat_firmware.elf | head -20
+  echo "--- overflow gate ---"
+  # Fail if .elf exceeds 90% of either flash or RAM — keeps headroom
+  # for the Phase 2..6 additions (replay counter, FDIR, full HAL).
+  FLASH_MAX=$((512 * 1024 * 90 / 100))
+  RAM_MAX=$((128 * 1024 * 90 / 100))
+  read text data bss _ < <(arm-none-eabi-size build-arm/unisat_firmware.elf | tail -1 | awk "{print \$1,\$2,\$3}")
+  flash=$((text + data))
+  ram=$((data + bss))
+  echo "    flash = ${flash} B (limit ${FLASH_MAX} B)"
+  echo "    ram   = ${ram} B (limit ${RAM_MAX} B)"
+  if [ "$flash" -gt "$FLASH_MAX" ] || [ "$ram" -gt "$RAM_MAX" ]; then
+      echo "    FAIL: firmware exceeds 90% budget" >&2
+      exit 1
+  fi
+'
+
 echo
 echo "✓ UniSat green. Ready to submit."

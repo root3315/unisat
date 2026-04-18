@@ -1,13 +1,15 @@
 # UniSat — Полная техническая документация
 
-**Версия:** 1.0.0
+**Версия:** 1.2.0 (после TRL-5 hardening + Phase 7/8)
 **Дата:** Апрель 2026
+**Лицензия:** Apache License, Version 2.0 (ранее MIT до 2026-04-18)
 **Репозиторий:** https://github.com/root3315/unisat
 
 ---
 
 ## Содержание
 
+0. [TRL-5 hardening (Phase 1–8) — что нового с v1.0](#0-trl-5-hardening-phase-18)
 1. [Что такое UniSat](#1-что-такое-unisat)
 2. [Поддерживаемые платформы](#2-поддерживаемые-платформы)
 3. [Структура проекта](#3-структура-проекта)
@@ -25,6 +27,137 @@
 15. [CubeSat: подробное руководство](#15-cubesat-подробное-руководство)
 16. [Docker](#16-docker)
 17. [Конкурсы и адаптация](#17-конкурсы-и-адаптация)
+
+---
+
+## 0. TRL-5 hardening (Phase 1–8)
+
+С момента первой публикации (v1.0, 2026-04-15) проект прошёл
+8 фаз software hardening на ветке `feat/trl5-hardening`. Эта
+секция описывает, что добавилось и где искать детали.
+
+### Новые модули (firmware)
+
+| Модуль | Файл | Назначение | Тесты |
+|---|---|---|:---:|
+| **Target build infra** | `firmware/stm32/Target/` | LD script, startup.s, SystemInit, clock cfg, IT handlers, HAL shim, FreeRTOSConfig.h, stm32f4xx_hal_conf.h, stm32_assert.h, peripherals.c | build |
+| **command_dispatcher** | `Core/Src/command_dispatcher.c` | HMAC-SHA256 + 32-bit counter + 64-bit sliding replay window | 11 |
+| **key_store** | `Core/Src/key_store.c` | A/B flash slots + CRC + monotonic generation | 10 |
+| **fdir** | `Core/Src/fdir.c` | 12-fault advisor, escalation window, 6-level severity ladder | 9 |
+| **mode_manager** | `Core/Src/mode_manager.c` | Commander layer — enacts SAFE/DEGRADED/REBOOT transitions | 9 |
+| **fdir_persistent** | `Core/Src/fdir_persistent.c` | `.noinit` SRAM ring buffer survives warm reboot + CRC | 6 |
+| **board_temp** | `Drivers/BoardTemp/board_temp.c` | TMP117 facade for beacon bytes 14-15 (Tboard) | 6 |
+| **boot_security** (integration) | `main.c` | Wires key_store → dispatcher at boot, fail-closed | 4 |
+
+### Python side additions
+
+| Что | Где | Тесты |
+|---|---|:---:|
+| **CounterSender** (ground-side) | `ground-station/utils/hmac_auth.py` | 22 |
+| **E2E mission scenario** | `flight-software/tests/test_mission_e2e.py` | 3 |
+| **Long-soak harness** (gated via env var) | `flight-software/tests/test_long_soak.py` | 1 |
+| **Streamlit page smoke** | `ground-station/tests/test_pages_smoke.py` | 13 |
+| **Extended coverage packs** | `flight-software/tests/test_*_coverage.py`, `*_extended.py`, `*_mocked.py` | 75+ |
+
+### Документация — новые артефакты
+
+| Файл | Содержит |
+|---|---|
+| `docs/requirements/SRS.md` | Software Requirements Spec, 44 REQ, priority + verification + source + test pointers |
+| `docs/requirements/traceability.csv` | Machine-readable REQ → source → test matrix |
+| `docs/reliability/fdir.md` | FDIR policy — fault table + severity ladder + thresholds |
+| `docs/quality/static_analysis.md` | cppcheck + coverage + sanitizers policy |
+| `docs/characterization/` | WCET / stack / heap / power measurement templates |
+| `docs/testing/hil_test_plan.md` | HIL bench BOM ($155) + 10 test IDs |
+| `docs/adr/ADR-003..008.md` | Architecture decisions: A/B keystore, counter=0 sentinel, FDIR split, .noinit, HAL shim, dispatcher wire format |
+| `docs/sbom/sbom-summary.md` | Auto-generated Software Bill of Materials |
+| `NOTICE` | Apache-2.0 third-party attribution |
+
+### Quality gates — все зелёные
+
+| Gate | Команда | Результат |
+|---|---|---|
+| C ctest | `make test-c` | 27/27 |
+| Python pytest | `make test-py` | 314+ passing |
+| C line coverage | `make coverage` | 85.3 % |
+| Python coverage | `make coverage-py` | 85.15 % (gate ≥ 80 %) |
+| cppcheck gate | `make cppcheck` | clean |
+| ASAN + UBSAN | `make sanitizers` | 27/27 clean |
+| STRICT (-Werror) | `cmake -DSTRICT=ON` | 27/27 |
+| mypy strict | `make lint-py` | 0 issues в 21 файле |
+| **ARM .elf builds** | `make setup-all && make target` | **31.6 KB flash (6 %) / 36.3 KB RAM (28 %)** |
+| SBOM | `make sbom` | SPDX summary под `docs/sbom/` |
+
+### Новые make targets
+
+```bash
+# Setup (one-time)
+make setup-all            # fetches HAL + FreeRTOS (~15 MB)
+
+# Target build
+make target               # cross-compile .elf / .bin / .hex
+make size                 # per-section flash/RAM report
+make flash                # st-flash to Nucleo-F446RE
+
+# Quality gates
+make cppcheck             # static-analysis (CI-blocking)
+make cppcheck-strict      # + MISRA advisory report
+make coverage             # C lcov HTML + % metric
+make coverage-py          # Python pytest-cov + 80 % gate
+make sanitizers           # ASAN + UBSAN
+make lint-py              # mypy --strict
+
+# Extras
+make sbom                 # SPDX bill of materials
+make configurator         # Streamlit mission configurator UI
+```
+
+### Security model (actual)
+
+Две угрозы из `docs/security/ax25_threat_model.md` закрыты
+полностью:
+
+**T1 — Command injection.** HMAC-SHA256 authenticates every uplink
+frame. `CCSDS_Dispatcher_Submit` drops unauthenticated frames
+silently (no NAK, no timing oracle). Constant-time verify per
+`hmac_sha256_verify`. Key epoch = 32 bytes, RFC 4231-compliant.
+
+**T2 — Replay.** 32-bit monotonic counter prepended to authenticated
+body; firmware maintains a 64-bit sliding-window bitmap and rejects
+duplicates, too-old frames, and counter=0 (reserved sentinel —
+see ADR-004). Ground-side `CounterSender` is thread-safe and
+monotonic; 8×100-thread race test verifies no duplicate values.
+
+**Key management.** A/B flash slots with CRC-32 + magic-byte
+validation. Generation counter strictly increasing so an
+attacker replaying an older "rotate key" command cannot
+downgrade. Torn-write safe: mid-rotation power-loss leaves the
+previously-active slot intact (ADR-003).
+
+### Reliability (FDIR) — NASA-style three-tier
+
+```
+L0 HW         → watchdog IC, voltage supervisor
+L1 SW         → Error_Handler + Watchdog_CheckAll + fdir.c advisor
+L1.5 Supervisor→ mode_manager.c (polls FDIR @ 1 Hz, enacts transitions)
+L1.6 Persistent→ fdir_persistent.c (.noinit ring buffer + CRC)
+L2 Ground     → operator TC next pass (~90 min)
+```
+
+12 fault IDs, 6-level severity ladder (LOG_ONLY → RETRY →
+RESET_BUS → DISABLE_SUBSYS → SAFE_MODE → REBOOT), 60-second
+escalation window. See `docs/reliability/fdir.md` for the fault
+table + threshold rationale.
+
+### License migration
+
+Проект первоначально был под **MIT (2026-02-15 — 2026-04-18)**.
+С 2026-04-18 — **Apache License 2.0**. Причина: patent-grant
+clause (§3) и defensive-termination (§3 последний абзац). Копии,
+полученные в MIT-окне, остаются под MIT — это фундаментальное
+свойство open-source лицензий.
+
+---
 
 ---
 

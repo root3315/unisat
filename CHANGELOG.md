@@ -5,6 +5,190 @@ All notable changes to UniSat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-04-18 — TRL-5 hardening (branch `feat/trl5-hardening`)
+
+Eight-phase hardening sweep covering security, reliability,
+build infrastructure, quality gates, and documentation. Ships a
+verified ARM target build, doubled test count, full FDIR stack,
+persistent key store, and a relicense to Apache-2.0 for the
+patent-grant clause.
+
+### Added — Phase 1: STM32 target build
+
+- `firmware/stm32/Target/STM32F446RETx_FLASH.ld` — linker script
+  (512 KB FLASH + 128 KB RAM layout, stack + heap guard regions).
+- `firmware/stm32/Target/startup_stm32f446retx.s` — Cortex-M4
+  vector table + full IRQ handler stubs + `Reset_Handler`.
+- `firmware/stm32/Target/system_stm32f4xx.c` — SystemInit + PLL
+  config driving the core to 168 MHz from an 8 MHz HSE.
+- `firmware/stm32/Target/system_init.c` — `SystemClock_Config()`
+  + weak `MX_*_Init` placeholders for peripheral bring-up.
+- `firmware/stm32/Target/stm32f4xx_it.c` — IT handlers (SysTick,
+  HardFault with register dump, NMI, PendSV, SVC).
+- `firmware/stm32/Target/hal_shim.c` — weak HAL_* stubs so the
+  firmware links out of the box without the STMicro HAL tree
+  being fetched yet.
+- `firmware/stm32/Target/stm32f4xx_hal_conf.h` — project HAL
+  configuration (168 MHz, enabled modules, no assert).
+- `firmware/stm32/Target/FreeRTOSConfig.h` — kernel configuration
+  for CMSIS-RTOSv2 (max 56 priorities, heap_4, generic task
+  selector for wrapper compat).
+- `firmware/stm32/Target/stm32_assert.h` — no-op for LL drivers.
+- `firmware/stm32/Target/peripherals.c` — huart1/2, hi2c1, hspi1,
+  hadc1, htim2, hiwdg handle definitions.
+- `scripts/setup_stm32_hal.sh` — one-command fetch of STM32CubeF4
+  HAL + CMSIS + CMSIS-RTOSv2 wrapper.
+- `scripts/setup_freertos.sh` — one-command fetch of FreeRTOS
+  V10.6.1 kernel + Cortex-M4F port.
+- `scripts/flash_stm32.sh` — `st-flash` wrapper with 90 %
+  flash/RAM budget gate.
+- `Makefile` targets: `make target / size / flash / setup-hal /
+  setup-freertos / setup-all`.
+
+**Verified:** ARM build produces `firmware/build-arm/unisat_firmware.elf`
+= 31.6 KB flash (6 % of 512 KB) + 36.3 KB RAM (28 % of 128 KB).
+
+### Added — Phase 2: Security (T2 replay + persistent key store)
+
+- 32-bit monotonic counter prefix + 64-bit sliding-window bitmap
+  in `command_dispatcher.c`; counter = 0 reserved as sentinel.
+  Closes **Threat T2 (replay)** from
+  `docs/security/ax25_threat_model.md`.
+- `firmware/stm32/Core/Src/key_store.c` — A/B flash slots with
+  CRC-32 + magic-byte validation + strictly monotonic generation.
+  Torn-write safe during rotation.
+- `ground-station/utils/hmac_auth.py` — `CounterSender` class
+  (thread-safe, monotonic, overflow-guard) + `build_auth_frame`
+  / `parse_auth_frame` / `verify_auth_frame`.
+- Integration in `main.c`: `key_store_init()` →
+  `CommandDispatcher_SetKey()` boot wiring (fail-closed when
+  neither slot carries a valid record).
+- Tests: `test_command_dispatcher.c` (11 sub-tests),
+  `test_key_store.c` (10), `test_boot_security.c` (4),
+  `test_hmac_auth.py` (22).
+
+### Added — Phase 3: FDIR (Fault Detection, Isolation, Recovery)
+
+- `firmware/stm32/Core/Src/fdir.c` — 12-fault advisor with
+  60-second escalation window and 6-level severity ladder
+  (LOG_ONLY → RETRY → RESET_BUS → DISABLE_SUBSYS → SAFE_MODE
+  → REBOOT).
+- `firmware/stm32/Core/Src/mode_manager.c` — commander layer
+  that polls FDIR at 1 Hz and enacts actual transitions
+  (ADR-005 split).
+- `firmware/stm32/Core/Src/fdir_persistent.c` — warm-reboot-
+  survivable fault ring in `.noinit` SRAM + CRC-32 validation
+  (ADR-006).
+- `firmware/stm32/Core/Src/watchdog.c` integrated with
+  `FDIR_Report` on task-feed miss.
+- Tests: `test_fdir.c` (9), `test_mode_manager.c` (9),
+  `test_fdir_persistent.c` (6).
+
+### Added — Phase 4: Tboard driver + E2E + soak
+
+- `firmware/stm32/Drivers/BoardTemp/board_temp.c` — TMP117
+  facade wiring beacon bytes 14-15 to live temperature reading
+  (previously hardcoded zeros).
+- `flight-software/tests/test_mission_e2e.py` — full mission
+  lifecycle test (init → nominal → imaging → safe mode →
+  recovery).
+- `flight-software/tests/test_long_soak.py` — 48-hour soak
+  harness gated via `UNISAT_SOAK_SECONDS` environment variable;
+  default smoke run is 30-cycle, ~1 second.
+- Tests: `test_board_temp.c` (6), e2e (3), soak (1).
+
+### Added — Phase 5: Quality gates
+
+- `cmake -DCOVERAGE=ON` → lcov HTML reports under
+  `firmware/build/coverage_html/`.
+- `cmake -DSANITIZERS=ON` → ASAN + UBSAN linked into ctest.
+- `cmake -DSTRICT=ON` → `-Werror -Wshadow -Wconversion` on host
+  builds (all 27 tests green under STRICT).
+- `scripts/run_cppcheck.sh` + `.cppcheck-suppressions` →
+  two-mode static analyzer (CI-blocking gate + MISRA advisory).
+- Makefile: `make cppcheck / cppcheck-strict / coverage /
+  sanitizers`.
+
+### Added — Phase 6: Documentation
+
+- `docs/requirements/SRS.md` — Software Requirements Spec, 44
+  REQ each with priority + verification method + source file +
+  test file.
+- `docs/requirements/traceability.csv` — machine-readable
+  REQ → source → test matrix.
+- `docs/characterization/` — WCET / stack / heap / power
+  measurement templates (data is TBD until HIL bench runs).
+- `docs/testing/hil_test_plan.md` — HIL bench BOM ($155) + 10
+  test IDs mapped to specific REQ IDs.
+- `docs/reliability/fdir.md` — FDIR policy + fault table.
+- `docs/quality/static_analysis.md` — quality-gate policy.
+- ADRs 3-8 under `docs/adr/` (A/B keystore, counter=0 sentinel,
+  FDIR split, .noinit log, HAL shim, dispatcher wire format).
+
+### Added — Phase 7: Python & release plumbing
+
+- `scripts/gen_sbom.sh` → SPDX bill-of-materials under
+  `docs/sbom/sbom-summary.md`.
+- `pytest-cov` gate in `flight-software/pyproject.toml` with
+  `fail_under = 80` (currently at 85.15 %).
+- `mypy --strict` clean across 21 source files after six
+  targeted type-annotation fixes.
+- `scripts/pin_docker.sh` + `make pin-docker / pin-docker-unpin`
+  — release-engineering toggle for Docker base-image pinning.
+
+### Added — Phase 8: Final polish + ARM verification
+
+- ARM target build actually verified (previously just linked):
+  6.04 % flash + 27.69 % RAM on STM32F446RE, both under the
+  90 % budget gate.
+- `__attribute__((unused))` annotations on every SIM-only
+  helper function across BME280, MPU9250, TMP117, UBLOX,
+  SunSensor drivers → zero `-Wunused-*` warnings on host and
+  target builds.
+- `uhf_tx_buffer` in `comm.c` likewise annotated for host.
+- 87 new Python tests covering gnss_receiver, health_monitor,
+  scheduler, orbit_predictor, image_processor, camera_handler,
+  communication, data_logger, module_registry (+ coverage from
+  51 % → 85.15 %).
+- LICENSE migrated MIT → Apache-2.0; `NOTICE` added with
+  third-party attribution.
+
+### Security model (summary)
+
+- T1 (command injection) — mitigated by HMAC-SHA256 with
+  constant-time verify (closed since 1.1.0).
+- T2 (replay) — **closed** by 32-bit counter + 64-bit sliding
+  window, counter=0 sentinel.
+- Key management — A/B flash rotation with monotonic
+  generation (downgrade replay rejected).
+
+### Test totals
+
+- C ctest: 16 → **27** test executables (+ 100+ sub-tests).
+- Python pytest: 34 → **329** tests (hypothesis + fuzz + e2e +
+  soak + Streamlit smoke + mocked-serial).
+- C line coverage: not measured → **85.3 %**.
+- Python line coverage: not measured → **85.15 %**.
+
+### Changed
+
+- LICENSE: MIT (2026-02-15 — 2026-04-18) → **Apache-2.0**
+  (2026-04-18 onward). See `NOTICE` for third-party attribution.
+- TECHNICAL_DOCUMENTATION.md bumped to v1.2.0 with new §0
+  Phase 1–8 summary.
+- `docs/superpowers/` legacy plans + specs marked archival
+  with banners pointing to the SRS and ADRs.
+
+### Infrastructure
+
+- 75 atomic commits on `feat/trl5-hardening` with detailed
+  commit messages (≥ 100 lines each).
+- 9 quality gates all green simultaneously: ctest + pytest +
+  cppcheck + coverage (C+Py) + STRICT + ASAN + UBSAN + mypy +
+  ARM build.
+- Supply-chain: pinned STM32CubeF4 v1.27.1 + FreeRTOS V10.6.1;
+  Docker digest-pin automation via `make pin-docker`.
+
 ## [1.1.0] - 2026-04-17
 
 ### Added — AX.25 Link Layer (Track 1)

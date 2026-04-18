@@ -1,10 +1,26 @@
 /**
  * @file watchdog.c
- * @brief Hardware and software watchdog implementation
+ * @brief Hardware + software watchdog, integrated with FDIR.
+ *
+ * Per-task liveness is tracked via last_feed_time[]; the hardware
+ * IWDG is kicked from the dedicated WatchdogTask at a cadence well
+ * below the IWDG reload window so a missing feed turns into a
+ * deterministic reset rather than a hang.
+ *
+ * When Watchdog_CheckAll detects a task that has not fed within
+ * WATCHDOG_TIMEOUT_MS:
+ *   1. Error_Log captures the event into the on-board log.
+ *   2. FDIR_Report(FAULT_WATCHDOG_TASK_MISS) is called so the
+ *      escalation-window logic decides whether this is a one-off
+ *      glitch or the 3rd miss inside 60 s (→ REBOOT).
+ *   3. Error_Handler is invoked with ERR_WATCHDOG_TIMEOUT; it
+ *      consults FDIR_GetRecommendedAction to decide between a
+ *      local retry, safe-mode entry, or a clean reboot.
  */
 
 #include "watchdog.h"
 #include "error_handler.h"
+#include "fdir.h"
 #include "config.h"
 #include <string.h>
 
@@ -62,6 +78,11 @@ void Watchdog_CheckAll(void) {
         if (!Watchdog_IsTaskAlive((WatchdogTask_t)i)) {
             Error_Log(ERR_WATCHDOG_TIMEOUT, ERROR_CRITICAL,
                       "Task watchdog timeout");
+            /* Route the event into the FDIR advisor so the per-fault
+             * escalation window (3 misses inside 60 s → REBOOT)
+             * applies. Error_Handler then consults FDIR to decide
+             * between log-only, safe-mode, or reboot. */
+            FDIR_Report(FAULT_WATCHDOG_TASK_MISS);
             Error_Handler(ERR_WATCHDOG_TIMEOUT);
         }
     }

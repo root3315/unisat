@@ -35,7 +35,7 @@
 
 /* ───────────── Channel Mapping ───────────── */
 
-static const uint8_t face_channels[SUN_SENSOR_NUM_FACES] = {
+__attribute__((unused)) static const uint8_t face_channels[SUN_SENSOR_NUM_FACES] = {
     SUN_SENSOR_CH_PLUS_X,
     SUN_SENSOR_CH_MINUS_X,
     SUN_SENSOR_CH_PLUS_Y,
@@ -49,7 +49,7 @@ static const uint8_t face_channels[SUN_SENSOR_NUM_FACES] = {
 /**
  * @brief Clamp a float to [0.0, 1.0].
  */
-static float clampf(float val)
+__attribute__((unused)) static float clampf(float val)
 {
     if (val < 0.0f) return 0.0f;
     if (val > 1.0f) return 1.0f;

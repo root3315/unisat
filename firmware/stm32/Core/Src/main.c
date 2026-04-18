@@ -8,6 +8,11 @@
 
 #include "main.h"
 #include "config.h"
+#include "command_dispatcher.h"
+#include "key_store.h"
+#include "fdir.h"
+#include "fdir_persistent.h"
+#include "mode_manager.h"
 
 #ifndef SIMULATION_MODE
 #include "cmsis_os2.h"
@@ -78,6 +83,54 @@ int main(void) {
     Watchdog_Init();
     Error_Init();
 
+    /* Persistent fault log lives in .noinit SRAM — inspect it BEFORE
+     * FDIR_Init wipes the volatile counters. A "valid survival" result
+     * means the previous boot ended in a soft reset and the pre-reset
+     * fault tail is still available for downlink; first-ever cold
+     * boot returns false and starts with an empty log. */
+    (void)FDIR_Persistent_Init();
+
+    FDIR_Init();
+    ModeManager_Init();
+
+    /* Command-authentication boot sequence.
+     *
+     * key_store_init() reads the A/B flash slots, picks the highest-
+     * generation record whose CRC verifies, and caches it. We then
+     * hand the active key straight to the command dispatcher so the
+     * very first post-boot uplink frame is subject to both HMAC
+     * authentication (T1) and replay-window checks (T2).
+     *
+     * Fail-closed contract: if both slots are empty / corrupted,
+     * key_store_get_active() returns KEY_STORE_EMPTY, the dispatcher
+     * is left with a zero-length key, and every incoming frame is
+     * rejected until a ground-driven recovery procedure reloads the
+     * key. FDIR raises FAULT_KEYSTORE_EMPTY so the condition is
+     * observable in downlink telemetry. */
+    {
+        KeyStoreStatus_t ks = key_store_init();
+        if (ks == KEY_STORE_OK) {
+            uint8_t  active_key[KEY_STORE_MAX_KEY_LEN];
+            size_t   active_len = 0;
+            uint32_t active_gen = 0;
+            if (key_store_get_active(active_key, &active_len,
+                                       &active_gen) == KEY_STORE_OK) {
+                CommandDispatcher_SetKey(active_key, active_len);
+            } else {
+                /* Active cache missing despite init success — defensive;
+                 * should never happen but report it rather than silently
+                 * leaving the dispatcher unkeyed. */
+                FDIR_Report(FAULT_KEYSTORE_EMPTY);
+            }
+        } else {
+            /* Cold boot with empty / corrupted slots: fail-closed.
+             * Dispatcher stays without a key, FDIR escalates to
+             * RECOVERY_SAFE_MODE on the first Report per fdir.c
+             * threshold = 1. */
+            FDIR_Report(FAULT_KEYSTORE_EMPTY);
+        }
+    }
+
     if (config.payload.enabled) {
         Payload_Init(PAYLOAD_RADIATION_MONITOR);
     }
@@ -134,6 +187,10 @@ int main(void) {
     osThreadNew(PayloadTask, NULL, &payload_attr);
 
     system_state = SYSTEM_STATE_NOMINAL;
+    /* Declare nominal operating mode — from this point on the
+     * FDIR supervisor in WatchdogTask can transition us out to
+     * SAFE / DEGRADED / REBOOT_PEND on its own. */
+    ModeManager_EnterNominal();
 
     /* Start FreeRTOS scheduler */
     osKernelStart();
@@ -252,6 +309,10 @@ void WatchdogTask(void *argument) {
         Watchdog_FeedHardware();
         OBC_UpdateUptime();
         EPS_Update();
+        /* Supervisor poll — walks the FDIR fault table, selects the
+         * worst-case recommendation, and drives SAFE_MODE / DEGRADED /
+         * REBOOT_PEND transitions. No-op when no fault is active. */
+        (void)ModeManager_Tick();
         osDelay(WATCHDOG_FEED_PERIOD_MS);
     }
 }

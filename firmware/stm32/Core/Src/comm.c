@@ -23,7 +23,11 @@ extern UART_HandleTypeDef huart2;
 
 static COMM_Status_t comm_status;
 static uint8_t uhf_rx_buffer[COMM_RX_BUFFER_SIZE];
-static uint8_t uhf_tx_buffer[COMM_TX_BUFFER_SIZE];
+/* TX ring buffer — used by the target-build `COMM_Send` DMA path
+ * (wired in the non-SIM branch). On host it's present but unused;
+ * the attribute silences -Wunused-variable without wrapping the
+ * declaration in #ifndef, keeping the host/target layouts identical. */
+__attribute__((unused)) static uint8_t uhf_tx_buffer[COMM_TX_BUFFER_SIZE];
 static volatile uint16_t uhf_rx_head = 0;
 static volatile uint16_t uhf_rx_tail = 0;
 
@@ -101,7 +105,7 @@ uint16_t COMM_Receive(CommChannel_t channel, uint8_t *buffer,
     uint16_t count = 0;
     while (uhf_rx_tail != uhf_rx_head && count < max_length) {
         buffer[count++] = uhf_rx_buffer[uhf_rx_tail];
-        uhf_rx_tail = (uhf_rx_tail + 1) % COMM_RX_BUFFER_SIZE;
+        uhf_rx_tail = (uint16_t)((uhf_rx_tail + 1U) % COMM_RX_BUFFER_SIZE);
     }
 
     if (count > 0) {
@@ -121,10 +125,21 @@ bool COMM_SendAX25(CommChannel_t channel,
     AX25_Address_t dst = { .ssid = dst_ssid };
     AX25_Address_t src = { .ssid = src_ssid };
 
+    /* Copy up to 6 callsign chars or stop at NUL. cppcheck's
+     * arrayIndexOutOfBounds checker cannot track that the `!= '\0'`
+     * short-circuit bounds `n` to the string's actual length —
+     * callers pass NUL-terminated literals like "CQ" (3 bytes)
+     * where the loop exits at n=2 before touching dst_call[3..5].
+     * Suppress the false positive inline so the surrounding real
+     * warnings stay visible. */
     size_t n;
-    for (n = 0; n < 6 && dst_call[n] != '\0'; n++) dst.callsign[n] = dst_call[n];
+    /* cppcheck-suppress arrayIndexOutOfBoundsCond */
+    /* cppcheck-suppress arrayIndexOutOfBounds */
+    for (n = 0; n < 6 && dst_call[n] != '\0'; n++) { dst.callsign[n] = dst_call[n]; }
     dst.callsign[n] = '\0';
-    for (n = 0; n < 6 && src_call[n] != '\0'; n++) src.callsign[n] = src_call[n];
+    /* cppcheck-suppress arrayIndexOutOfBoundsCond */
+    /* cppcheck-suppress arrayIndexOutOfBounds */
+    for (n = 0; n < 6 && src_call[n] != '\0'; n++) { src.callsign[n] = src_call[n]; }
     src.callsign[n] = '\0';
 
     uint8_t buf[AX25_MAX_FRAME_BYTES];
@@ -188,7 +203,7 @@ bool COMM_IsConnected(CommChannel_t channel) {
 
 void COMM_UART_RxCallback(CommChannel_t channel, uint8_t byte) {
     (void)channel;
-    uint16_t next = (uhf_rx_head + 1) % COMM_RX_BUFFER_SIZE;
+    uint16_t next = (uint16_t)((uhf_rx_head + 1U) % COMM_RX_BUFFER_SIZE);
     if (next != uhf_rx_tail) {
         uhf_rx_buffer[uhf_rx_head] = byte;
         uhf_rx_head = next;
@@ -202,7 +217,7 @@ void COMM_ProcessRxBuffer(void) {
      * COMM_Status_t so existing telemetry sees link-layer health. */
     while (uhf_rx_tail != uhf_rx_head) {
         uint8_t byte = uhf_rx_buffer[uhf_rx_tail];
-        uhf_rx_tail = (uhf_rx_tail + 1) % COMM_RX_BUFFER_SIZE;
+        uhf_rx_tail = (uint16_t)((uhf_rx_tail + 1U) % COMM_RX_BUFFER_SIZE);
 
         AX25_UiFrame_t frame;
         bool ready = false;

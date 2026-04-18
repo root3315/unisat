@@ -46,7 +46,7 @@ void Error_Log(ErrorCode_t code, ErrorSeverity_t severity, const char *msg) {
     }
 
     error_log[error_log_index] = entry;
-    error_log_index = (error_log_index + 1) % ERROR_LOG_MAX_ENTRIES;
+    error_log_index = (uint16_t)((error_log_index + 1U) % ERROR_LOG_MAX_ENTRIES);
     error_count++;
 
     if (severity >= ERROR_ERROR) {

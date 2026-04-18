@@ -44,7 +44,7 @@ void TMP117_Platform_Delay(uint32_t ms)
 /**
  * @brief Write a 16-bit register (big-endian) with retry logic.
  */
-static TMP117_Status_t tmp117_write_reg16(TMP117_Handle_t *dev,
+__attribute__((unused)) static TMP117_Status_t tmp117_write_reg16(TMP117_Handle_t *dev,
                                            uint8_t reg, uint16_t val)
 {
 #ifdef SIMULATION_MODE
@@ -66,7 +66,7 @@ static TMP117_Status_t tmp117_write_reg16(TMP117_Handle_t *dev,
 /**
  * @brief Read a 16-bit register (big-endian) with retry logic.
  */
-static TMP117_Status_t tmp117_read_reg16(TMP117_Handle_t *dev,
+__attribute__((unused)) static TMP117_Status_t tmp117_read_reg16(TMP117_Handle_t *dev,
                                           uint8_t reg, uint16_t *val)
 {
 #ifdef SIMULATION_MODE

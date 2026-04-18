@@ -7,7 +7,7 @@ name = "unisat-flight-software"
 version = "1.0.0"
 description = "Flight software for the UniSat CubeSat platform"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "Apache-2.0"}
 requires-python = ">=3.11"
 authors = [
     {name = "UniSat Team"},
@@ -16,7 +16,7 @@ keywords = ["cubesat", "satellite", "flight-software", "space"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Astronomy",
@@ -33,12 +33,62 @@ dependencies = [
 dev = [
     "pytest>=7.4",
     "pytest-asyncio>=0.21",
+    "pytest-cov>=4.1",
     "mypy>=1.7",
     "ruff>=0.1.6",
+    "hypothesis>=6.0",
 ]
 
 [project.scripts]
 unisat = "flight_controller:main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+# pythonpath keeps the existing `sys.path.insert` convention working
+# when pytest is invoked from the repo root or from flight-software/.
+pythonpath = ["."]
+
+[tool.coverage.run]
+# Measure every import from the flight-software tree; exclude the
+# test files themselves and vendor one-liner entry points.
+source = ["core", "modules"]
+branch = true
+omit = [
+    "tests/*",
+    "flight_controller.py",   # entry point; exercised via integration
+    "run_cansat.py",
+]
+
+[tool.coverage.report]
+# MUST-level gate (current measured baseline). A regression below
+# this threshold fails CI when `pytest --cov` is invoked.
+#
+# The 80 % value is the aspirational SHOULD-level target per
+# SRS REQ-BLD-005 (docs/quality/static_analysis.md); adding new
+# tests can ratchet this gate up without reopening this config.
+#
+# Post-Phase-8 coverage pack history:
+#   baseline      51 %  (test_mission_e2e + existing units)
+#   + GNSS        63 %  (tests/test_gnss_receiver.py)
+#   + health      +4 %  (tests/test_health_monitor.py)
+#   + scheduler   66 %  (tests/test_scheduler_extended.py)
+#   + remaining   75 %  (tests/test_remaining_modules.py)
+#   + coverage    77 %  (tests/test_coverage_boost.py +
+#                         tests/test_data_logger_coverage.py)
+#   + reg/orbit   82.5 % (tests/test_registry_orbit_image.py)
+#
+# With 82.53 % achieved the MUST gate is pinned at 80 % — the
+# SHOULD-level target from SRS REQ-BLD-005 is now reached.
+fail_under = 80
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
 
 [tool.ruff]
 target-version = "py311"
@@ -49,3 +99,23 @@ python_version = "3.11"
 strict = true
 warn_return_any = true
 warn_unused_configs = true
+# The project pulls in a few libraries that don't ship type stubs
+# (pyserial, sgp4, aiofiles). Ignore missing imports for those so
+# mypy can still gate the in-tree code.
+ignore_missing_imports = true
+
+# aiofiles is a specific pain point — upstream stubs exist
+# (types-aiofiles) but installing them pulls in a chain of
+# conflicts on a minimal CI image. Skip following its imports so
+# mypy's strict gate never trips on its Any-typed surface.
+[[tool.mypy.overrides]]
+module = "aiofiles.*"
+ignore_missing_imports = true
+follow_imports = "skip"
+
+# Tests use Any heavily for fixtures; exempt the tests/ tree from
+# strict to keep the gate actionable on production code first.
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false

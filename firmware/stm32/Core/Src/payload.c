@@ -117,7 +117,7 @@ void Payload_Update(void) {
             uint32_t cps = sbm20_read_cps();
 
             radiation_data.cps_values[radiation_data.index] = cps;
-            radiation_data.index = (radiation_data.index + 1) % 60;
+            radiation_data.index = (uint8_t)((radiation_data.index + 1U) % 60U);
 
             /* SBM-20: ~0.0057 uSv/h per CPM */
             float cpm = (float)cps * 60.0f;

@@ -72,12 +72,18 @@ void VirtualUART_Shutdown(void) {
 
 bool VirtualUART_Send(const uint8_t *data, uint16_t len) {
   if (s_fd == SOCK_INVALID) return false;
-  int n = send(s_fd, (const char *)data, len, 0);
-  return n == (int)len;
+  /* POSIX send() returns ssize_t (long on 64-bit hosts); narrow to
+   * int deliberately for the success comparison — a partial send
+   * on a local TCP loopback is treated as failure here. */
+  ssize_t n = send(s_fd, (const char *)data, (size_t)len, 0);
+  return n == (ssize_t)len;
 }
 
 int VirtualUART_Recv(uint8_t *buf, int max_bytes) {
   if (s_fd == SOCK_INVALID) return 0;
-  int n = recv(s_fd, (char *)buf, max_bytes, 0);
-  return n < 0 ? 0 : n;
+  if (max_bytes <= 0) return 0;
+  ssize_t n = recv(s_fd, (char *)buf, (size_t)max_bytes, 0);
+  if (n < 0) return 0;
+  /* Safe narrow: recv returns ≤ max_bytes which was a non-negative int. */
+  return (int)n;
 }

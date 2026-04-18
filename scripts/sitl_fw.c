@@ -9,6 +9,12 @@
  * ground-station listener.
  */
 
+/* glibc / musl gate usleep() behind a feature-test macro when
+ * compiling with -std=c11. Define the POSIX macro before any
+ * system header so the declaration is visible under STRICT. */
+#define _POSIX_C_SOURCE 200809L
+#define _DEFAULT_SOURCE 1
+
 #include "virtual_uart.h"
 #include "ax25_api.h"
 #include <stdio.h>

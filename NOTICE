@@ -1,0 +1,54 @@
+UniSat — CubeSat Flight Software + Ground Station Platform
+Copyright 2026 root3315 (Tashkent, Uzbekistan)
+
+This product is licensed under the Apache License, Version 2.0
+(the "License"); see the LICENSE file in this repository.
+
+==============================================================================
+
+This product re-distributes or depends on the following third-party
+components. Each retains its own copyright and license terms.
+
+ * STM32CubeF4 HAL
+   Copyright (c) STMicroelectronics
+   Licensed under SLA0044 (BSD-3-Clause-style)
+   Fetched at build time by scripts/setup_stm32_hal.sh;
+   NOT committed to this repository. See the HAL's own
+   License.md for the full terms.
+
+ * CMSIS Core (ARM) + CMSIS-RTOSv2 wrapper
+   Copyright (c) ARM Limited
+   Licensed under Apache License, Version 2.0
+   Fetched at build time via STM32CubeF4 bundle.
+
+ * FreeRTOS Kernel V10.6.1
+   Copyright (c) Amazon.com, Inc. or its affiliates
+   Licensed under the MIT License
+   Fetched at build time by scripts/setup_freertos.sh;
+   NOT committed to this repository.
+
+ * Unity Test Framework
+   Copyright (c) 2007-20 Mike Karlesky, Mark VanderVoord,
+                          Greg Williams
+   Licensed under the MIT License
+   Re-distributed under firmware/tests/unity/ (header-only subset).
+
+ * Python dependencies (runtime and test):
+   streamlit, plotly, pandas, numpy, scipy, sgp4, pyserial,
+   aiofiles, Pillow, pydeck, hypothesis, pytest, pytest-asyncio,
+   pytest-cov, mypy
+   — various permissive licences (Apache-2.0, BSD-3, MIT);
+   see each upstream project for the exact terms. `make sbom`
+   regenerates an SPDX summary under docs/sbom/.
+
+==============================================================================
+
+License history for this repository:
+
+  2026-02-15 — 2026-04-18   MIT License (commit 249e6a2 through da74da2)
+  2026-04-18 onward         Apache License, Version 2.0
+
+All contributions made before 2026-04-18 under the MIT License remain
+available under those terms for any downstream user who obtained the
+code during that window. New contributions and new releases are
+licensed under Apache-2.0 going forward — see the LICENSE file.

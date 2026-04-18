@@ -50,13 +50,28 @@ uploads/
 logs/
 telemetry_data/
 images/captured/
+# ImageProcessor writes converted copies + thumbnails here when
+# the `storage_dir` config key isn't overridden; tests produce a
+# few. Keep out of git.
+processed/
+flight-software/processed/
 
-# Node / claude tooling cruft (not part of the project)
+# Fetched STM32Cube HAL / CMSIS (scripts/setup_stm32_hal.sh)
+firmware/stm32/Drivers/STM32F4xx_HAL_Driver/
+firmware/stm32/Drivers/CMSIS/
+
+# FreeRTOS kernel (scripts/setup_freertos.sh)
+firmware/stm32/Middlewares/
+
+# Firmware build artefacts (per-architecture output dirs)
+firmware/build-*/
+
+# Node / editor cruft (not part of the project)
 node_modules/
 package.json
 package-lock.json
 
-# Claude Code local state
+# Local tooling state
 .claude/
 
 # Environment

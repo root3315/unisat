@@ -60,7 +60,10 @@ def pressure_to_altitude(pressure_pa: float,
         return 0.0
     ratio = pressure_pa / ref_pressure_pa
     exponent = (GAS_CONSTANT * TEMPERATURE_LAPSE_RATE) / (GRAVITY * MOLAR_MASS_AIR)
-    return (SEA_LEVEL_TEMPERATURE_K / TEMPERATURE_LAPSE_RATE) * (1.0 - ratio ** exponent)
+    return float(
+        (SEA_LEVEL_TEMPERATURE_K / TEMPERATURE_LAPSE_RATE) *
+        (1.0 - ratio ** exponent)
+    )
 
 
 class BarometricAltimeter(BaseModule):

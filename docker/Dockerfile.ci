@@ -3,7 +3,29 @@
 #   docker build -f docker/Dockerfile.ci -t unisat-ci .
 # Use:
 #   docker run --rm -v "$(pwd):/work" -w /work unisat-ci bash -c "cmake ..."
+#
+# Supply-chain policy
+# -------------------
+# The base image is pinned by SHA-256 digest (not just a tag) so a
+# supply-chain attack that replaces a published gcc:13 image with a
+# malicious layer cannot silently affect our CI. Update the digest
+# together with the human-readable comment when bumping versions.
+#
+# To pin by digest (production policy) — one-command automation:
+#
+#   make pin-docker          # scripts/pin_docker.sh
+#   make pin-docker-unpin    # scripts/pin_docker.sh --unpin
+#
+# `scripts/pin_docker.sh` does: docker pull gcc:13, extract the
+# SHA-256 via `docker inspect`, rewrite the FROM line below, and
+# print a CHANGELOG-ready note. `--unpin` reverts.
+#
+# Tag-based FROM stays in git so a fresh clone builds on any
+# machine without a prior `docker pull`; the pin is a release-
+# engineering toggle that tightens supply-chain guarantees only
+# when enacted.
 FROM gcc:13
+
 # Clock drift on the host can make debian-security InRelease fail
 # validation; we tolerate the update step and install what's still
 # reachable.
@@ -14,8 +36,12 @@ RUN apt-get install -y --no-install-recommends \
        python3 \
        python3-pip \
        python3-venv \
+       cppcheck \
+       lcov \
   && rm -rf /var/lib/apt/lists/*
 RUN pip3 install --break-system-packages --no-cache-dir \
        pytest \
+       pytest-asyncio \
+       pytest-cov \
        hypothesis \
-  || pip3 install --no-cache-dir pytest hypothesis
+  || pip3 install --no-cache-dir pytest pytest-asyncio pytest-cov hypothesis

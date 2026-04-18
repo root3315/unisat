@@ -1,38 +1,139 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(unisat_firmware
-    VERSION 1.0.0
-    DESCRIPTION "UniSat CubeSat Firmware"
-    LANGUAGES C
-)
+#
+# Toolchain detection MUST run before project() so CMake's compiler
+# probes the right compiler. When arm-none-eabi-gcc is on PATH we
+# produce a real STM32F446RE firmware image; otherwise we fall back
+# to a host static library used by the ctest + pytest pipelines.
+#
+#
+# COVERAGE / SANITIZERS / STRICT are host-only — gcov needs native
+# libgcov, ASAN/UBSAN need a POSIX runtime, STRICT is a warnings
+# gate on the production-like host build. If any of them is ON we
+# skip the ARM auto-detect even when arm-none-eabi-gcc is on PATH.
+# Set FORCE_HOST=ON explicitly to get the same effect without
+# enabling a specific gate.
+#
+option(FORCE_HOST  "Force host build even if arm-none-eabi-gcc is on PATH" OFF)
+option(STRICT      "Host build: -Werror + extra warnings" OFF)
+option(COVERAGE    "Host build: gcov coverage instrumentation" OFF)
+option(SANITIZERS  "Host build: ASAN + UBSAN" OFF)
 
-# Cross-compilation settings for STM32F4
-set(CMAKE_SYSTEM_NAME Generic)
-set(CMAKE_SYSTEM_PROCESSOR arm)
+if(FORCE_HOST OR STRICT OR COVERAGE OR SANITIZERS)
+    set(_unisat_force_host ON)
+else()
+    set(_unisat_force_host OFF)
+endif()
 
-# Toolchain
 find_program(ARM_CC arm-none-eabi-gcc)
-if(ARM_CC)
-    set(CMAKE_C_COMPILER arm-none-eabi-gcc)
-    set(CMAKE_ASM_COMPILER arm-none-eabi-gcc)
-    set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
-    set(CMAKE_SIZE arm-none-eabi-size)
+if(ARM_CC AND NOT _unisat_force_host)
+    set(CMAKE_SYSTEM_NAME      Generic)
+    set(CMAKE_SYSTEM_PROCESSOR arm)
+    set(CMAKE_C_COMPILER       arm-none-eabi-gcc)
+    set(CMAKE_ASM_COMPILER     arm-none-eabi-gcc)
+    set(CMAKE_OBJCOPY          arm-none-eabi-objcopy)
+    set(CMAKE_SIZE             arm-none-eabi-size)
+    # Skip GCC link probe — no crt0 for bare-metal, only .elf output.
+    set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
     set(CROSS_COMPILE ON)
 else()
-    message(WARNING "ARM toolchain not found, building for host (test mode)")
+    if(_unisat_force_host)
+        message(STATUS "Host build forced (FORCE_HOST / COVERAGE / "
+                       "SANITIZERS / STRICT flag set)")
+    else()
+        message(STATUS "arm-none-eabi-gcc not found — host build (SIMULATION_MODE)")
+    endif()
     set(CROSS_COMPILE OFF)
 endif()
 
-# Compiler flags
+project(unisat_firmware
+    VERSION 1.1.0
+    DESCRIPTION "UniSat CubeSat Firmware"
+    LANGUAGES C ASM
+)
+
+#
+# Compiler flags.
+# Shared: -Wall -Wextra -Wpedantic -std=c11 across both paths so the
+# host build catches any regression the ARM build would also reject.
+# Phase 5 will add -Werror behind an opt-in STRICT=ON gate.
+#
 set(MCU_FLAGS "-mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 -mfloat-abi=hard")
-set(OPT_FLAGS "-O2 -g")
+set(OPT_FLAGS "-Og -g3")
+
+#
+# Phase 5 opt-in build-quality gates.
+#   -DSTRICT=ON       : host build promotes warnings to errors
+#                        (-Werror) and enables -Wshadow -Wconversion
+#                        so every regression surfaces immediately.
+#   -DCOVERAGE=ON     : host build emits gcov counters; the `coverage`
+#                        target runs lcov + genhtml for a report.
+#   -DSANITIZERS=ON   : host build links AddressSanitizer +
+#                        UndefinedBehaviorSanitizer. Catches
+#                        out-of-bounds, use-after-free, shift of
+#                        negative value, etc. Host-only — the target
+#                        toolchain has no runtime for these.
+#
+# (STRICT / COVERAGE / SANITIZERS options are declared above the
+# toolchain detection so they can force the host path.)
 
 if(CROSS_COMPILE)
-    set(CMAKE_C_FLAGS "${MCU_FLAGS} ${OPT_FLAGS} -Wall -Wextra -Wpedantic -std=c11")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdata-sections -ffunction-sections")
-    set(CMAKE_EXE_LINKER_FLAGS "-Wl,--gc-sections -specs=nosys.specs -specs=nano.specs")
+    # Wall/Wextra/Wpedantic kept on; -Wno-incompatible-pointer-types
+    # silences the char* vs signed char* mismatch ARM's CMSIS-RTOSv2
+    # wrapper has against the FreeRTOS kernel signature. Upstream
+    # issue, not our code. -Wno-unused-parameter / -Wno-error=sign-compare
+    # likewise cover wrapper-only noise.
+    set(CMAKE_C_FLAGS
+        "${MCU_FLAGS} ${OPT_FLAGS} -Wall -Wextra -Wpedantic -std=gnu11 \
+        -fdata-sections -ffunction-sections -fstack-usage \
+        -Wno-incompatible-pointer-types \
+        -Wno-unused-parameter \
+        -Wno-sign-compare \
+        -DSTM32F446xx -DUSE_HAL_DRIVER")
+    set(CMAKE_ASM_FLAGS "${MCU_FLAGS} -x assembler-with-cpp")
+
+    # Linker script path is anchored to the Target/ directory next to
+    # the startup.s that knows about these symbols. -Map emits a full
+    # static memory map for the Phase 5 size-budget CI check.
+    set(LINKER_SCRIPT
+        "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Target/STM32F446RETx_FLASH.ld")
+
+    set(CMAKE_EXE_LINKER_FLAGS
+        "${MCU_FLAGS} -T${LINKER_SCRIPT} \
+        -specs=nosys.specs -specs=nano.specs \
+        -Wl,--gc-sections,--print-memory-usage \
+        -Wl,-Map=unisat_firmware.map,--cref")
 else()
     set(CMAKE_C_FLAGS "-Wall -Wextra -Wpedantic -std=c11 -g -DSIMULATION_MODE")
+
+    if(STRICT)
+        # -Werror gates the CI; -Wshadow catches the classic local
+        # variable shadowing a module-scope name bug; -Wconversion
+        # surfaces narrowing casts that matter on the 32-bit MCU.
+        # Keep off by default so a regular `make test` during
+        # development isn't blocked by a benign third-party warning.
+        #
+        # unused-function is demoted because several sensor drivers
+        # gate their real helpers behind #ifndef SIMULATION_MODE —
+        # the helpers are defined but never referenced in the host
+        # build, which is expected and uninteresting.
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wshadow -Wconversion \
+            -Wno-error=unused-variable -Wno-error=unused-parameter \
+            -Wno-error=unused-but-set-variable \
+            -Wno-error=unused-function \
+            -Wno-error=unused-const-variable")
+    endif()
+    if(COVERAGE)
+        # --coverage is short for -fprofile-arcs -ftest-coverage on
+        # compile and -lgcov on link.
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage -O0")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+    endif()
+    if(SANITIZERS)
+        set(SAN_FLAGS "-fsanitize=address,undefined -fno-omit-frame-pointer")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${SAN_FLAGS}")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${SAN_FLAGS}")
+    endif()
 endif()
 
 # Include directories
@@ -49,15 +150,33 @@ include_directories(
     stm32/Drivers/AX25
     stm32/Drivers/VirtualUART
     stm32/Drivers/Crypto
+    stm32/Drivers/BoardTemp
     stm32/ADCS
     stm32/EPS
 )
 
-# Source files
-file(GLOB CORE_SOURCES "stm32/Core/Src/*.c")
+# Source files — application + drivers + subsystems (shared by host and ARM).
+file(GLOB CORE_SOURCES   "stm32/Core/Src/*.c")
 file(GLOB DRIVER_SOURCES "stm32/Drivers/*/*.c")
-file(GLOB ADCS_SOURCES "stm32/ADCS/*.c")
-file(GLOB EPS_SOURCES "stm32/EPS/*.c")
+file(GLOB ADCS_SOURCES   "stm32/ADCS/*.c")
+file(GLOB EPS_SOURCES    "stm32/EPS/*.c")
+
+# VirtualUART is a host-only TCP-loopback shim for the SITL demo.
+# Pulls in sys/socket.h which arm-none-eabi's newlib-nano does not
+# provide — filter it out of the cross build to keep target link
+# clean. Host builds keep it via the glob above.
+if(CROSS_COMPILE)
+    list(FILTER DRIVER_SOURCES EXCLUDE REGEX ".*/VirtualUART/.*")
+endif()
+
+# Target-only sources: LD-anchored vectors, CMSIS SystemInit, clock
+# config, exception handlers, and weak HAL fallback. Globbed separately
+# so the host build never pulls them in (would produce bare-register
+# writes into x86 address space).
+file(GLOB TARGET_C_SOURCES "stm32/Target/*.c")
+set(TARGET_ASM_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Target/startup_stm32f446retx.s"
+)
 
 set(ALL_SOURCES
     ${CORE_SOURCES}
@@ -66,15 +185,112 @@ set(ALL_SOURCES
     ${EPS_SOURCES}
 )
 
-if(CROSS_COMPILE)
-    add_executable(unisat_firmware.elf ${ALL_SOURCES})
+#
+# HAL auto-detect — if scripts/setup_stm32_hal.sh has been run, link
+# the full STM32Cube HAL and drop our weak hal_shim.c (its strong
+# counterparts in HAL_Driver/Src override every symbol we stubbed).
+# If the user has not fetched HAL, the build still succeeds and the
+# shim keeps the linker happy — firmware boots, clocks up, executes,
+# but every sensor/bus call returns HAL_ERROR until HAL is installed.
+#
+set(HAL_DRIVER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Drivers/STM32F4xx_HAL_Driver")
+set(CMSIS_DEVICE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Drivers/CMSIS/Include")
+if(CROSS_COMPILE AND EXISTS "${HAL_DRIVER_DIR}/Src" AND EXISTS "${CMSIS_DEVICE_DIR}")
+    message(STATUS "STM32Cube HAL detected — linking full driver set")
+    file(GLOB HAL_SOURCES "${HAL_DRIVER_DIR}/Src/*.c")
+    list(REMOVE_ITEM HAL_SOURCES
+        "${HAL_DRIVER_DIR}/Src/stm32f4xx_hal_timebase_rtc_alarm_template.c"
+        "${HAL_DRIVER_DIR}/Src/stm32f4xx_hal_timebase_rtc_wakeup_template.c"
+        "${HAL_DRIVER_DIR}/Src/stm32f4xx_hal_timebase_tim_template.c"
+    )
+    list(APPEND TARGET_C_SOURCES ${HAL_SOURCES})
+    list(REMOVE_ITEM TARGET_C_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Target/hal_shim.c")
+    # stm32f4xx_hal_conf.h lives in Target/; pre-pend that path so HAL's
+    # own stm32f4xx_hal.h picks the project config before falling back
+    # to the template that ships inside the HAL tree.
+    include_directories("${CMAKE_CURRENT_SOURCE_DIR}/stm32/Target"
+                        "${HAL_DRIVER_DIR}/Inc" "${CMSIS_DEVICE_DIR}"
+                        "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Drivers/CMSIS/CMSIS_Include")
+    set(HAS_FULL_HAL ON)
+else()
+    if(CROSS_COMPILE)
+        message(STATUS "STM32Cube HAL not found — hal_shim.c will be linked")
+        message(STATUS "    run scripts/setup_stm32_hal.sh for a production build")
+    endif()
+    set(HAS_FULL_HAL OFF)
+endif()
 
-    # Generate binary and hex files
+#
+# FreeRTOS auto-detect — if scripts/setup_freertos.sh has been run,
+# link the kernel + portable port + CMSIS-RTOSv2 wrapper. Without
+# this the firmware links (HAL_shim + weak osKernelStart stub are
+# enough for --gc-sections to succeed) but tasks won't actually
+# execute on real hardware.
+#
+set(FREERTOS_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Middlewares/FreeRTOS/Source")
+set(FREERTOS_PORT_DIR "${FREERTOS_SRC_DIR}/portable/GCC_ARM_CM4F")
+set(CMSIS_RTOS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stm32/Middlewares/CMSIS_RTOS_V2")
+if(CROSS_COMPILE AND EXISTS "${FREERTOS_SRC_DIR}/include" AND EXISTS "${FREERTOS_PORT_DIR}")
+    message(STATUS "FreeRTOS detected — linking kernel + Cortex-M4F port")
+    file(GLOB FREERTOS_KERNEL_SOURCES "${FREERTOS_SRC_DIR}/*.c")
+    file(GLOB FREERTOS_PORT_SOURCES "${FREERTOS_PORT_DIR}/*.c")
+    list(APPEND TARGET_C_SOURCES ${FREERTOS_KERNEL_SOURCES} ${FREERTOS_PORT_SOURCES})
+    include_directories("${FREERTOS_SRC_DIR}/include" "${FREERTOS_PORT_DIR}")
+    # CMSIS-RTOSv2 wrapper: STM32CubeF4 ships the .c + .h files flat
+    # inside the CMSIS_RTOS_V2 dir (no separate Include/ subdir).
+    if(EXISTS "${CMSIS_RTOS_DIR}/cmsis_os2.h")
+        file(GLOB CMSIS_RTOS_SOURCES "${CMSIS_RTOS_DIR}/*.c")
+        list(APPEND TARGET_C_SOURCES ${CMSIS_RTOS_SOURCES})
+        include_directories("${CMSIS_RTOS_DIR}")
+    endif()
+    set(HAS_FREERTOS ON)
+else()
+    if(CROSS_COMPILE)
+        message(STATUS "FreeRTOS not found — CMSIS-RTOSv2 calls will be unresolved")
+        message(STATUS "    run scripts/setup_freertos.sh for a runnable .elf")
+    endif()
+    set(HAS_FREERTOS OFF)
+endif()
+
+if(CROSS_COMPILE)
+    add_executable(unisat_firmware.elf
+        ${ALL_SOURCES}
+        ${TARGET_C_SOURCES}
+        ${TARGET_ASM_SOURCES}
+    )
+    set_target_properties(unisat_firmware.elf PROPERTIES
+        LINK_DEPENDS "${LINKER_SCRIPT}"
+    )
+
+    # Post-build: .bin + .hex + size report. The --format=berkeley output
+    # is what st-flash consumes; the separate .hex is convenient for
+    # STM32CubeProgrammer / OpenOCD workflows that parse Intel-hex.
     add_custom_command(TARGET unisat_firmware.elf POST_BUILD
-        COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:unisat_firmware.elf> unisat_firmware.bin
-        COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:unisat_firmware.elf> unisat_firmware.hex
-        COMMAND ${CMAKE_SIZE} $<TARGET_FILE:unisat_firmware.elf>
-        COMMENT "Generating binary and hex files"
+        COMMAND ${CMAKE_OBJCOPY} -O binary
+                $<TARGET_FILE:unisat_firmware.elf> unisat_firmware.bin
+        COMMAND ${CMAKE_OBJCOPY} -O ihex
+                $<TARGET_FILE:unisat_firmware.elf> unisat_firmware.hex
+        COMMAND ${CMAKE_SIZE} --format=berkeley
+                $<TARGET_FILE:unisat_firmware.elf>
+        COMMENT "Generating .bin/.hex and printing section sizes"
+    )
+
+    # Convenience targets so `cmake --build build --target flash` works
+    # anywhere arm-none-eabi-gcc + st-flash are installed. Size is a
+    # cheap gate for catching flash/RAM overflow early — Phase 5 wires
+    # it into the CI budget check.
+    add_custom_target(flash
+        COMMAND st-flash write unisat_firmware.bin 0x08000000
+        COMMAND st-flash reset
+        DEPENDS unisat_firmware.elf
+        COMMENT "Flashing firmware to STM32F446RE via ST-Link"
+    )
+
+    add_custom_target(size
+        COMMAND ${CMAKE_SIZE} --format=sysv
+                $<TARGET_FILE:unisat_firmware.elf>
+        DEPENDS unisat_firmware.elf
+        COMMENT "Per-section flash / RAM usage"
     )
 else()
     # Host build for testing. unisat_core aggregates every firmware
@@ -93,10 +309,15 @@ else()
         tests/test_stubs.c
         stm32/Core/Src/telemetry.c
         stm32/Core/Src/ccsds.c
+        stm32/Drivers/BoardTemp/board_temp.c
+        stm32/Drivers/TMP117/tmp117.c
+        stm32/Core/Src/fdir.c
     )
     target_include_directories(test_beacon_layout PRIVATE
         tests
         stm32/Core/Inc
+        stm32/Drivers/BoardTemp
+        stm32/Drivers/TMP117
     )
     target_compile_definitions(test_beacon_layout PRIVATE SIMULATION_MODE)
     target_link_libraries(test_beacon_layout PRIVATE m)
@@ -208,13 +429,18 @@ else()
         stm32/Core/Src/comm.c
         stm32/Core/Src/telemetry.c
         stm32/Core/Src/ccsds.c
+        stm32/Core/Src/fdir.c
         stm32/Drivers/AX25/ax25.c
         stm32/Drivers/AX25/ax25_decoder.c
+        stm32/Drivers/BoardTemp/board_temp.c
+        stm32/Drivers/TMP117/tmp117.c
     )
     target_include_directories(test_comm_integration PRIVATE
         tests
         stm32/Core/Inc
         stm32/Drivers/AX25
+        stm32/Drivers/BoardTemp
+        stm32/Drivers/TMP117
     )
     target_compile_definitions(test_comm_integration PRIVATE SIMULATION_MODE)
     target_link_libraries(test_comm_integration PRIVATE m)
@@ -246,6 +472,14 @@ else()
     target_compile_definitions(test_ccsds PRIVATE SIMULATION_MODE)
     add_test(NAME ccsds COMMAND test_ccsds)
 
+    # Extended CCSDS coverage — Parse edges + secondary header.
+    add_executable(test_ccsds_extended
+        tests/test_ccsds_extended.c
+        stm32/Core/Src/ccsds.c
+    )
+    target_compile_definitions(test_ccsds_extended PRIVATE SIMULATION_MODE)
+    add_test(NAME ccsds_extended COMMAND test_ccsds_extended)
+
     add_executable(test_adcs_algorithms
         tests/test_adcs_algorithms.c
         stm32/ADCS/quaternion.c
@@ -254,6 +488,17 @@ else()
     target_compile_definitions(test_adcs_algorithms PRIVATE SIMULATION_MODE)
     target_link_libraries(test_adcs_algorithms PRIVATE m)
     add_test(NAME adcs_algorithms COMMAND test_adcs_algorithms)
+
+    # Extended ADCS coverage — Conjugate/FromAxisAngle/FromDCM/
+    # Integrate/RotateVector/Error + BDot_IsDetumbled/Reset.
+    add_executable(test_quaternion_extended
+        tests/test_quaternion_extended.c
+        stm32/ADCS/quaternion.c
+        stm32/ADCS/bdot.c
+    )
+    target_compile_definitions(test_quaternion_extended PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_quaternion_extended PRIVATE m)
+    add_test(NAME quaternion_extended COMMAND test_quaternion_extended)
 
     add_executable(test_eps
         tests/test_eps.c
@@ -264,11 +509,75 @@ else()
     target_link_libraries(test_eps PRIVATE m)
     add_test(NAME eps COMMAND test_eps)
 
+    # Extended EPS coverage — every MPPT P&O branch + battery state.
+    add_executable(test_eps_extended
+        tests/test_eps_extended.c
+        stm32/EPS/mppt.c
+        stm32/EPS/battery_manager.c
+    )
+    target_compile_definitions(test_eps_extended PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_eps_extended PRIVATE m)
+    add_test(NAME eps_extended COMMAND test_eps_extended)
+
+    # power_distribution.c — load shedding + channel control.
+    add_executable(test_power_distribution
+        tests/test_power_distribution.c
+        stm32/EPS/power_distribution.c
+    )
+    target_compile_definitions(test_power_distribution PRIVATE SIMULATION_MODE)
+    add_test(NAME power_distribution COMMAND test_power_distribution)
+
+    # error_handler.c — log ring + safe-mode + EEPROM-branch coverage.
+    # Uses its own in-file EPS stubs (not test_stubs.c) so the test
+    # stays standalone — gcov tracks the Error_Log severity branches
+    # without pulling in the full subsystem tree.
+    add_executable(test_error_handler
+        tests/test_error_handler.c
+        stm32/Core/Src/error_handler.c
+    )
+    target_compile_definitions(test_error_handler PRIVATE SIMULATION_MODE)
+    add_test(NAME error_handler COMMAND test_error_handler)
+
+    # Telemetry module smoke tests — deeper coverage is in
+    # test_telemetry_packers.c and test_beacon_layout.c.
     add_executable(test_telemetry
         tests/test_telemetry.c
+        tests/test_stubs.c
+        stm32/Core/Src/telemetry.c
+        stm32/Core/Src/ccsds.c
+        stm32/Drivers/BoardTemp/board_temp.c
+        stm32/Drivers/TMP117/tmp117.c
+        stm32/Core/Src/fdir.c
+    )
+    target_include_directories(test_telemetry PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/BoardTemp
+        stm32/Drivers/TMP117
     )
     target_compile_definitions(test_telemetry PRIVATE SIMULATION_MODE)
-    add_test(NAME telemetry_placeholder COMMAND test_telemetry)
+    target_link_libraries(test_telemetry PRIVATE m)
+    add_test(NAME telemetry_smoke COMMAND test_telemetry)
+
+    # Phase 7 #5 — per-subsystem telemetry packers.
+    add_executable(test_telemetry_packers
+        tests/test_telemetry_packers.c
+        tests/test_stubs.c
+        stm32/Core/Src/telemetry.c
+        stm32/Core/Src/ccsds.c
+        stm32/Drivers/BoardTemp/board_temp.c
+        stm32/Drivers/TMP117/tmp117.c
+        stm32/Core/Src/fdir.c
+    )
+    target_include_directories(test_telemetry_packers PRIVATE
+        tests
+        stm32/Core/Inc
+        stm32/Drivers/BoardTemp
+        stm32/Drivers/TMP117
+    )
+    target_compile_definitions(test_telemetry_packers PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_telemetry_packers PRIVATE m)
+    add_test(NAME telemetry_packers COMMAND test_telemetry_packers)
 
     add_executable(test_hmac
         tests/test_hmac.c
@@ -288,6 +597,73 @@ else()
     target_compile_definitions(test_command_dispatcher PRIVATE SIMULATION_MODE)
     add_test(NAME command_dispatcher COMMAND test_command_dispatcher)
 
+    # Phase 2 / M1a — persistent HMAC key store with rotation.
+    # Test file supplies its own strong platform_read/write/erase
+    # hooks (fault-injection for corrupt-slot and backend-fail cases),
+    # which override the weak defaults in key_store.c.
+    add_executable(test_key_store
+        tests/test_key_store.c
+        stm32/Core/Src/key_store.c
+    )
+    target_compile_definitions(test_key_store PRIVATE SIMULATION_MODE)
+    add_test(NAME key_store COMMAND test_key_store)
+
+    # Boot-time security integration — key_store -> dispatcher wiring.
+    # Links the real key_store.c and command_dispatcher.c together
+    # (no stubs) so the end-to-end fail-closed + warm-reboot-rotation
+    # paths main.c relies on are proven in CI.
+    add_executable(test_boot_security
+        tests/test_boot_security.c
+        stm32/Core/Src/key_store.c
+        stm32/Core/Src/command_dispatcher.c
+        stm32/Drivers/Crypto/sha256.c
+        stm32/Drivers/Crypto/hmac_sha256.c
+    )
+    target_compile_definitions(test_boot_security PRIVATE SIMULATION_MODE)
+    add_test(NAME boot_security COMMAND test_boot_security)
+
+    # Phase 3 — Fault Detection, Isolation, Recovery (FDIR).
+    # Test supplies its own strong FDIR_GetTick so escalation timing
+    # is deterministic without HAL_GetTick.
+    add_executable(test_fdir
+        tests/test_fdir.c
+        stm32/Core/Src/fdir.c
+    )
+    target_compile_definitions(test_fdir PRIVATE SIMULATION_MODE)
+    add_test(NAME fdir COMMAND test_fdir)
+
+    # Phase 3 follow-up — FDIR-driven mode supervisor.
+    add_executable(test_mode_manager
+        tests/test_mode_manager.c
+        stm32/Core/Src/mode_manager.c
+        stm32/Core/Src/fdir.c
+    )
+    target_compile_definitions(test_mode_manager PRIVATE SIMULATION_MODE)
+    add_test(NAME mode_manager COMMAND test_mode_manager)
+
+    # Phase 7 #4 — warm-reboot-survivable fault log (.noinit on target,
+    # plain .bss on host). Test links the real implementation and
+    # overrides FDIR_GetTick for deterministic timestamps.
+    add_executable(test_fdir_persistent
+        tests/test_fdir_persistent.c
+        stm32/Core/Src/fdir_persistent.c
+    )
+    target_compile_definitions(test_fdir_persistent PRIVATE SIMULATION_MODE)
+    add_test(NAME fdir_persistent COMMAND test_fdir_persistent)
+
+    # Phase 4 — Board-temperature facade (Tboard beacon field).
+    # Deliberately DOES NOT link tmp117.c; the test provides its own
+    # strong TMP117_Init / TMP117_Read so bus-failure and
+    # out-of-range scenarios are exercised deterministically.
+    add_executable(test_board_temp
+        tests/test_board_temp.c
+        stm32/Drivers/BoardTemp/board_temp.c
+        stm32/Core/Src/fdir.c
+    )
+    target_compile_definitions(test_board_temp PRIVATE SIMULATION_MODE)
+    target_link_libraries(test_board_temp PRIVATE m)
+    add_test(NAME board_temp COMMAND test_board_temp)
+
     # ───────── SITL firmware demo binary ─────────
 
     add_executable(sitl_fw
@@ -304,5 +680,44 @@ else()
     target_compile_definitions(sitl_fw PRIVATE SIMULATION_MODE)
     if(WIN32)
         target_link_libraries(sitl_fw PRIVATE ws2_32)
+    endif()
+
+    # ───────── Phase 5: coverage target ─────────
+    #
+    # Runs ctest, then lcov + genhtml to produce an HTML report under
+    # build/coverage_html/ and a flat line-coverage percentage the CI
+    # scripts can parse. Requires the host build to have been
+    # configured with -DCOVERAGE=ON so gcov counters are embedded.
+    #
+    # Usage (from repo root):
+    #   cmake -B firmware/build -S firmware -DCOVERAGE=ON
+    #   cmake --build firmware/build
+    #   cmake --build firmware/build --target coverage
+    #
+    if(COVERAGE)
+        find_program(LCOV_BIN    lcov)
+        find_program(GENHTML_BIN genhtml)
+        if(LCOV_BIN AND GENHTML_BIN)
+            add_custom_target(coverage
+                COMMAND ${LCOV_BIN} --zerocounters --directory .
+                COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+                COMMAND ${LCOV_BIN} --capture --directory .
+                        --output-file coverage.info
+                        --rc geninfo_unexecuted_blocks=1
+                        --ignore-errors mismatch,negative
+                COMMAND ${LCOV_BIN} --remove coverage.info
+                        "*/tests/*" "*/unity/*" "/usr/*"
+                        --output-file coverage.info
+                        --ignore-errors unused
+                COMMAND ${LCOV_BIN} --list coverage.info
+                COMMAND ${GENHTML_BIN} coverage.info
+                        --output-directory coverage_html --quiet
+                COMMENT "gcov + lcov + genhtml -> coverage_html/"
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            )
+        else()
+            message(WARNING "COVERAGE=ON but lcov / genhtml missing — "
+                            "install lcov package to enable the report target")
+        endif()
     endif()
 endif()

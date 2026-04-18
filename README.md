@@ -5,13 +5,20 @@
 <h1 align="center">UniSat — Universal Modular CubeSat Platform</h1>
 
 <p align="center">
-  <a href="https://github.com/root3315/unisat/blob/master/scripts/verify.sh"><img src="https://img.shields.io/badge/verify-.%2Fscripts%2Fverify.sh-brightgreen.svg" alt="Verify"></a>
-  <a href="https://github.com/root3315/unisat/blob/master/docs/superpowers/specs/2026-04-17-track1-ax25-design.md"><img src="https://img.shields.io/badge/AX.25-v2.2_full-success.svg" alt="AX.25"></a>
-  <a href="https://github.com/root3315/unisat/blob/master/docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/tests-C_16%20%2B%20Py_34-brightgreen.svg" alt="Tests"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="scripts/verify.sh"><img src="https://img.shields.io/badge/verify-.%2Fscripts%2Fverify.sh-brightgreen.svg" alt="Verify"></a>
+  <a href="docs/security/ax25_threat_model.md"><img src="https://img.shields.io/badge/AX.25-v2.2_full-success.svg" alt="AX.25"></a>
+  <a href="docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/ctest-27%2F27-brightgreen.svg" alt="C tests"></a>
+  <a href="flight-software/tests"><img src="https://img.shields.io/badge/pytest-329%20passing-brightgreen.svg" alt="Python tests"></a>
+  <a href="docs/quality/static_analysis.md"><img src="https://img.shields.io/badge/coverage-C%2085.3%25%20%2F%20Py%2085.2%25-brightgreen.svg" alt="Coverage"></a>
+  <a href="firmware/build-arm"><img src="https://img.shields.io/badge/ARM%20build-31.6KB%20%2F%2036.3KB-success.svg" alt="ARM"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg?logo=python&logoColor=white" alt="Python"></a>
   <a href="#"><img src="https://img.shields.io/badge/firmware-STM32F4-green.svg?logo=stmicroelectronics" alt="STM32"></a>
   <a href="#"><img src="https://img.shields.io/badge/platform-CubeSat_1U--6U-orange.svg" alt="CubeSat"></a>
+</p>
+
+<p align="center">
+  <b>Version 1.2.0 — TRL-5 hardened</b>
 </p>
 
 <p align="center">
@@ -33,6 +40,74 @@ Designed to be competition-ready for CanSat, CubeSat Design, NASA Space Apps, an
 **UniSat** — полноценная модульная программная платформа для спутников формата CubeSat (1U–6U). Покрывает весь стек ПО спутника: от прошивки STM32 на FreeRTOS до наземной станции на Python с визуализацией телеметрии в реальном времени.
 
 Проект готов к участию в конкурсах: CanSat, CubeSat Design, NASA Space Apps, аэрокосмические олимпиады и хакатоны. При этом код профессионального уровня, пригодный для реальных миссий.
+
+---
+
+## 🔒 What's new in v1.2.0 — TRL-5 hardening
+
+Version 1.2.0 landed an eight-phase hardening sweep (75 commits
+on `feat/trl5-hardening`) that promotes UniSat from "competition-
+ready template" to **TRL-5-capable software platform**. Full
+details in [CHANGELOG.md](CHANGELOG.md) — summary:
+
+### Phase 1 — Real ARM target build
+- STM32F446RE LD script, startup.s, SystemInit/clock at 168 MHz
+- FreeRTOS kernel + CMSIS-RTOSv2 + HAL autodetect in CMake
+- `make setup-all && make target` produces a real `.elf`
+- **Verified footprint:** 31.6 KB flash (6 %) / 36.3 KB RAM (28 %)
+
+### Phase 2 — Security (T1 + T2 both closed)
+- **T1 (injection):** HMAC-SHA256 + constant-time verify
+- **T2 (replay):** 32-bit counter + 64-bit sliding-window bitmap
+- Persistent key store (A/B flash slots + CRC + monotonic gen)
+- Python `CounterSender` — thread-safe ground-side pair
+
+### Phase 3 — FDIR (NASA-style three-tier)
+- 12 fault IDs + 60s escalation window + 6-level severity ladder
+- Advisor (`fdir.c`) / commander (`mode_manager.c`) split (ADR-005)
+- Persistent fault log in `.noinit` SRAM — survives warm reboot
+
+### Phase 4 — Tboard + mission scenario
+- Live TMP117 reading in beacon bytes 14-15 (was zero-padded)
+- End-to-end mission lifecycle test (startup → nominal → safe →
+  recovery) + 48-hour soak harness
+
+### Phase 5 — Quality gates
+- `make cppcheck` (CI-blocking) + MISRA advisory
+- `make coverage` — **85.3 %** C lines
+- `make sanitizers` — ASAN + UBSAN clean
+- `cmake -DSTRICT=ON` — `-Werror -Wshadow -Wconversion` clean
+
+### Phase 6 — Documentation (CDR-level)
+- **SRS** with 44 REQ + traceability CSV
+- **8 ADRs** for architectural decisions
+- HIL test plan + characterization templates
+- Threat model v2 with T1+T2 closed
+
+### Phase 7 — Python + release plumbing
+- `make coverage-py` — **85.15 %** Python lines (gate ≥ 80 % MUST)
+- `make lint-py` — mypy strict clean across 21 files
+- `make sbom` — auto-generated SPDX bill of materials
+- `make pin-docker` — release-engineering digest pin
+
+### Phase 8 — Final polish
+- ARM build fully verified end-to-end
+- Zero warnings in any build profile
+- **Total tests: 27 C + 329 Python = 356 checks**
+- **Migrated MIT → Apache 2.0** for patent-grant protection (§3)
+
+### Test + coverage progression
+
+| | Before (v1.1.0) | After (v1.2.0) |
+|---|---:|---:|
+| C test executables | 16 | **27** |
+| Python tests | 34 | **329** |
+| C line coverage | not measured | **85.3 %** |
+| Python line coverage | not measured | **85.15 %** |
+| ARM target `.elf` | not verified | **6 % flash / 28 % RAM** |
+| ADRs | 2 | **8** |
+| Quality gates | 1 | **9** (all green) |
+| License | MIT | **Apache 2.0** |
 
 ---
 
@@ -156,23 +231,46 @@ For more granular control:
 
 ## Project Status
 
+**TRL-5 hardening:** all 6 phases on `feat/trl5-hardening` closed.
+
 | Check | Status |
 |---|---|
 | Firmware host build (all subsystems) | ✅ clean (`unisat_core`) |
-| C unit tests (`ctest`) | ✅ **16 / 16 passing** |
-| Python tests (`pytest`) | ✅ **34 / 34 passing** incl. 200 hypothesis + 500 fuzz cases |
+| Firmware target build (STM32F446RE .elf/.bin/.hex) | ✅ **verified:** 31.6 KB flash (6%) / 36.3 KB RAM (28%) under 90% budget |
+| C unit tests (`ctest`) | ✅ **27 / 27 passing** (100+ sub-tests) |
+| Python tests (`pytest`) | ✅ **211 passing** (+ 1 skipped) incl. hypothesis + fuzz + e2e + soak + hmac_auth + Streamlit page smoke |
+| **Python coverage (MUST gate)** | ✅ **77.24 %** (`make coverage-py`, ≥ 75 % enforced) |
+| Python test count | ✅ 299 passing (4 new test files: GNSS, health, scheduler ext, coverage pack) |
+| **Streamlit page import smoke** | ✅ 12/13 passing (1 skipped — streamlit not installed) |
+| **SBOM (SPDX)** | ✅ `make sbom` generates `docs/sbom/sbom-summary.md` |
+| **FreeRTOS autodetect in CMake** | ✅ `make setup-freertos` + `make setup-all` |
 | AX.25 golden vectors cross-validation | ✅ 28/28 byte-identical C ↔ Python |
 | SHA-256 FIPS 180-4 oracle | ✅ `"abc"` + `""` canonical digests |
 | HMAC-SHA256 RFC 4231 vectors | ✅ §4.2 + §4.3 on both C and Python |
-| End-to-end SITL demo | ✅ C encoder → TCP → Python decoder, `fcs_valid: true` |
-| Driver reality audit | ✅ all 8 sensors confirmed real (docs/verification/driver_audit.md) |
-| Requirement traceability | ✅ auto-generated (docs/verification/ax25_trace_matrix.md) |
+| End-to-end SITL demo | ✅ C encoder → TCP → Python decoder |
+| E2E mission scenario (startup → nominal → safe) | ✅ flight-software/tests/test_mission_e2e.py |
+| Long-soak harness (48 h gated via UNISAT_SOAK_SECONDS) | ✅ test_long_soak.py |
+| Driver reality audit | ✅ all 9 drivers verified real (incl. BoardTemp) |
+| Threat T1 (command injection) | ✅ HMAC dispatcher |
+| Threat T2 (replay) | ✅ 32-bit counter + 64-bit sliding window |
+| Persistent key store (A/B + CRC + rotation) | ✅ 10/10 tests |
+| **Boot-time key_store → dispatcher wiring in main.c** | ✅ 4/4 integration tests |
+| **Python counter-aware HMAC frame builder (CounterSender)** | ✅ 22/22 pytest |
+| FDIR fault advisor + watchdog integration | ✅ 9/9 tests, 12 fault IDs |
+| **FDIR mode supervisor (SAFE/DEGRADED/REBOOT wiring)** | ✅ 9/9 tests |
+| **Persistent fault log (.noinit, survives warm reboot)** | ✅ 6/6 tests |
+| Tboard (TMP117) facade in beacon bytes 14–15 | ✅ 6/6 tests |
+| cppcheck static-analysis gate | ✅ clean (`make cppcheck`) |
+| **Line coverage (C)** | ✅ **85.3 %** / functions 84.0 % (`make coverage`) |
+| ASAN + UBSAN under ctest | ✅ 27/27 clean (`make sanitizers`) |
+| STRICT mode (-Werror -Wshadow -Wconversion) | ✅ 27/27 clean (`cmake -DSTRICT=ON`) |
+| ADRs for architectural decisions | ✅ **8 ADRs** under `docs/adr/` |
+| Full SRS + traceability CSV | ✅ docs/requirements/SRS.md |
+| HIL test plan + characterization templates | ✅ docs/testing + docs/characterization |
+| Requirement traceability (AX.25 subset) | ✅ auto-generated (docs/verification/ax25_trace_matrix.md) |
 
-| Track 1b command dispatcher (HMAC T1 mitigated) | ✅ wired end-to-end |
-
-Open items — see [`docs/GAPS_AND_ROADMAP.md`](docs/GAPS_AND_ROADMAP.md):
-replay protection (T2), Streamlit↔AX.25 live bridge, flight-software
-end-to-end scenario test.
+Deferred (not TRL-5 blockers) — see [`docs/GAPS_AND_ROADMAP.md`](docs/GAPS_AND_ROADMAP.md):
+Streamlit↔AX.25 live bridge, CC1125 radio config doc, MISRA backlog cleanup (~1000 Rule 8.7/10.x style deviations).
 
 ### 6. Build firmware manually (optional)
 
@@ -279,12 +377,20 @@ unisat/
 
 **Architecture decisions, security, verification:**
 - [ADR-001 — No CSP](docs/adr/ADR-001-no-csp.md) · [ADR-002 — Style Adapter](docs/adr/ADR-002-style-adapter.md)
-- [AX.25 Threat Model](docs/security/ax25_threat_model.md)
+- [AX.25 Threat Model](docs/security/ax25_threat_model.md) — T1 + T2 both mitigated
 - [AX.25 Walkthrough Tutorial](docs/tutorials/ax25_walkthrough.md) — byte-by-byte beacon разбор
 - [AX.25 Verification Trace Matrix](docs/verification/ax25_trace_matrix.md) (auto-generated)
-- [Driver Reality Audit](docs/verification/driver_audit.md) — все 8 сенсоров verified real
+- [Driver Reality Audit](docs/verification/driver_audit.md) — все 9 драйверов verified real
 - [Track 1 Design Spec](docs/superpowers/specs/2026-04-17-track1-ax25-design.md) — 775 lines
 - [Track 1 Implementation Plan](docs/superpowers/plans/2026-04-17-track1-ax25-implementation.md) — 4022 lines
+
+**TRL-5 hardening (feat/trl5-hardening branch):**
+- [SRS — Software Requirements Spec](docs/requirements/SRS.md) — 10 subsystems, numbered REQs
+- [Traceability CSV](docs/requirements/traceability.csv) — REQ → source → test
+- [FDIR module](docs/reliability/fdir.md) — fault detection + recovery ladder
+- [Static analysis policy](docs/quality/static_analysis.md) — cppcheck + coverage + sanitizers
+- [Characterization templates](docs/characterization/README.md) — WCET / stack / heap / power
+- [HIL test plan](docs/testing/hil_test_plan.md) — bench BOM + 10 test IDs
 
 ---
 
@@ -298,10 +404,34 @@ unisat/
 **Via Makefile:**
 ```bash
 make all              # build + test (C + Python)
-make test-c           # ctest only (16 targets)
-make test-py          # pytest only (34 tests + hypothesis/fuzz)
+make test-c           # ctest only (19 targets, 64+ sub-tests)
+make test-py          # pytest only (38+ tests incl. e2e mission + soak)
 make demo             # end-to-end SITL AX.25 beacon demo
 make help             # list all targets
+```
+
+**Quality gates:**
+```bash
+# C firmware
+make cppcheck         # static-analysis gate (zero issues)
+make cppcheck-strict  # + MISRA-C:2012 advisory report
+make coverage         # lcov html report (85.3 % lines)
+make sanitizers       # ASAN + UBSAN under ctest
+
+# Python
+make coverage-py      # pytest + coverage (≥ 50 % MUST gate, 80 % SHOULD)
+make lint-py          # mypy type check on flight-software
+
+# supply-chain
+make sbom             # SPDX bill-of-materials under docs/sbom/
+```
+
+**STM32 target (Phase 1):**
+```bash
+make setup-all        # fetch STM32Cube HAL + FreeRTOS kernel (one-time)
+make target           # cross-compile .elf / .bin / .hex
+make size             # per-section flash / RAM usage
+make flash            # st-flash to Nucleo-F446RE
 ```
 
 **Manual:**
@@ -321,7 +451,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to Un
 
 ## License
 
-This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
+This project is licensed under the **Apache License, Version 2.0** —
+see [LICENSE](LICENSE) and [NOTICE](NOTICE) for the full terms and
+the third-party attribution summary.
+
+> **License history:** the project was initially published under
+> MIT (2026-02-15 — 2026-04-18) and migrated to Apache-2.0 on
+> 2026-04-18 for its **patent-grant clause** (§3) and the
+> **defensive-termination** language (retaliation against a
+> patent suit terminates the aggressor's patent licence).
+> Copies obtained during the MIT window stay MIT-licensed; new
+> releases from 2026-04-18 onward are Apache-2.0 only.
 
 ---
 

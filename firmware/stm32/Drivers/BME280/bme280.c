@@ -41,7 +41,7 @@ void BME280_Platform_Delay(uint32_t ms)
 
 /* ───────────── Internal Helpers ───────────── */
 
-static BME280_Status_t bme280_write_reg(BME280_Handle_t *dev,
+__attribute__((unused)) static BME280_Status_t bme280_write_reg(BME280_Handle_t *dev,
                                          uint8_t reg, uint8_t val)
 {
 #ifdef SIMULATION_MODE
@@ -59,7 +59,7 @@ static BME280_Status_t bme280_write_reg(BME280_Handle_t *dev,
 #endif
 }
 
-static BME280_Status_t bme280_read_reg(BME280_Handle_t *dev,
+__attribute__((unused)) static BME280_Status_t bme280_read_reg(BME280_Handle_t *dev,
                                         uint8_t reg, uint8_t *buf, uint16_t len)
 {
 #ifdef SIMULATION_MODE
@@ -81,7 +81,7 @@ static BME280_Status_t bme280_read_reg(BME280_Handle_t *dev,
 /**
  * @brief Read calibration/trimming parameters from device NVM.
  */
-static BME280_Status_t bme280_read_calib(BME280_Handle_t *dev)
+__attribute__((unused)) static BME280_Status_t bme280_read_calib(BME280_Handle_t *dev)
 {
     uint8_t buf[26];
     BME280_Status_t st;
@@ -124,7 +124,7 @@ static BME280_Status_t bme280_read_calib(BME280_Handle_t *dev)
  * @brief Compensate raw temperature ADC value.
  * @return Temperature in 0.01 deg C (e.g. 2315 = 23.15 C).  Also updates t_fine.
  */
-static int32_t bme280_compensate_temp(BME280_Handle_t *dev, int32_t adc_T)
+__attribute__((unused)) static int32_t bme280_compensate_temp(BME280_Handle_t *dev, int32_t adc_T)
 {
     int32_t var1, var2, T;
 
@@ -143,7 +143,7 @@ static int32_t bme280_compensate_temp(BME280_Handle_t *dev, int32_t adc_T)
  * @brief Compensate raw pressure ADC value.
  * @return Pressure in Pa as unsigned 32-bit Q24.8 (divide by 256 for Pa).
  */
-static uint32_t bme280_compensate_press(BME280_Handle_t *dev, int32_t adc_P)
+__attribute__((unused)) static uint32_t bme280_compensate_press(BME280_Handle_t *dev, int32_t adc_P)
 {
     int64_t var1, var2, p;
 
@@ -170,7 +170,7 @@ static uint32_t bme280_compensate_press(BME280_Handle_t *dev, int32_t adc_P)
  * @brief Compensate raw humidity ADC value.
  * @return Humidity in Q22.10 format (divide by 1024 for %RH).
  */
-static uint32_t bme280_compensate_hum(BME280_Handle_t *dev, int32_t adc_H)
+__attribute__((unused)) static uint32_t bme280_compensate_hum(BME280_Handle_t *dev, int32_t adc_H)
 {
     int32_t v_x1_u32r;
 

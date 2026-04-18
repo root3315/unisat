@@ -59,7 +59,7 @@ void UBLOX_Platform_Delay(uint32_t ms)
 /**
  * @brief Read from a DDC register with retry logic.
  */
-static UBLOX_Status_t ublox_read_reg(UBLOX_Handle_t *dev,
+__attribute__((unused)) static UBLOX_Status_t ublox_read_reg(UBLOX_Handle_t *dev,
                                       uint8_t reg, uint8_t *buf, uint16_t len)
 {
 #ifdef SIMULATION_MODE
@@ -81,7 +81,7 @@ static UBLOX_Status_t ublox_read_reg(UBLOX_Handle_t *dev,
 /**
  * @brief Send raw bytes to the DDC port with retry logic.
  */
-static UBLOX_Status_t ublox_write_raw(UBLOX_Handle_t *dev,
+__attribute__((unused)) static UBLOX_Status_t ublox_write_raw(UBLOX_Handle_t *dev,
                                        const uint8_t *data, uint16_t len)
 {
 #ifdef SIMULATION_MODE
@@ -102,7 +102,7 @@ static UBLOX_Status_t ublox_write_raw(UBLOX_Handle_t *dev,
 /**
  * @brief Compute UBX checksum (Fletcher-8 over class, id, length, payload).
  */
-static void ublox_checksum(const uint8_t *data, uint16_t len,
+__attribute__((unused)) static void ublox_checksum(const uint8_t *data, uint16_t len,
                             uint8_t *ck_a, uint8_t *ck_b)
 {
     *ck_a = 0;
@@ -212,6 +212,8 @@ UBLOX_Status_t UBLOX_ReadBytes(UBLOX_Handle_t *dev, uint8_t *buf,
     if (!dev || !dev->initialized || !buf || !read) return UBLOX_ERR_I2C;
 
 #ifdef SIMULATION_MODE
+    (void)len;   /* SIM path doesn't draw from the bus — len is
+                  * still part of the public API for target builds. */
     *read = 0;
     return UBLOX_ERR_NO_DATA;
 #else
