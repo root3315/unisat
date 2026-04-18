@@ -16,28 +16,37 @@ st.title("UniSat Mission Configurator")
 PLATFORM_OPTIONS = {
     "CubeSat": {
         "mission_types": ["cubesat_leo", "cubesat_sso", "cubesat_tech_demo"],
-        "form_factors": ["1U", "2U", "3U", "6U", "12U"],
+        # All CubeSat sizes supported as of v1.3.0 — including 1.5U.
+        "form_factors": [
+            "cubesat_1u", "cubesat_1_5u", "cubesat_2u",
+            "cubesat_3u", "cubesat_6u", "cubesat_12u",
+        ],
         "description": "Orbital CubeSat missions (LEO, SSO, ISS)",
     },
     "CanSat": {
         "mission_types": ["cansat_standard", "cansat_advanced"],
-        "form_factors": ["cansat_standard", "cansat_custom"],
+        "form_factors": ["cansat_minimal", "cansat_standard", "cansat_advanced"],
         "description": "CanSat competitions (ESERO, AAS, national)",
     },
     "Suborbital Rocket": {
         "mission_types": ["rocket_sounding", "rocket_competition"],
-        "form_factors": ["rocket_avionics", "rocket_custom"],
+        "form_factors": ["rocket_payload"],
         "description": "Rocketry competitions (SA Cup, IREC, Team America)",
     },
     "High Altitude Balloon": {
         "mission_types": ["hab_standard", "hab_long_duration"],
-        "form_factors": ["hab_payload_small", "hab_payload_medium", "hab_payload_large"],
+        "form_factors": ["hab_payload"],
         "description": "HAB flights and competitions",
     },
     "Drone / UAV": {
         "mission_types": ["drone_survey", "drone_inspection"],
-        "form_factors": ["drone_small", "drone_medium"],
+        "form_factors": ["drone_small"],
         "description": "UAV survey, inspection, and competition missions",
+    },
+    "Rover": {
+        "mission_types": ["rover_survey"],
+        "form_factors": ["rover_small"],
+        "description": "Small ground rovers and exploration platforms",
     },
     "Custom": {
         "mission_types": ["custom"],

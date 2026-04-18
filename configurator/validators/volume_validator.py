@@ -1,35 +1,73 @@
-"""Volume Validator — Check component fit for all platform types."""
+"""Volume Validator — Check component fit for all platform types.
 
+Volume envelopes are sourced from :mod:`core.form_factors`. Legacy
+keys ("1U", "cansat_custom" …) are kept as aliases so older configs
+keep validating.
+"""
+
+from __future__ import annotations
+
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 
-# Volume specs by form factor
-FORM_FACTOR_VOLUMES: dict[str, dict[str, float]] = {
-    # CubeSat standards
-    "1U": {"x_mm": 100, "y_mm": 100, "z_mm": 113.5, "volume_cm3": 1135},
-    "2U": {"x_mm": 100, "y_mm": 100, "z_mm": 227.0, "volume_cm3": 2270},
-    "3U": {"x_mm": 100, "y_mm": 100, "z_mm": 340.5, "volume_cm3": 3405},
-    "6U": {"x_mm": 100, "y_mm": 226.3, "z_mm": 340.5, "volume_cm3": 7704},
-    "12U": {"x_mm": 226.3, "y_mm": 226.3, "z_mm": 340.5, "volume_cm3": 17438},
-    # CanSat
-    "cansat_standard": {"outer_diameter_mm": 68, "inner_diameter_mm": 64, "height_mm": 80, "x_mm": 68, "y_mm": 68, "z_mm": 80, "volume_cm3": 290, "internal_volume_cm3": 257},
-    "cansat_custom": {"x_mm": 80, "y_mm": 80, "z_mm": 150, "volume_cm3": 960},
-    # Rocket
-    "rocket_avionics": {"x_mm": 50, "y_mm": 50, "z_mm": 100, "volume_cm3": 250},
-    "rocket_custom": {"x_mm": 80, "y_mm": 80, "z_mm": 200, "volume_cm3": 1280},
-    # HAB
-    "hab_payload_small": {"x_mm": 150, "y_mm": 150, "z_mm": 100, "volume_cm3": 2250},
-    "hab_payload_medium": {"x_mm": 200, "y_mm": 200, "z_mm": 150, "volume_cm3": 6000},
-    "hab_payload_large": {"x_mm": 300, "y_mm": 300, "z_mm": 200, "volume_cm3": 18000},
-    # Drone
-    "drone_small": {"x_mm": 200, "y_mm": 200, "z_mm": 100, "volume_cm3": 4000},
-    "drone_medium": {"x_mm": 300, "y_mm": 300, "z_mm": 150, "volume_cm3": 13500},
-    # Custom
-    "custom": {"x_mm": 200, "y_mm": 200, "z_mm": 200, "volume_cm3": 8000},
+_FLIGHT_SW = Path(__file__).resolve().parents[2] / "flight-software"
+if str(_FLIGHT_SW) not in sys.path:
+    sys.path.insert(0, str(_FLIGHT_SW))
+
+from core.form_factors import get_form_factor, list_form_factors
+
+
+_ALIASES: dict[str, str] = {
+    "1U": "cubesat_1u",
+    "1.5U": "cubesat_1_5u",
+    "2U": "cubesat_2u",
+    "3U": "cubesat_3u",
+    "6U": "cubesat_6u",
+    "12U": "cubesat_12u",
+    "cansat_custom": "cansat_advanced",
+    "rocket_avionics": "rocket_payload",
+    "rocket_custom": "rocket_payload",
+    "hab_payload_small": "hab_payload",
+    "hab_payload_medium": "hab_payload",
+    "hab_payload_large": "hab_payload",
+    "drone_medium": "drone_small",
 }
+
+
+def _canonical(form_factor: str) -> str:
+    return _ALIASES.get(form_factor, form_factor)
+
+
+def _volume_spec(form_factor: str) -> dict[str, float]:
+    """Merge registry volume info with legacy bbox hints for UI display."""
+    canonical = _canonical(form_factor)
+    try:
+        ff = get_form_factor(canonical)
+    except KeyError:
+        return {"volume_cm3": 3405.0, "x_mm": 100.0, "y_mm": 100.0, "z_mm": 340.5}
+    spec: dict[str, float] = dict(ff.volume.dimensions_mm)
+    spec["volume_cm3"] = ff.volume.volume_cm3
+    # Provide rectangular bbox for cylindrical shapes so UI can show a box.
+    if ff.volume.shape == "cylindrical":
+        d = ff.volume.dimensions_mm.get("outer_d", 0.0)
+        h = ff.volume.dimensions_mm.get("height", 0.0)
+        spec.setdefault("x_mm", d)
+        spec.setdefault("y_mm", d)
+        spec.setdefault("z_mm", h)
+    return spec
+
+
+FORM_FACTOR_VOLUMES: dict[str, dict[str, float]] = {
+    key: _volume_spec(key) for key in list_form_factors()
+}
+for alias in _ALIASES:
+    FORM_FACTOR_VOLUMES[alias] = _volume_spec(alias)
+
 
 COMPONENT_VOLUMES_CM3: dict[str, float] = {
     "obc_board": 50, "eps_board": 60, "battery_pack": 200,
-    "comm_uhf": 40, "comm_sband": 50, "adcs_unit": 150,
+    "comm_uhf": 40, "comm_sband": 50, "comm_lora": 8, "adcs_unit": 150,
     "gnss_module": 15, "imu_module": 5, "barometer_module": 3,
     "camera_module": 80, "payload_module": 100,
     "descent_controller_module": 20, "harness_misc": 50,
@@ -48,9 +86,11 @@ class VolumeResult:
 
 def validate_volume(form_factor: str,
                     enabled_subsystems: dict[str, bool]) -> VolumeResult:
-    """Validate volume budget for given configuration."""
-    specs = FORM_FACTOR_VOLUMES.get(form_factor, FORM_FACTOR_VOLUMES.get("3U", {}))
-    available = specs.get("volume_cm3", 3405)
+    """Validate volume budget for a configuration."""
+    specs = FORM_FACTOR_VOLUMES.get(
+        form_factor, FORM_FACTOR_VOLUMES.get("cubesat_3u", {})
+    )
+    available = specs.get("volume_cm3", 3405.0)
 
     items: dict[str, float] = {
         "obc_board": COMPONENT_VOLUMES_CM3["obc_board"],
@@ -64,6 +104,8 @@ def validate_volume(form_factor: str,
         items["comm_uhf"] = COMPONENT_VOLUMES_CM3["comm_uhf"]
     if enabled_subsystems.get("comm_sband", False):
         items["comm_sband"] = COMPONENT_VOLUMES_CM3["comm_sband"]
+    if enabled_subsystems.get("comm_lora", False):
+        items["comm_lora"] = COMPONENT_VOLUMES_CM3["comm_lora"]
     if enabled_subsystems.get("adcs", False):
         items["adcs_unit"] = COMPONENT_VOLUMES_CM3["adcs_unit"]
     if enabled_subsystems.get("gnss", False):
