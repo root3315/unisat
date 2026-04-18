@@ -88,7 +88,26 @@ typedef struct {
     uint32_t recent_count;     /* occurrences inside current window    */
     uint32_t window_start_ms;  /* HAL_GetTick at start of recent window */
     uint32_t last_event_ms;    /* HAL_GetTick at most recent Report    */
+    /* Grayscale severity tracking (see FDIR_ReportGrayscale).
+     *
+     *   severity_ema : exponential moving average of the last
+     *                  severity samples (0..255). Uses a shift-based
+     *                  update so there is no division on a hot path.
+     *   severity_peak: worst sample observed inside the recent window
+     *                  — clamps back down when FDIR_ClearRecent fires. */
+    uint32_t severity_ema;
+    uint32_t severity_peak;
 } FDIR_FaultState_t;
+
+/** Grayscale severity bands used by FDIR_ReportGrayscale. The bands
+ *  map analogue sensor drift onto the same recovery ladder the
+ *  binary FDIR_Report drives, so a gradually-worsening sensor can
+ *  escalate without a hard fault ever tripping. */
+#define FDIR_SEVERITY_NOMINAL   0U    /* no action needed              */
+#define FDIR_SEVERITY_WATCH     64U   /* within margin, keep watching  */
+#define FDIR_SEVERITY_WARNING   128U  /* drift exceeds tolerance       */
+#define FDIR_SEVERITY_MAJOR     192U  /* drift triggers DISABLE_SUBSYS */
+#define FDIR_SEVERITY_CRITICAL  255U  /* drift triggers SAFE_MODE      */
 
 
 /** Static per-fault configuration — immutable after FDIR_Init. */
@@ -126,6 +145,22 @@ void FDIR_Init(void);
  *  task; protected by a local critical section so concurrent
  *  writers cannot corrupt the counters. */
 void FDIR_Report(FDIR_FaultId_t id);
+
+/** Report a graded (grayscale) severity sample for a fault.
+ *
+ *  Complements the binary FDIR_Report for anomalies that live on a
+ *  continuum rather than a clean fired/not-fired boundary — sensor
+ *  drift, thermal warming, slowly-degrading link margin. ``sample``
+ *  is a 0..255 severity level (use the FDIR_SEVERITY_* constants).
+ *  The module maintains an exponential moving average per fault,
+ *  and the recommendation is computed from whichever of the binary
+ *  recent-count or the EMA crosses the severity ladder first.
+ *
+ *  Calling FDIR_ReportGrayscale with a high sample value DOES still
+ *  bump the binary recent_count so a sensor that pins to CRITICAL
+ *  several samples in a row eventually escalates via the regular
+ *  recent-window threshold as well. */
+void FDIR_ReportGrayscale(FDIR_FaultId_t id, uint8_t sample);
 
 /** Return the recovery action the FDIR recommends for the current
  *  state of a given fault. If the recent-window count is at or
