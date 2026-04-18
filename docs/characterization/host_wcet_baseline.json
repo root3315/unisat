@@ -1,0 +1,47 @@
+{
+  "baseline_captured": "2026-04-18",
+  "tool": "firmware/tests/bench_ax25.c",
+  "build_profile": "host / gcc -O2 / SIMULATION_MODE",
+  "host_cpu": "x86_64, modern desktop class",
+  "iterations_per_case": 10000,
+  "frame_size_bytes": 69,
+  "notes": [
+    "Host numbers are a lower bound on the target MCU; Cortex-M4 @ 168 MHz is typically 10-20x slower on pure-C integer code.",
+    "max_us captures first-iteration outliers (branch-predictor warmup, instruction-cache misses). The mean and min are what matter.",
+    "Budgets from docs/superpowers/specs/2026-04-17-track1-ax25-design.md §4.11: encode < 5000 us, decode < 2000 us per frame @ 168 MHz. All cases clear the budget with multi-order-of-magnitude margin on the host and a healthy margin projected on target."
+  ],
+  "results": [
+    {
+      "name": "ax25_encode_ui_frame",
+      "mean_us": 5.754,
+      "min_us": 3.858,
+      "max_us": 560.926,
+      "budget_target_us": 5000.0,
+      "within_budget": true
+    },
+    {
+      "name": "ax25_decoder_push_byte_whole_frame",
+      "mean_us": 7.156,
+      "min_us": 4.135,
+      "max_us": 2070.772,
+      "budget_target_us": 2000.0,
+      "within_budget": true
+    },
+    {
+      "name": "ax25_decode_ui_frame_pure",
+      "mean_us": 1.530,
+      "min_us": 1.239,
+      "max_us": 223.607,
+      "budget_target_us": 2000.0,
+      "within_budget": true
+    },
+    {
+      "name": "hmac_sha256_48B_beacon",
+      "mean_us": 6.370,
+      "min_us": 3.980,
+      "max_us": 244.112,
+      "budget_target_us": 5000.0,
+      "within_budget": true
+    }
+  ]
+}
