@@ -375,6 +375,11 @@ unisat/
 - [Testing Plan](docs/testing_plan.md) · [Assembly Guide](docs/assembly_guide.md)
 - [API Reference](docs/API_REFERENCE.md) · [Requirements Traceability](docs/REQUIREMENTS_TRACEABILITY.md)
 
+**Contributing & conventions:**
+- [STYLE_GUIDE.md](docs/STYLE_GUIDE.md) — Google-derived code + prose conventions
+- [SECURITY.md](SECURITY.md) — vulnerability reporting policy
+- [CONTRIBUTING.md](CONTRIBUTING.md) — PR workflow
+
 **Architecture decisions, security, verification:**
 - [ADR-001 — No CSP](docs/adr/ADR-001-no-csp.md) · [ADR-002 — Style Adapter](docs/adr/ADR-002-style-adapter.md)
 - [AX.25 Threat Model](docs/security/ax25_threat_model.md) — T1 + T2 both mitigated
