@@ -22,7 +22,8 @@
         docker-ci ci goldens trace clean help \
         target size flash setup-hal setup-freertos setup-all \
         cppcheck cppcheck-strict coverage sanitizers \
-        coverage-py lint-py configurator sbom
+        coverage-py lint-py configurator sbom \
+        pin-docker pin-docker-unpin
 
 FIRMWARE_DIR := firmware
 BUILD_DIR    := $(FIRMWARE_DIR)/build
@@ -172,6 +173,14 @@ configurator:
 
 sbom:
 	scripts/gen_sbom.sh
+
+# --- Docker supply-chain pin -------------------------------------
+
+pin-docker:
+	scripts/pin_docker.sh
+
+pin-docker-unpin:
+	scripts/pin_docker.sh --unpin
 
 # --- STM32F446RE target build ------------------------------------
 #

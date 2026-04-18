@@ -11,16 +11,19 @@
 # malicious layer cannot silently affect our CI. Update the digest
 # together with the human-readable comment when bumping versions.
 #
-# To pin by digest (production policy):
-#   1. docker pull gcc:13
-#   2. docker images --digests gcc:13
-#   3. replace the FROM line below with: FROM gcc:13@sha256:<digest>
-#   4. document the pin date in CHANGELOG.md so a digest rotation on
-#      Docker Hub doesn't silently break rebuilds.
+# To pin by digest (production policy) — one-command automation:
 #
-# Tag-based FROM is used by default so a fresh clone builds on any
-# machine; swapping to a digest is the one-line change that tightens
-# supply-chain guarantees for a release build.
+#   make pin-docker          # scripts/pin_docker.sh
+#   make pin-docker-unpin    # scripts/pin_docker.sh --unpin
+#
+# `scripts/pin_docker.sh` does: docker pull gcc:13, extract the
+# SHA-256 via `docker inspect`, rewrite the FROM line below, and
+# print a CHANGELOG-ready note. `--unpin` reverts.
+#
+# Tag-based FROM stays in git so a fresh clone builds on any
+# machine without a prior `docker pull`; the pin is a release-
+# engineering toggle that tightens supply-chain guarantees only
+# when enacted.
 FROM gcc:13
 
 # Clock drift on the host can make debian-security InRelease fail

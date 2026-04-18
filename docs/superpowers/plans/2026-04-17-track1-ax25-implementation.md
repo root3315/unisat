@@ -1,6 +1,29 @@
 # AX.25 Link Layer Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> ⚠️ **ARCHIVED — HISTORICAL IMPLEMENTATION ROADMAP**
+>
+> This 4000-line plan was executed in April 2026 and landed the
+> initial AX.25 + CCSDS + HMAC stack (commits up to 99774cf). It
+> is **preserved for traceability** — the Phase 2–8 TRL-5
+> hardening work refined several of the APIs and wire formats
+> listed here, most notably:
+>
+> - **Replay counter (ADR-004):** the dispatcher now expects a
+>   4-byte counter prefix before the body; this plan references
+>   the older body+HMAC-only layout.
+> - **Key store (ADR-003):** the plan assumed the HMAC key was
+>   set by boot code; the production firmware now reads it from
+>   A/B flash via `key_store.c`.
+> - **FDIR (ADR-005):** this plan's §7 talks about FDIR as one
+>   module; it was later split into `fdir.c` (advisor) +
+>   `mode_manager.c` (commander).
+>
+> For current implementation guidance see:
+> - `docs/requirements/SRS.md` — authoritative requirements
+> - `docs/adr/` — 8 ADRs covering post-Track-1 design decisions
+> - `docs/TECHNICAL_DOCUMENTATION.md §0` — Phase 7/8 summary
+>
+> See `docs/superpowers/README.md` for the archival context.
 
 **Goal:** Implement the AX.25 UI-frame link layer end-to-end: pure C + Python libraries with a streaming decoder, full integration into `comm.c`, SITL round-trip via TCP loopback, and a `make demo` that walks a real beacon from firmware to ground station.
 

@@ -1,6 +1,19 @@
 # Track 1 — AX.25 Link Layer: Design Spec
 
-**Status**: Approved
+> ⚠️ **ARCHIVED — PRE-TRL-5 DOCUMENT**
+>
+> This spec was approved on 2026-04-17 and drove the first
+> implementation of the AX.25 + CCSDS stack. It is **preserved for
+> historical reference**; current behaviour is documented in the
+> SRS (`docs/requirements/SRS.md`), the eight ADRs under
+> `docs/adr/`, and the threat model
+> (`docs/security/ax25_threat_model.md`). The TRL-5 hardening work
+> in Phase 2–8 refined the APIs — when this spec and the current
+> code disagree, the code is authoritative.
+>
+> See `docs/superpowers/README.md` for the full archival context.
+
+**Status**: Archived (was: Approved)
 **Date**: 2026-04-17
 **Author**: UniSat engineering
 **Track**: 1 of 4 (Protocol Completion)

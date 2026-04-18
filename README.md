@@ -7,8 +7,8 @@
 <p align="center">
   <a href="https://github.com/root3315/unisat/blob/master/scripts/verify.sh"><img src="https://img.shields.io/badge/verify-.%2Fscripts%2Fverify.sh-brightgreen.svg" alt="Verify"></a>
   <a href="https://github.com/root3315/unisat/blob/master/docs/superpowers/specs/2026-04-17-track1-ax25-design.md"><img src="https://img.shields.io/badge/AX.25-v2.2_full-success.svg" alt="AX.25"></a>
-  <a href="https://github.com/root3315/unisat/blob/master/docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/tests-C_16%20%2B%20Py_34-brightgreen.svg" alt="Tests"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="https://github.com/root3315/unisat/blob/master/docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/tests-C_27%20%2B%20Py_314-brightgreen.svg" alt="Tests"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-blue.svg" alt="License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg?logo=python&logoColor=white" alt="Python"></a>
   <a href="#"><img src="https://img.shields.io/badge/firmware-STM32F4-green.svg?logo=stmicroelectronics" alt="STM32"></a>
   <a href="#"><img src="https://img.shields.io/badge/platform-CubeSat_1U--6U-orange.svg" alt="CubeSat"></a>
@@ -376,7 +376,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on how to contribute to Un
 
 ## License
 
-This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
+This project is licensed under the **Apache License, Version 2.0** —
+see [LICENSE](LICENSE) and [NOTICE](NOTICE) for the full terms and
+the third-party attribution summary.
+
+> **License history:** the project was initially published under
+> MIT (2026-02-15 — 2026-04-18) and migrated to Apache-2.0 on
+> 2026-04-18 for its **patent-grant clause** (§3) and the
+> **defensive-termination** language (retaliation against a
+> patent suit terminates the aggressor's patent licence).
+> Copies obtained during the MIT window stay MIT-licensed; new
+> releases from 2026-04-18 onward are Apache-2.0 only.
 
 ---
 
