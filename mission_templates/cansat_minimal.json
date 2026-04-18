@@ -1,0 +1,63 @@
+{
+  "mission": {
+    "name": "CanSat Minimal",
+    "version": "1.0.0",
+    "description": "Lightweight CanSat (≤350 g) — telemetry-only, passive descent",
+    "mission_type": "cansat_minimal",
+    "platform": "cansat",
+    "operator": "Team Name",
+    "telemetry_hz": 4.0,
+    "competition": {
+      "type": "cansat",
+      "name": "CanSat Minimal Class",
+      "max_cansat_mass_g": 350,
+      "max_cansat_outer_diameter_mm": 66,
+      "max_cansat_inner_diameter_mm": 64,
+      "max_cansat_height_mm": 115,
+      "descent_rate_range_m_s": [5.0, 15.0]
+    }
+  },
+  "satellite": {
+    "form_factor": "cansat_minimal",
+    "mass_kg": 0.30,
+    "dimensions_mm": {"outer_diameter_mm": 66, "inner_diameter_mm": 64,
+                      "height_mm": 115}
+  },
+  "subsystems": {
+    "obc": {"enabled": true, "mcu": "RP2040", "clock_mhz": 133,
+            "ram_kb": 264, "flash_kb": 2048},
+    "imu": {"enabled": true, "sensor_type": "LSM6DS3", "sample_rate_hz": 50,
+            "accel_range_g": 16, "gyro_range_dps": 2000,
+            "has_magnetometer": false, "simulate": false},
+    "barometer": {"enabled": true, "sensor_type": "BMP280",
+                  "sample_rate_hz": 10, "ref_pressure_pa": 101325,
+                  "ground_altitude_m": 0, "simulate": false},
+    "gnss": {"enabled": false},
+    "comm": {
+      "enabled": true,
+      "uhf": {"enabled": true, "frequency_mhz": 433.0, "power_w": 0.05,
+              "data_rate_bps": 2400, "protocol": "custom"}
+    },
+    "camera": {"enabled": false},
+    "descent_controller": {"enabled": false},
+    "payload": {"enabled": true, "type": "temperature_humidity",
+                "description": "BME280 atmospheric profiler"}
+  },
+  "features": {
+    "orbit_predictor": false,
+    "reaction_wheels": false,
+    "magnetorquers": false,
+    "descent_controller": false,
+    "parachute_pyro": false,
+    "barometer": true,
+    "imu": true,
+    "gnss": false,
+    "camera": false,
+    "solar_panels": false
+  },
+  "ground_station": {
+    "location": {"name": "Launch Site", "latitude": 0.0, "longitude": 0.0,
+                 "altitude_m": 0},
+    "antenna": {"type": "whip", "gain_dbi": 2, "frequency_mhz": 433}
+  }
+}
