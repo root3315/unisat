@@ -1,0 +1,40 @@
+# Normalize line endings across Windows / Linux / macOS checkouts.
+# Without this, Git on Windows auto-converts LF -> CRLF at checkout,
+# which breaks `#!/usr/bin/env bash` shebangs when scripts are run
+# inside Linux containers (seen in scripts/run_cppcheck.sh on v1.2.0).
+
+# Default: let Git decide.
+* text=auto
+
+# Explicit LF: anything that must run on Linux regardless of
+# developer platform.
+*.sh      text eol=lf
+*.bash    text eol=lf
+Makefile  text eol=lf
+Dockerfile* text eol=lf
+
+# Explicit LF for source files — no reason to ever have CRLF here.
+*.c       text eol=lf
+*.h       text eol=lf
+*.cc      text eol=lf
+*.cpp     text eol=lf
+*.hpp     text eol=lf
+*.py      text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.toml    text eol=lf
+*.json    text eol=lf
+*.md      text eol=lf
+*.ld      text eol=lf
+*.s       text eol=lf
+*.S       text eol=lf
+
+# Binary — never touch.
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.bin     binary
+*.hex     binary
+*.elf     binary
+*.ipynb   text eol=lf
