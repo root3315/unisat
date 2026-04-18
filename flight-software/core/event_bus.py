@@ -55,11 +55,23 @@ class EventBus:
     def subscribe(self, pattern: str, handler: EventHandler) -> None:
         """Subscribe a handler to events matching a pattern.
 
+        A handler that is already subscribed to the same pattern is
+        NOT added a second time: a double-subscribe would fire the
+        handler twice per publish and only the first entry would be
+        removed by ``unsubscribe``, leaking a live duplicate.
+
         Args:
             pattern: Event name or wildcard pattern.
             handler: Async callable receiving an Event.
         """
-        self._handlers.setdefault(pattern, []).append(handler)
+        handlers = self._handlers.setdefault(pattern, [])
+        if handler in handlers:
+            logger.debug(
+                "Duplicate subscribe ignored for '%s': %s",
+                pattern, handler.__qualname__,
+            )
+            return
+        handlers.append(handler)
         logger.debug("Subscribed to '%s': %s", pattern, handler.__qualname__)
 
     def unsubscribe(self, pattern: str, handler: EventHandler) -> None:
