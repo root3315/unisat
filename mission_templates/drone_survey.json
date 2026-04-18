@@ -16,9 +16,9 @@
     }
   },
   "satellite": {
-    "form_factor": "drone",
+    "form_factor": "drone_medium",
     "mass_kg": 2.5,
-    "dimensions_mm": [400, 400, 200]
+    "dimensions_mm": [300, 300, 150]
   },
   "subsystems": {
     "obc": {
