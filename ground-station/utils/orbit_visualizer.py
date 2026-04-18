@@ -4,7 +4,6 @@ import math
 from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 
-import numpy as np
 
 # Default ISS-like TLE for UniSat demo
 DEFAULT_TLE = (

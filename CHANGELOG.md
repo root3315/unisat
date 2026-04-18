@@ -5,6 +5,64 @@ All notable changes to UniSat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.2] - 2026-04-18 — Full audit: docs sync + lint clean
+
+Full repository audit after the 1.3.1 polish. Zero behavioural changes;
+this release fixes stale numbers in every documentation file,
+brings the whole Python tree to `ruff` / `mypy --strict` clean, and
+cross-links form-factor-specific budgets to the 3U reference docs.
+
+### Fixed — stale documentation
+
+- **README.md** — test-count badges and project-status table brought
+  in line with the real 420 Python / 28 ctest numbers (were 329 / 27).
+  Banner subtitle changed from "Universal Modular CubeSat Platform"
+  to "Universal Modular Satellite Platform" since the scope is no
+  longer CubeSat-only. Project tree gained accurate test counts per
+  package and references to `utils/profile_gate.py` and the
+  `by_form_factor/` BOM directory.
+- **docs/GAPS_AND_ROADMAP.md** — verification table reflects 28/28
+  ctest and 420 pytest (was 27 / 329).
+- **docs/USAGE_GUIDE.md** — "ctest 16/16 → pytest 34/34" updated to
+  "28/28 → 420/420" with per-package breakdown.
+- **docs/quality/static_analysis.md** — soft-pass numbers updated.
+- **docs/TECHNICAL_DOCUMENTATION.md** — version bumped from 1.2.0 to
+  1.3.1, with a two-line "What's new since 1.2" block.
+- **COMPETITION_GUIDE.md** — CanSat section completely rewritten.
+  Previous guidance ("set form_factor to 1U or custom, add parachute
+  module") predated the first-class CanSat profiles and was actively
+  misleading. Now shows the three built-in variants, the three-line
+  setup, and an explicit competition-scoring table.
+- **CLAUDE.md** — "parallel-truth debt" warning rewritten into a
+  "single source of truth" note (the debt was closed in 1.3.1).
+- **docs/mass_budget.md** and **docs/power_budget.md** now call out
+  their 3U scope and point at `core.form_factors` for other profiles.
+
+### Fixed — code quality
+
+- **`flight-software/modules/__init__.py`** — removed unused `asyncio`
+  import.
+- **`flight-software/modules/health_monitor.py`** — type-ignore
+  comment on `ctypes.windll.kernel32` widened to include
+  `unused-ignore` so mypy is happy whether the attribute is present
+  (Windows) or not (Linux/Mac).
+- **19 automatic `ruff --fix`** cleanups across `core/`, `modules/`,
+  `ground-station/`, `simulation/` (unused imports, unused local
+  variables).
+- **`ground-station/tests/test_ax25.py`** — two two-statement-on-one-
+  line cases split.
+- **`noqa: E402` hints** added to the three legitimate sys.path + late
+  import sites (`configurator/validators/*`, `configurator_app.py`,
+  `ground-station/utils/ax25.py`). Ruff is now clean across every
+  package.
+
+### Verified
+
+- `ruff check` clean across `flight-software/core`, `flight-software/modules`,
+  `ground-station`, `simulation`, `configurator`.
+- `mypy --strict` clean across the 23 `flight-software` source files.
+- All 420 Python tests still green across all 4 packages.
+
 ## [1.3.1] - 2026-04-18 — Universal-platform polish
 
 Post-merge follow-up that closes the parallel-truth gap between the

@@ -1,12 +1,11 @@
 """Tests for the link budget calculator module."""
 
-import math
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from link_budget_calculator import SPEED_OF_LIGHT, calculate_link_budget
+from link_budget_calculator import calculate_link_budget
 
 
 class TestUHFLinkBudget:

@@ -1,7 +1,6 @@
 """Power Simulator — Solar generation and eclipse modeling."""
 
 import math
-import numpy as np
 from dataclasses import dataclass
 
 

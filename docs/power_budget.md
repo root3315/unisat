@@ -2,6 +2,10 @@
 
 Reference: ECSS-E-ST-20C (Space Engineering - Electrical and Electronic), CubeSat Design Specification Rev. 14
 
+> **Profile scope:** this file details the 3U CubeSat reference build.
+> Per-class power envelopes (peak/average/battery/solar-capable) for
+> every supported profile are in `flight-software/core/form_factors.py`.
+
 ## 1. Solar Generation
 
 ### 1.1 Panel Characteristics

@@ -7,7 +7,6 @@ pass windows, and eclipse/sunlight periods from Two-Line Element sets.
 from __future__ import annotations
 
 import math
-import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any

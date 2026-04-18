@@ -5,7 +5,6 @@ Provides the base module interface and exports for all subsystem modules.
 
 from __future__ import annotations
 
-import asyncio
 import logging
 from abc import ABC, abstractmethod
 from enum import Enum, auto

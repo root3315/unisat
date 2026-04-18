@@ -15,7 +15,7 @@ _FLIGHT_SW = Path(__file__).resolve().parents[2] / "flight-software"
 if str(_FLIGHT_SW) not in sys.path:
     sys.path.insert(0, str(_FLIGHT_SW))
 
-from core.form_factors import get_form_factor, list_form_factors
+from core.form_factors import get_form_factor, list_form_factors  # noqa: E402
 
 
 _ALIASES: dict[str, str] = {

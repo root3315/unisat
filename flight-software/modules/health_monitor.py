@@ -6,7 +6,6 @@ Generates threshold-based alerts and periodic health reports.
 
 from __future__ import annotations
 
-import os
 import platform
 import shutil
 import time
@@ -179,7 +178,7 @@ class HealthMonitor(BaseModule):
         import ctypes
         try:
             if platform.system() == "Windows":
-                kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+                kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined,unused-ignore]
 
                 class MEMORYSTATUSEX(ctypes.Structure):
                     _fields_ = [

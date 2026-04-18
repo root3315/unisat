@@ -25,7 +25,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any, Iterable
 
-from core.form_factors import FormFactor, get_form_factor
+from core.form_factors import FormFactor
 from core.mission_types import MissionProfile, PlatformCategory
 
 logger = logging.getLogger("unisat.features")

@@ -1,6 +1,5 @@
 """Data Export — Download telemetry in CSV, JSON, or CCSDS format."""
 
-import json
 import io
 import numpy as np
 import pandas as pd

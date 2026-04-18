@@ -31,8 +31,8 @@ import sqlite3
 import threading
 import time
 from collections import deque
-from dataclasses import asdict, dataclass, field
-from typing import Iterable, Optional
+from dataclasses import asdict, dataclass
+from typing import Optional
 
 from utils.ax25 import AX25Error, Ax25Decoder
 

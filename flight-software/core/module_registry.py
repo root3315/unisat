@@ -118,7 +118,7 @@ class ModuleRegistry:
         except AttributeError as exc:
             self._load_errors[name] = f"Class not found: {exc}"
             logger.warning("Class %s not found in %s: %s", class_name, module_path, exc)
-        except TypeError as exc:
+        except TypeError:
             # Module constructor doesn't accept config — try without
             try:
                 mod = importlib.import_module(module_path)

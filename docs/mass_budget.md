@@ -2,6 +2,12 @@
 
 Reference: CubeSat Design Specification Rev. 14 (Cal Poly), ECSS-E-ST-10-02C (Verification), GEVS-SE Rev. A
 
+> **Profile scope:** this file details the 3U CubeSat reference build.
+> For other profiles (1U, 1.5U, 2U, 6U, 12U, CanSat minimal / standard /
+> advanced) see the per-class BOMs under
+> [`hardware/bom/by_form_factor/`](../hardware/bom/by_form_factor/README.md)
+> and the envelopes in `flight-software/core/form_factors.py`.
+
 ## 1. Detailed Component Breakdown
 
 ### 1.1 Structure Subsystem

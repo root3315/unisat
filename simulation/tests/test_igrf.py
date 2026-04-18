@@ -1,12 +1,11 @@
 """Tests for the IGRF dipole model."""
 
-import math
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from igrf_model import compute_field, simple_dipole_field, R_EARTH
+from igrf_model import compute_field, simple_dipole_field
 
 
 class TestFieldMagnitude:

@@ -6,7 +6,6 @@ HMAC-SHA256 command authentication, and connection health monitoring.
 
 from __future__ import annotations
 
-import asyncio
 import hashlib
 import hmac
 import struct
@@ -17,7 +16,7 @@ from typing import Any
 import serial
 
 from modules import BaseModule, ModuleStatus
-from modules.telemetry_manager import SYNC_WORD, TelemetryFrame, TelemetryManager
+from modules.telemetry_manager import SYNC_WORD, TelemetryManager
 
 
 class CommunicationManager(BaseModule):

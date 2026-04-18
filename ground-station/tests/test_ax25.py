@@ -17,7 +17,7 @@ from hypothesis import given, strategies as st, settings
 from utils.ax25 import (
     fcs_crc16, bit_stuff, bit_unstuff, StuffingViolation,
     Address, encode_address, decode_address, InvalidAddress,
-    UiFrame, encode_ui_frame, decode_ui_frame,
+    encode_ui_frame, decode_ui_frame,
     FcsMismatch, InvalidControl, InvalidPid, FrameOverflow,
     Ax25Decoder, AX25Error,
 )
@@ -234,7 +234,8 @@ class TestStreamingDecoder:
         assert dec.frames_other_err == 0
 
     def test_back_to_back_frames(self):
-        dst = Address("CQ", 0); src = Address("UN8SAT", 1)
+        dst = Address("CQ", 0)
+        src = Address("UN8SAT", 1)
         a = encode_ui_frame(dst, src, 0xF0, b"A")
         b = encode_ui_frame(dst, src, 0xF0, b"B")
         dec = Ax25Decoder()
@@ -252,7 +253,8 @@ class TestStreamingDecoder:
         for _ in range(50):
             dec.push_byte(0xFF)
         # After garbage, decoder MUST be usable again.
-        dst = Address("CQ", 0); src = Address("UN8SAT", 1)
+        dst = Address("CQ", 0)
+        src = Address("UN8SAT", 1)
         frame = encode_ui_frame(dst, src, 0xF0, b"X")
         good = [f for b in frame if (f := dec.push_byte(b)) is not None]
         assert len(good) == 1

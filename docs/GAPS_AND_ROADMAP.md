@@ -12,9 +12,9 @@ hardening (ветка `feat/trl5-hardening`) — фазы отмечены ни�
 |---|---|
 | Host build firmware (`unisat_core`) | ✅ clean |
 | **Target build firmware (ARM, `unisat_firmware.elf`)** | ✅ **verified** — 31.6 KB flash / 36.3 KB RAM (6 % / 28 % of budget) |
-| C unit tests (`ctest`) | ✅ **27 / 27** (100+ sub-tests after Phase 1–8) |
+| C unit tests (`ctest`) | ✅ **28 / 28** (100+ sub-tests after Phase 1–8) |
 | **C line coverage** | ✅ **85.3 %** / functions 84.0 % (`make coverage`) |
-| Python tests (`pytest`, full) | ✅ **329 passing** (incl. e2e + soak + hmac_auth + Streamlit + mocked-serial) |
+| Python tests (`pytest`, full) | ✅ **420 passing** — 262 flight-software + 82 ground-station + 57 simulation + 19 configurator |
 | **Python coverage** | ✅ **85.15 %** (`make coverage-py`, gate ≥ 80 % MUST) |
 | **mypy --strict** | ✅ 0 issues in 21 source files |
 | Hypothesis property + fuzz | ✅ 200 + 500 cases |

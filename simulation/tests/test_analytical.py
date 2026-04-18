@@ -1,6 +1,5 @@
 """Tests for analytical orbital mechanics solutions."""
 
-import math
 import sys
 from pathlib import Path
 

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**UniSat** — universal modular satellite software platform. **v1.3.0** extended support from CubeSat-only to a multi-class registry: CanSat (minimal/standard/advanced), CubeSat (1U/1.5U/2U/3U/6U/12U), suborbital rocket, HAB, drone, rover, custom. TRL-5-hardened on the CubeSat-3U reference profile. Three cooperating codebases share one repo and one on-air protocol stack:
+**UniSat** — universal modular satellite software platform. **v1.3.0** extended support from CubeSat-only to a multi-class registry (CanSat minimal/standard/advanced, CubeSat 1U/1.5U/2U/3U/6U/12U, suborbital rocket, HAB, drone, rover, custom). **v1.3.1** wired the configurator into the registry and shipped a full operations guide. TRL-5-hardened on the CubeSat-3U reference profile. Three cooperating codebases share one repo and one on-air protocol stack:
 
 - **`firmware/`** — STM32F446RE OBC firmware in C11 + FreeRTOS (host-buildable for tests; cross-compiles to `.elf/.bin/.hex` when `arm-none-eabi-gcc` is on PATH).
 - **`flight-software/`** — Python 3.11 asyncio mission controller meant to run on a Raspberry Pi Zero 2 W, talking to the OBC over UART.
@@ -67,7 +67,7 @@ make sbom             # docs/sbom/sbom-summary.md (SPDX)
 - **`mission_templates/*.json`** — 8 ready-to-use presets (cansat_minimal/standard/advanced + cubesat_1u through 12u).
 - **`hardware/bom/by_form_factor/*.csv`** — per-class BOM with real masses.
 
-**Known parallel-truth debt (do not replicate):** `configurator/validators/mass_validator.py` and `volume_validator.py` still hold hardcoded dicts that predate `form_factors.py`. They know only a subset of profiles (no `cansat_minimal`, `cansat_advanced`, `cubesat_1_5u`). When touching validators, switch them to read from `form_factors.get_form_factor(key)` instead of extending the dicts. Same for `configurator/configurator_app.py` (lines ~18–44 hardcode form-factor lists).
+**Single source of truth (closed in v1.3.1):** `configurator/validators/mass_validator.py` and `volume_validator.py` now read envelopes directly from `form_factors.get_form_factor(key)`. Legacy keys (`"1U"`, `"cansat_custom"` …) stay alive via `_ALIASES` tables inside both files — back-compat, not a parallel dict. `configurator_app.py` uses the canonical keys (`cubesat_1u`, `cansat_minimal` …) in its dropdown. When adding a new form factor, registering it in `form_factors.py` is enough — everything else discovers it automatically.
 
 When adding a new form factor: register it in `form_factors.py` **first**, then add template, BOM, feature-flag mapping in `feature_flags.py`, and a firmware profile macro in `mission_profile.h`. Don't forget `tests/test_form_factors.py`.
 
