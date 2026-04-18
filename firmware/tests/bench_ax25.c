@@ -28,6 +28,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -44,31 +45,74 @@ static uint64_t now_ns(void) {
 
 typedef struct {
     const char *name;
+    uint64_t   *samples;    /* per-iteration elapsed ns */
+    uint32_t    capacity;
+    uint32_t    iterations;
     uint64_t    total_ns;
     uint64_t    min_ns;
     uint64_t    max_ns;
-    uint32_t    iterations;
 } bench_result_t;
 
-static void report(const bench_result_t *r) {
+static int cmp_u64(const void *a, const void *b) {
+    uint64_t x = *(const uint64_t *)a;
+    uint64_t y = *(const uint64_t *)b;
+    if (x < y) return -1;
+    if (x > y) return  1;
+    return 0;
+}
+
+/** Sample the sorted array at the given percentile in [0, 1]. */
+static uint64_t pct(const uint64_t *sorted, uint32_t n, double p) {
+    if (n == 0) return 0;
+    double idx = p * (double)(n - 1);
+    uint32_t i = (uint32_t)idx;
+    if (i >= n) i = n - 1;
+    return sorted[i];
+}
+
+static void report(bench_result_t *r) {
+    qsort(r->samples, r->iterations, sizeof(uint64_t), cmp_u64);
+
     double mean_us = (double)r->total_ns / (double)r->iterations / 1000.0;
     double min_us  = (double)r->min_ns / 1000.0;
     double max_us  = (double)r->max_ns / 1000.0;
+    double p50_us  = (double)pct(r->samples, r->iterations, 0.50) / 1000.0;
+    double p95_us  = (double)pct(r->samples, r->iterations, 0.95) / 1000.0;
+    double p99_us  = (double)pct(r->samples, r->iterations, 0.99) / 1000.0;
     printf("  {\"name\": \"%s\", \"iterations\": %u, "
-           "\"mean_us\": %.3f, \"min_us\": %.3f, \"max_us\": %.3f}",
-           r->name, r->iterations, mean_us, min_us, max_us);
+           "\"mean_us\": %.3f, \"min_us\": %.3f, "
+           "\"p50_us\": %.3f, \"p95_us\": %.3f, \"p99_us\": %.3f, "
+           "\"max_us\": %.3f}",
+           r->name, r->iterations,
+           mean_us, min_us, p50_us, p95_us, p99_us, max_us);
 }
 
 static void bench_record(bench_result_t *r, uint64_t elapsed_ns) {
+    if (r->iterations < r->capacity) {
+        r->samples[r->iterations] = elapsed_ns;
+    }
     r->total_ns += elapsed_ns;
     r->iterations++;
     if (r->min_ns == 0 || elapsed_ns < r->min_ns) r->min_ns = elapsed_ns;
     if (elapsed_ns > r->max_ns) r->max_ns = elapsed_ns;
 }
 
+static void bench_init(bench_result_t *r, const char *name, uint32_t cap) {
+    memset(r, 0, sizeof(*r));
+    r->name     = name;
+    r->capacity = cap;
+    r->samples  = (uint64_t *)calloc(cap, sizeof(uint64_t));
+}
+
+static void bench_free(bench_result_t *r) {
+    free(r->samples);
+    r->samples = NULL;
+}
+
 /* ---- 1. ax25_encode_ui_frame ------------------------------------ */
 static bench_result_t bench_encode(void) {
-    bench_result_t r = { .name = "ax25_encode_ui_frame" };
+    bench_result_t r;
+    bench_init(&r, "ax25_encode_ui_frame", BENCH_ITERATIONS);
     ax25_address_t dst = { .callsign = "CQ", .ssid = 0 };
     ax25_address_t src = { .callsign = "UN8SAT", .ssid = 1 };
     uint8_t info[48];
@@ -87,7 +131,8 @@ static bench_result_t bench_encode(void) {
 
 /* ---- 2. streaming decoder, whole frame -------------------------- */
 static bench_result_t bench_decoder_stream(const uint8_t *frame, size_t len) {
-    bench_result_t r = { .name = "ax25_decoder_push_byte_whole_frame" };
+    bench_result_t r;
+    bench_init(&r, "ax25_decoder_push_byte_whole_frame", BENCH_ITERATIONS);
     ax25_decoder_t dec;
     ax25_ui_frame_t out;
     bool ready = false;
@@ -105,7 +150,8 @@ static bench_result_t bench_decoder_stream(const uint8_t *frame, size_t len) {
 
 /* ---- 3. ax25_decode_ui_frame (pure, pre-unstuffed body) --------- */
 static bench_result_t bench_decode_pure(const uint8_t *body, size_t len) {
-    bench_result_t r = { .name = "ax25_decode_ui_frame_pure" };
+    bench_result_t r;
+    bench_init(&r, "ax25_decode_ui_frame_pure", BENCH_ITERATIONS);
     ax25_ui_frame_t out;
 
     for (uint32_t i = 0; i < BENCH_ITERATIONS; i++) {
@@ -118,7 +164,8 @@ static bench_result_t bench_decode_pure(const uint8_t *body, size_t len) {
 
 /* ---- 4. HMAC-SHA256 over a 48 B beacon -------------------------- */
 static bench_result_t bench_hmac(void) {
-    bench_result_t r = { .name = "hmac_sha256_48B_beacon" };
+    bench_result_t r;
+    bench_init(&r, "hmac_sha256_48B_beacon", BENCH_ITERATIONS);
     uint8_t key[32] = { 0 };
     for (int i = 0; i < 32; i++) key[i] = (uint8_t)i;
     uint8_t msg[48];
@@ -166,5 +213,10 @@ int main(void) {
     report(&r_pure);   printf(",\n    ");
     report(&r_hmac);   printf("\n  ]\n");
     printf("}\n");
+
+    bench_free(&r_encode);
+    bench_free(&r_stream);
+    bench_free(&r_pure);
+    bench_free(&r_hmac);
     return 0;
 }

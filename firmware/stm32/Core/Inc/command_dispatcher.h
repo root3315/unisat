@@ -2,13 +2,37 @@
  * @file command_dispatcher.h
  * @brief CCSDS telecommand dispatcher — HMAC-SHA256 + anti-replay.
  *
- * Wire format of the frame delivered to CCSDS_Dispatcher_Submit:
+ * ## Wire format
  *
  *     ┌──────────────────┬───────────────┬───────────────────────┐
  *     │  4-byte counter  │   body bytes  │    HMAC-SHA256 tag    │
- *     │   (big-endian)   │  (CCSDS pkt)  │      (32 bytes)       │
+ *     │   big-endian     │  (CCSDS pkt)  │      (32 bytes)       │
  *     └──────────────────┴───────────────┴───────────────────────┘
  *      \_________________ authenticated _____________/
+ *
+ * The 4-byte counter is transmitted **big-endian** (network order)
+ * to match CCSDS and AX.25 conventions. Ground-side senders MUST
+ * encode it as `struct.pack(">I", counter)` or equivalent.
+ *
+ * This wire format is frozen within the 1.x major version. Any
+ * breaking change (field addition, reordering, size change) is a
+ * 2.0.0 release per SemVer — see the compatibility notice in
+ * `CHANGELOG.md`.
+ *
+ * ## Thread safety
+ *
+ * The dispatcher keeps its key, replay-window bitmap, counters,
+ * and statistics in **module-level globals**. Every mutating
+ * function (`CCSDS_Dispatcher_Submit`, `CommandDispatcher_SetKey`,
+ * `CommandDispatcher_SetHandler`, `ResetStats`, `ResetReplayWindow`)
+ * is therefore **NOT re-entrant and MUST be called from a single
+ * task context** — in the flight build that is `comm_rx_task`.
+ *
+ * Callers from other tasks must synchronise via the FreeRTOS
+ * queue that feeds `comm_rx_task` (see `comm.c`) and never reach
+ * the dispatcher API directly. Read-only getters
+ * (`GetStats`) snapshot state atomically in a single register-
+ * sized copy and are safe for telemetry-task reads.
  *
  *  The dispatcher:
  *    1. Rejects frames shorter than 4 + 1 + 32 = 37 bytes.

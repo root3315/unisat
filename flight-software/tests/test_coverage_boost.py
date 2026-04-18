@@ -1,7 +1,15 @@
-"""Coverage pack for camera_handler, communication, module_registry.
+"""Behaviour tests for camera_handler, communication, module_registry.
 
-Together with test_remaining_modules.py this raises the flight-software
-coverage from the 51 % baseline to ≥ 80 %.
+Each test below asserts a specific behavioural contract — not just
+line coverage. Regressions in module APIs fail the suite.
+
+Historical note — this file was introduced in Phase 7 to help raise
+flight-software coverage from the 51 % v1.1.0 baseline to the
+≥ 80 % gate. The coverage gain is a side effect; the primary role
+is to pin down intended behaviour for the three modules named
+above. File kept under its original name so Phase 7 git history
+stays traceable; a more descriptive rename is tracked as a
+follow-up polish item.
 """
 
 from __future__ import annotations

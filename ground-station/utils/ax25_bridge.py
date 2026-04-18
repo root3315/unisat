@@ -77,12 +77,20 @@ class Ax25Bridge:
         capacity: int = 200,
         sqlite_path: Optional[str] = None,
         reconnect_delay_s: float = 1.0,
+        reconnect_max_delay_s: float = 30.0,
     ) -> None:
         self.host = host
         self.port = port
         self._capacity = capacity
         self._sqlite_path = sqlite_path
+        # Exponential backoff on TCP failures: start at
+        # reconnect_delay_s, double on every consecutive attempt,
+        # cap at reconnect_max_delay_s. Prevents a fast reconnect
+        # loop from saturating the local socket or a misconfigured
+        # peer during a long outage.
         self._reconnect_delay_s = reconnect_delay_s
+        self._reconnect_max_delay_s = reconnect_max_delay_s
+        self._current_delay_s = reconnect_delay_s
 
         self._decoder = Ax25Decoder()
         self._buffer: deque[LiveFrame] = deque(maxlen=capacity)
@@ -166,11 +174,20 @@ class Ax25Bridge:
         while not self._stop_event.is_set():
             try:
                 self._connect_and_read()
+                # A clean return means the peer closed the socket
+                # gracefully — reset backoff so next reconnect is
+                # fast.
+                self._current_delay_s = self._reconnect_delay_s
             except Exception as exc:  # pragma: no cover — keep thread alive
                 self._last_error = repr(exc)
                 self._connected = False
-            if self._stop_event.wait(self._reconnect_delay_s):
+            if self._stop_event.wait(self._current_delay_s):
                 break
+            # Double the delay up to the cap, so repeated failures
+            # back off instead of hammering the local stack.
+            self._current_delay_s = min(
+                self._current_delay_s * 2.0, self._reconnect_max_delay_s
+            )
 
     def _connect_and_read(self) -> None:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:

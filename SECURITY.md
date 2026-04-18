@@ -11,19 +11,30 @@
 ## Reporting a vulnerability
 
 **Do not** file a public GitHub issue for a security problem.
-Instead:
+Use one of the private channels below:
 
-1. Email the maintainer at the address in the `root3315` GitHub
-   profile, subject line `[unisat-security]`.
-2. Include:
-   - A clear description of the issue.
-   - Reproduction steps (smallest failing input preferred).
-   - Affected versions.
-   - Impact assessment you have already done, if any.
-3. Expect an acknowledgement within **48 hours**.
-4. We publish a coordinated disclosure once a fix ships — your
-   contribution is credited in the release notes unless you ask
-   otherwise.
+- **Email:** `sozdayvek@gmail.com` — subject line
+  `[unisat-security]`. Fastest path.
+- **GitHub security advisory:**
+  <https://github.com/root3315/unisat/security/advisories/new>
+  — GitHub's private-vulnerability-reporting flow notifies the
+  maintainer directly and keeps the thread off the public issue
+  tracker.
+
+Include:
+
+- A clear description of the issue.
+- Reproduction steps — smallest failing input preferred.
+- Affected versions.
+- Impact assessment you have already done, if any.
+
+**Expect an acknowledgement within 48 hours** of the initial
+report.
+
+We publish a coordinated disclosure once a fix ships; your
+contribution is credited in the release notes unless you ask
+otherwise. If the report is severe enough to warrant a CVE, the
+maintainer handles the filing.
 
 ## In-scope
 
