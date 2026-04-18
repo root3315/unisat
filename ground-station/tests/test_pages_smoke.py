@@ -51,10 +51,10 @@ def _pages() -> list[Path]:
 
 
 def test_pages_dir_has_expected_count() -> None:
-    """Regression: the repository should ship all 10 dashboard pages."""
+    """Regression: the repository should ship all 11 dashboard pages."""
     pages = _pages()
-    assert len(pages) == 10, (
-        f"expected 10 dashboard pages, found {len(pages)}: "
+    assert len(pages) == 11, (
+        f"expected 11 dashboard pages, found {len(pages)}: "
         f"{[p.name for p in pages]}"
     )
 
