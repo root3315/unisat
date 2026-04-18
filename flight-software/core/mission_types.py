@@ -250,9 +250,9 @@ def _cansat_standard_profile() -> MissionProfile:
         competition={
             "type": "cansat",
             "max_mass_g": 500,
-            "can_diameter_mm": 64,
-            "can_height_mm": 68,
-            "capsule_height_mm": 80,
+            "outer_diameter_mm": 68,
+            "inner_diameter_mm": 64,
+            "height_mm": 80,
             "descent_rate_range_m_s": [6.0, 11.0],
             "max_landing_velocity_m_s": 12.0,
             "min_telemetry_samples": 100,
