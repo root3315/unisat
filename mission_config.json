@@ -16,7 +16,12 @@
   },
   "satellite": {
     "form_factor": "cansat_standard",
-    "mass_kg": 1.272
+    "mass_kg": 0.45,
+    "dimensions_mm": {
+      "outer_diameter_mm": 68,
+      "inner_diameter_mm": 64,
+      "height_mm": 80
+    }
   },
   "subsystems": {
     "obc": {
