@@ -4,7 +4,12 @@ import random
 import streamlit as st
 import numpy as np
 
+from utils.profile_gate import page_applies
+
 st.set_page_config(page_title="Image Viewer", layout="wide")
+
+page_applies(features=("camera",), page_label="Image Viewer")
+
 st.title("🖼️ Image Viewer")
 
 # Demo image metadata
