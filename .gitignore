@@ -50,6 +50,11 @@ uploads/
 logs/
 telemetry_data/
 images/captured/
+# ImageProcessor writes converted copies + thumbnails here when
+# the `storage_dir` config key isn't overridden; tests produce a
+# few. Keep out of git.
+processed/
+flight-software/processed/
 
 # Fetched STM32Cube HAL / CMSIS (scripts/setup_stm32_hal.sh)
 firmware/stm32/Drivers/STM32F4xx_HAL_Driver/
