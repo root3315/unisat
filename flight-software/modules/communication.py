@@ -190,7 +190,10 @@ class CommunicationManager(BaseModule):
             self._last_rx_time = time.time()
             self.rx_queue.append(packet)
             self.logger.debug("RX %d bytes", len(packet))
-            return packet
+            # Explicit bytes() cast — pyserial's read() returns Any at
+            # the stub level; narrow here so mypy's strict mode stops
+            # complaining about a returned Any.
+            return bytes(packet)
         except serial.SerialException as exc:
             self.record_error(f"RX failed: {exc}")
             self._connected = False

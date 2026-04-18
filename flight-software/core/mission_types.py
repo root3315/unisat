@@ -518,7 +518,7 @@ def list_mission_types() -> list[str]:
     return [mt.value for mt in _PROFILES]
 
 
-def build_profile_from_config(config: dict) -> MissionProfile:
+def build_profile_from_config(config: dict[str, Any]) -> MissionProfile:
     """Build a MissionProfile from a mission_config.json dict.
 
     If config contains a known ``mission_type``, the built-in profile is

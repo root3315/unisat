@@ -108,7 +108,7 @@ class ModuleRegistry:
         try:
             mod = importlib.import_module(module_path)
             cls = getattr(mod, class_name)
-            instance = cls(config=config or {})
+            instance: BaseModule = cls(config=config or {})
             self.modules[name] = instance
             logger.info("Loaded module: %s (%s.%s)", name, module_path, class_name)
             return instance
@@ -123,10 +123,10 @@ class ModuleRegistry:
             try:
                 mod = importlib.import_module(module_path)
                 cls = getattr(mod, class_name)
-                instance = cls()
-                self.modules[name] = instance
+                instance_noconfig: BaseModule = cls()
+                self.modules[name] = instance_noconfig
                 logger.info("Loaded module (no-config): %s", name)
-                return instance
+                return instance_noconfig
             except Exception as inner_exc:
                 self._load_errors[name] = f"Instantiation error: {inner_exc}"
                 logger.warning("Failed to instantiate %s: %s", name, inner_exc)
@@ -136,7 +136,7 @@ class ModuleRegistry:
 
         return None
 
-    def load_modules_from_config(self, config: dict,
+    def load_modules_from_config(self, config: dict[str, Any],
                                  core_modules: list[str],
                                  optional_modules: list[str]) -> dict[str, BaseModule]:
         """Load all modules specified by the mission profile and config.

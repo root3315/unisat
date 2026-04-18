@@ -76,7 +76,11 @@ omit = [
 #   + remaining   75 %  (tests/test_remaining_modules.py)
 #   + coverage    77 %  (tests/test_coverage_boost.py +
 #                         tests/test_data_logger_coverage.py)
-fail_under = 75
+#   + reg/orbit   82.5 % (tests/test_registry_orbit_image.py)
+#
+# With 82.53 % achieved the MUST gate is pinned at 80 % — the
+# SHOULD-level target from SRS REQ-BLD-005 is now reached.
+fail_under = 80
 show_missing = true
 skip_covered = false
 exclude_lines = [
@@ -96,9 +100,19 @@ strict = true
 warn_return_any = true
 warn_unused_configs = true
 # The project pulls in a few libraries that don't ship type stubs
-# (pyserial, sgp4). Ignore missing imports for those so mypy can
-# still gate the in-tree code.
+# (pyserial, sgp4, aiofiles). Ignore missing imports for those so
+# mypy can still gate the in-tree code.
 ignore_missing_imports = true
+
+# aiofiles is a specific pain point — upstream stubs exist
+# (types-aiofiles) but installing them pulls in a chain of
+# conflicts on a minimal CI image. Skip following its imports so
+# mypy's strict gate never trips on its Any-typed surface.
+[[tool.mypy.overrides]]
+module = "aiofiles.*"
+ignore_missing_imports = true
+follow_imports = "skip"
+
 # Tests use Any heavily for fixtures; exempt the tests/ tree from
 # strict to keep the gate actionable on production code first.
 [[tool.mypy.overrides]]
