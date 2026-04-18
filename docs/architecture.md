@@ -1,10 +1,43 @@
 # System Architecture
 
-Reference: ECSS-E-ST-40C (Software Engineering), CCSDS 133.0-B-2, CubeSat Design Specification Rev. 14
+Reference: ECSS-E-ST-40C (Software Engineering), CCSDS 133.0-B-2, CubeSat Design Specification Rev. 14, ESA/ESTEC CanSat regulations.
 
 ## 1. Overview
 
 UniSat follows a layered architecture with clear separation between hardware abstraction, subsystem logic, and mission management. The system is split across two processors: an STM32F446RE microcontroller running FreeRTOS for real-time control, and a Raspberry Pi Zero 2 W running Python 3.11+ asyncio for high-level mission management, image processing, and ground station communication.
+
+As of **v1.3.0**, the same code base serves multiple vehicle classes — not only CubeSat. See `docs/universal_platform.md` for the full list and §1.1 below for the selection mechanism.
+
+## 1.1. Universal platform (form-factor registry)
+
+The source of truth for every supported vehicle class is `flight-software/core/form_factors.py`. Each entry bundles a mass envelope, volume envelope, power envelope, allowed ADCS tiers, allowed communication bands, and regulation notes:
+
+| Class | Key | Mass | Envelope | Regulation |
+|---|---|---:|---|---|
+| CanSat minimal | `cansat_minimal` | ≤ 350 g | Ø66 × 115 mm (legacy ESA can) | ESA CanSat |
+| CanSat standard | `cansat_standard` | ≤ 500 g | Ø68 × 80 mm (CDS-compliant) | ESA/ESTEC CanSat |
+| CanSat advanced | `cansat_advanced` | ≤ 500 g | Ø68 × 115 mm (pyro + camera) | ESA/ESTEC CanSat |
+| CubeSat 1U | `cubesat_1u` | ≤ 2.0 kg | 100 × 100 × 113.5 mm | CDS Rev. 14 |
+| CubeSat 1.5U | `cubesat_1_5u` | ≤ 3.0 kg | 100 × 100 × 170.3 mm | CDS Rev. 14 |
+| CubeSat 2U | `cubesat_2u` | ≤ 4.0 kg | 100 × 100 × 227 mm | CDS Rev. 14 |
+| CubeSat 3U | `cubesat_3u` | ≤ 6.0 kg | 100 × 100 × 340.5 mm | CDS Rev. 14 |
+| CubeSat 6U | `cubesat_6u` | ≤ 12.0 kg | 226.3 × 100 × 366 mm | NASA 6U |
+| CubeSat 12U | `cubesat_12u` | ≤ 24.0 kg | 226.3 × 226.3 × 366 mm | CDS research |
+| Rocket payload | `rocket_payload` | ≤ 10 kg | Ø100 × 300 mm | Per launch provider |
+| HAB | `hab_payload` | ≤ 4.0 kg | 150 × 150 × 150 mm | FAA Part 101 |
+| Drone (small) | `drone_small` | ≤ 5.0 kg | 500 × 500 × 200 mm | National CAA |
+| Rover (small) | `rover_small` | ≤ 30 kg | 400 × 300 × 250 mm | n/a (ground) |
+| Custom | `custom` | user-defined | user-defined | user-defined |
+
+Three collaborating gates resolve what runs on a given profile (see `flight-software/core/feature_flags.py`):
+
+```
+explicit override  →  form-factor gate  →  platform gate  →  default
+```
+
+The firmware mirrors the Python resolver at compile time through `firmware/stm32/Core/Inc/mission_profile.h`. One source tree → 9 binaries via `-DMISSION_PROFILE_<NAME>=1`, built with `make target-cansat_standard`, `make target-cubesat_3u`, etc.
+
+The ground station calls `ground-station/utils/profile_gate.py` to hide orbit/imagery/ADCS pages for non-orbital profiles (CanSat, HAB, drone).
 
 ## 2. System Block Diagram
 
