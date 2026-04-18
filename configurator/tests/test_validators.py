@@ -98,3 +98,68 @@ def test_volume_utilization_increases():
     minimal = validate_volume("3U", MINIMAL)
     full = validate_volume("3U", ALL_ENABLED)
     assert full.utilization_pct > minimal.utilization_pct
+
+
+# --- Universal platform (v1.3.0) ---
+
+CANSAT_CONFIG = {
+    "eps": True, "comm_uhf": True, "gnss": True,
+    "imu": True, "barometer": True, "descent_controller": True,
+}
+
+
+def test_cansat_standard_fits_500g_limit():
+    """Reference BOM (cansat_standard.csv) is ≈170 g; validator must
+    confirm the default config stays inside the 500 g envelope."""
+    result = validate_mass("cansat_standard", CANSAT_CONFIG)
+    assert result.valid is True
+    assert result.limit_kg == 0.5
+    assert result.total_kg < 0.5
+    # Headroom should be positive — leaves room for the science payload.
+    assert result.margin_kg > 0.2
+
+
+def test_cansat_minimal_fits_350g_limit():
+    result = validate_mass("cansat_minimal", CANSAT_CONFIG)
+    assert result.limit_kg == 0.35
+    assert result.total_kg < 0.35
+
+
+def test_cansat_uses_cansat_scale_component_masses():
+    """Regression: CanSat numbers must not inherit CubeSat defaults."""
+    cansat = validate_mass("cansat_standard", CANSAT_CONFIG)
+    cubesat = validate_mass("cubesat_3u", CANSAT_CONFIG)
+    # CanSat components should be roughly an order of magnitude lighter.
+    assert cansat.total_kg * 5 < cubesat.total_kg
+
+
+def test_legacy_keys_still_work():
+    """Old configs written before v1.3.0 used '1U', '3U' etc. — must
+    still resolve through the alias table."""
+    legacy = validate_mass("3U", ALL_ENABLED)
+    canonical = validate_mass("cubesat_3u", ALL_ENABLED)
+    assert legacy.limit_kg == canonical.limit_kg
+    assert legacy.total_kg == canonical.total_kg
+
+
+def test_volume_cansat_cylindrical_envelope():
+    result = validate_volume("cansat_standard", CANSAT_CONFIG)
+    # Ø68 × 80 mm outer cylinder ≈ 290 cm³.
+    assert 250 <= result.available_cm3 <= 310
+
+
+def test_all_registry_form_factors_validate():
+    """Every form factor registered in core.form_factors must go
+    through the validator without raising — no KeyError, no None."""
+    import sys
+    from pathlib import Path
+    sys.path.insert(
+        0, str(Path(__file__).resolve().parents[2] / "flight-software")
+    )
+    from core.form_factors import list_form_factors
+
+    for key in list_form_factors():
+        mass = validate_mass(key, ALL_ENABLED)
+        vol = validate_volume(key, ALL_ENABLED)
+        assert mass.limit_kg > 0, f"{key}: zero mass limit"
+        assert vol.available_cm3 >= 0, f"{key}: negative volume"

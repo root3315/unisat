@@ -5,6 +5,66 @@ All notable changes to UniSat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-04-18 — Universal-platform polish
+
+Post-merge follow-up that closes the parallel-truth gap between the
+form-factor registry and the Streamlit configurator, fixes a flaky
+soak test, and ships a full end-to-end operations guide.
+
+### Changed
+
+- **Configurator validators now read from `core.form_factors`.** Both
+  `configurator/validators/mass_validator.py` and `volume_validator.py`
+  stop carrying their own hardcoded dicts and instead source mass /
+  volume envelopes from the registry. Every profile registered in
+  `form_factors.py` is automatically recognised by the validator, and
+  legacy keys (`"1U"`, `"3U"`, `"cansat_custom"` …) keep working via
+  an explicit alias table.
+- **`configurator_app.py`** form-factor dropdown updated to expose the
+  full set: `cubesat_1u` through `cubesat_12u` (adds 1.5U), all three
+  CanSat variants, plus `rover_small`. Legacy `1U` / `cansat_custom`
+  labels retired from the UI but still accepted if you paste an older
+  config.
+- **CanSat-scale component masses.** The mass validator previously
+  defaulted to CubeSat-sized components (150 g OBC stack, 500 g battery)
+  which produced 1.4 kg totals for a 500 g CanSat. A second
+  `CANSAT_COMPONENT_MASSES` table now supplies realistic hobby-part
+  weights (5–15 g range) so CanSat profiles validate against the actual
+  competition envelope. Reference BOMs already reflected these — now
+  the validator matches.
+- **`hardware/bom/by_form_factor/README.md`** adds a "payload headroom"
+  column so teams stop confusing kit mass with the regulation limit.
+  For `cansat_standard`: 170 g kit + 330 g headroom = 500 g cutoff.
+
+### Added
+
+- **`docs/OPERATIONS_GUIDE.md`** — 12-section start-to-finish playbook
+  covering profile selection, tooling setup, simulation, firmware
+  build per profile, BOM fill, ground-station bring-up, HIL bench
+  tests, pre-launch checklist, flight-day roles, post-flight analysis,
+  and competition submission.
+- **Five new configurator templates**: `cansat_minimal_default.json`,
+  `cansat_standard_default.json`, `cansat_advanced_default.json`,
+  `1_5u_default.json`, `12u_default.json`. Closes the template gap
+  so every registered form factor has a starter config.
+- **Six new validator tests** covering CanSat envelopes, scale-aware
+  component masses, legacy-alias back-compat, cylindrical-volume
+  handling, and a sweep that every registered form factor validates
+  without raising.
+
+### Fixed
+
+- **Flaky `test_long_soak.py::test_mission_soak`.** Windows + Python
+  3.14 occasionally saw the "first" cycle complete in < 0.1 ms, which
+  made the `mean ≤ 1.5 × first` drift check trip on the full suite.
+  Replaced the first-cycle anchor with a median-of-first-5 baseline
+  and loosened the factor to 3× — still catches genuine degradation
+  (memory leak, unbounded list growth), stops flaking on scheduler
+  jitter.
+- **Root `mission_config.json` mass/form-factor mismatch** — example
+  declared `cansat_standard` but carried `mass_kg: 1.272` (2.5× over
+  the 500 g limit). Restored to 0.45 kg with explicit dimensions.
+
 ## [1.3.0] - 2026-04-18 — Universal Platform (branch `feature/universal-platform`)
 
 Expands the platform coverage from "3U CubeSat LEO + a handful of

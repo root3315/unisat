@@ -1,0 +1,13 @@
+{
+  "form_factor": "cansat_standard",
+  "mass_limit_kg": 0.50,
+  "dimensions_mm": {"outer_d": 68, "inner_d": 64, "height": 80},
+  "solar_panels": 0,
+  "subsystems": {
+    "obc": true, "eps": true, "comm_uhf": false, "comm_sband": false,
+    "comm_lora": true, "adcs": false, "gnss": true,
+    "imu": true, "barometer": true,
+    "descent_controller": true, "camera": false, "payload": true
+  },
+  "notes": "CDS-compliant CanSat (Ø68 × 80 mm, ≤500 g). Reference BOM ≈170 g leaves ≈330 g for science payload."
+}

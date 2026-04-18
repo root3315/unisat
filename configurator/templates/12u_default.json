@@ -1,0 +1,12 @@
+{
+  "form_factor": "cubesat_12u",
+  "mass_limit_kg": 24.0,
+  "dimensions_mm": [226.3, 226.3, 366.0],
+  "solar_panels": 16,
+  "subsystems": {
+    "obc": true, "eps": true, "comm_uhf": true, "comm_sband": true,
+    "comm_xband": true, "adcs": true, "gnss": true,
+    "propulsion": true, "camera": true, "payload": true
+  },
+  "notes": "12U research-class CubeSat — full star-tracker ADCS, X/Ka-band downlink, optional propulsion."
+}

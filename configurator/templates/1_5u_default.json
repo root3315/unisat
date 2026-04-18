@@ -1,0 +1,11 @@
+{
+  "form_factor": "cubesat_1_5u",
+  "mass_limit_kg": 3.0,
+  "dimensions_mm": [100, 100, 170.25],
+  "solar_panels": 4,
+  "subsystems": {
+    "obc": true, "eps": true, "comm_uhf": true, "comm_sband": false,
+    "adcs": true, "gnss": true, "camera": false, "payload": true
+  },
+  "notes": "1.5U — intermediate size when 1U is too tight for battery + reaction wheel."
+}

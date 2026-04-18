@@ -60,7 +60,7 @@ DEFAULT_SOAK_SECONDS        = 1.0          # quick-smoke default
 DEFAULT_SMOKE_CYCLES        = 30           # hard lower bound
 MEMORY_BUDGET_KB_PER_CYCLE  = 128          # ceiling for peak-alloc growth
 CYCLE_BUDGET_SECONDS        = 0.1          # per-cycle soft limit
-DEGRADATION_FACTOR          = 1.5          # mean cycle ≤ 1.5× first cycle
+DEGRADATION_FACTOR          = 3.0          # mean cycle ≤ 3× median-of-first-5
 
 
 # --- Mission phase ring ---------------------------------------------
@@ -225,13 +225,15 @@ async def test_mission_soak() -> None:
         f"{budget_kb:.1f} KB for {cycles_run} cycles"
     )
 
-    if first_cycle_seconds is not None and cycles_run >= 5:
+    if cycles_run >= 10:
+        warmup = sorted(cycle_times[:5])
+        baseline = warmup[len(warmup) // 2]
         mean = sum(cycle_times) / len(cycle_times)
-        assert mean <= first_cycle_seconds * DEGRADATION_FACTOR, (
+        assert mean <= baseline * DEGRADATION_FACTOR, (
             f"per-cycle time drifted upward: "
-            f"first={first_cycle_seconds*1e3:.2f} ms, "
+            f"baseline(median of first 5)={baseline*1e3:.2f} ms, "
             f"mean={mean*1e3:.2f} ms (factor "
-            f"{mean / max(first_cycle_seconds, 1e-6):.2f})"
+            f"{mean / max(baseline, 1e-6):.2f})"
         )
 
     # Leave the state machine in nominal so a subsequent soak test

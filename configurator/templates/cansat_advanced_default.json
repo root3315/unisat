@@ -1,0 +1,13 @@
+{
+  "form_factor": "cansat_advanced",
+  "mass_limit_kg": 0.50,
+  "dimensions_mm": {"outer_d": 68, "inner_d": 64, "height": 115},
+  "solar_panels": 0,
+  "subsystems": {
+    "obc": true, "eps": true, "comm_uhf": true, "comm_sband": false,
+    "comm_lora": true, "adcs": false, "gnss": true,
+    "imu": true, "barometer": true,
+    "descent_controller": true, "camera": true, "payload": true
+  },
+  "notes": "Tall-capsule CanSat with pyro deployment + onboard camera (≤500 g)."
+}
