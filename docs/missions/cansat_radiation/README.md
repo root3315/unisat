@@ -2,7 +2,7 @@
 
 Конкретная CanSat-миссия на платформе UniSat `cansat_standard`: измерение вертикального профиля гамма-радиации 0–500 м с разрешением 80 м на базе датчика SBM-20.
 
-Этот пакет закрывает **4 регламентные слабости** из CanSat-оценки:
+Этот пакет закрывает **4 регламентные слабости** из CanSat-оценки и соответствует **официальному регламенту UzCanSat 2026**:
 
 | Было | Стало |
 |---|---|
@@ -10,19 +10,30 @@
 | Научная миссия 5/15 — «собираем телеметрию» | [`SCIENCE_MISSION.md`](SCIENCE_MISSION.md) — H₀/H₁, обоснование SBM-20 на 5 критериях |
 | Презентация 12/20 — нет слайдов | [`PRESENTATION.md`](PRESENTATION.md) (10 слайдов Marp) + [`POSTER.md`](POSTER.md) (A0) |
 | Риск −20 за «ключевые данные» | [`KEY_DATA_PACKET.md`](KEY_DATA_PACKET.md) — тройное резервирование + [`baseline_sitl_dataset.csv`](baseline_sitl_dataset.csv) |
+| Соответствие конкретному конкурсу (UzCanSat) | [`UZCANSAT_COMPLIANCE.md`](UZCANSAT_COMPLIANCE.md) + preset `mission_templates/cansat_uzcansat.json` |
 
 ## Карта документов
 
 ```
 docs/missions/cansat_radiation/
-├── README.md              ← ты здесь
-├── CDR.md                 ← Critical Design Review (14 разделов)
-├── SCIENCE_MISSION.md     ← H₀/H₁, обоснование датчиков, метод
-├── KEY_DATA_PACKET.md     ← формат ключевых данных + fallback-план
-├── PRESENTATION.md        ← 10 слайдов (Marp), talking points в комментариях
-├── POSTER.md              ← ASCII-layout постера A0 + указания по вёрстке
-└── baseline_sitl_dataset.csv  ← эталонный SITL-полёт (743 строки, 59 SBM-20 событий)
+├── README.md                   ← ты здесь
+├── CDR.md                      ← Critical Design Review (14 разделов)
+├── SCIENCE_MISSION.md          ← H₀/H₁, обоснование датчиков, метод
+├── KEY_DATA_PACKET.md          ← формат ключевых данных + fallback-план
+├── PRESENTATION.md             ← 10 слайдов (Marp), talking points в комментариях
+├── POSTER.md                   ← ASCII-layout постера A0 + указания по вёрстке
+├── UZCANSAT_COMPLIANCE.md      ← чек-лист соответствия регламенту cmspace.uz
+├── baseline_sitl_dataset.csv   ← эталонный SITL-полёт (743 строки, 59 SBM-20 событий)
+└── references/official/        ← 6 официальных файлов с cmspace.uz (read-only)
+    ├── Reglament_ocenki_RU.docx
+    ├── Baholash_Reglamenti_UZ.docx
+    ├── Plan_meropriyatiya_CanSat_RU.docx
+    ├── Tatbir_rejasi_CanSat_UZ.docx
+    ├── Qollanma.pdf
+    └── CanSat_olchamlari.png
 ```
+
+UzCanSat-preset лежит **снаружи** этой папки — в [`mission_templates/cansat_uzcansat.json`](../../../mission_templates/cansat_uzcansat.json) — чтобы оставаться в каноническом месте для mission templates.
 
 ## Связанные инструменты
 

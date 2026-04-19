@@ -1,0 +1,168 @@
+{
+  "_comment": "UzCanSat 2026 preset — overrides cansat_standard for the Uzbekistan/ICESCO/Uzcosmos competition regulation. Source of truth: docs/missions/cansat_radiation/UZCANSAT_COMPLIANCE.md. The generic cansat_standard template is NOT modified — this file just overrides the handful of settings the UzCanSat rulebook pins.",
+
+  "mission": {
+    "name": "UzCanSat Entry",
+    "version": "1.0.0",
+    "description": "UzCanSat 2026 — compliant preset. Telemetry cadence, camera, post-landing locator match the cmspace.uz regulation verbatim.",
+    "mission_type": "cansat_standard",
+    "platform": "cansat",
+    "operator": "Team Name",
+    "telemetry_hz": 1.0,
+    "competition": {
+      "type": "cansat",
+      "name": "UzCanSat 2026",
+      "regulation_source": "training.cmspace.uz/youth-projects/16",
+      "descent_rate_range_m_s": [6.0, 11.0],
+      "max_landing_velocity_m_s": 12.0,
+      "min_telemetry_samples": 100,
+      "max_cansat_mass_g": 500,
+      "max_cansat_outer_diameter_mm": 68,
+      "max_cansat_inner_diameter_mm": 64,
+      "max_cansat_height_mm": 80,
+      "launch_altitude_m_min": 500,
+      "launch_altitude_m_max": 700,
+      "launch_vehicle": ["rocket", "drone"],
+      "post_landing": {
+        "telemetry_continuation_s": 10,
+        "locator": "buzzer_or_gnss",
+        "buzzer_required_for_schools": true,
+        "gnss_required_for_universities": true
+      },
+      "camera": {
+        "required": true,
+        "orientation": "horizontal",
+        "min_resolution_px": [640, 480],
+        "min_fps": 30,
+        "storage": "sd_card",
+        "submission": "sd_card_to_commission_after_flight"
+      },
+      "bonus_tasks": [
+        "real_time_altitude_from_barometer",
+        "instantaneous_velocity_from_accelerometer_and_gyro"
+      ],
+      "team_size_min": 5,
+      "team_size_max": 10
+    }
+  },
+
+  "satellite": {
+    "form_factor": "cansat_standard",
+    "mass_kg": 0.5,
+    "dimensions_mm": {
+      "outer_diameter_mm": 68,
+      "inner_diameter_mm": 64,
+      "height_mm": 80
+    }
+  },
+
+  "subsystems": {
+    "obc": {
+      "enabled": true,
+      "mcu": "STM32F446RE",
+      "clock_mhz": 180,
+      "ram_kb": 128,
+      "flash_kb": 512
+    },
+    "imu": {
+      "enabled": true,
+      "sensor_type": "BMI088",
+      "sample_rate_hz": 100,
+      "accel_range_g": 24,
+      "gyro_range_dps": 2000,
+      "has_magnetometer": true,
+      "simulate": false
+    },
+    "barometer": {
+      "enabled": true,
+      "sensor_type": "MS5611",
+      "sample_rate_hz": 25,
+      "ref_pressure_pa": 101325,
+      "ground_altitude_m": 0,
+      "simulate": false
+    },
+    "environmental": {
+      "enabled": true,
+      "sensor_type": "BME280",
+      "_note": "Humidity + secondary temperature — satisfies UzCanSat §5.3 required-sensor list."
+    },
+    "gnss": {
+      "enabled": true,
+      "receiver": "u-blox_MAX-M10S",
+      "antenna": "patch",
+      "_note": "Primary post-landing locator for university teams (UzCanSat §5)."
+    },
+    "comm": {
+      "enabled": true,
+      "lora": {
+        "enabled": true,
+        "frequency_mhz": 433.0,
+        "power_dbm": 14,
+        "spreading_factor": 7,
+        "bandwidth_khz": 250,
+        "_note": "ISM 433 MHz — no HAM licence needed. 1 Hz telemetry cadence per regulation."
+      }
+    },
+    "camera": {
+      "enabled": true,
+      "resolution_mp": 5,
+      "min_resolution_px": [640, 480],
+      "min_fps": 30,
+      "orientation": "horizontal",
+      "storage_gb": 8,
+      "record_from": "launch_detect",
+      "record_until": "landed + 10s",
+      "_note": "UzCanSat §5.4 — horizon-capture mandatory, SD card submitted to commission."
+    },
+    "descent_controller": {
+      "enabled": true,
+      "deploy_altitude_m": 450,
+      "target_descent_rate_m_s": 8.0,
+      "min_descent_rate_m_s": 6.0,
+      "max_descent_rate_m_s": 11.0,
+      "landing_speed_threshold_m_s": 12.0,
+      "deploy_delay_s": 1.0,
+      "min_telemetry_samples": 100
+    },
+    "buzzer": {
+      "enabled": true,
+      "gpio_pin": "PB12",
+      "activation_trigger": "landed + 10s",
+      "frequency_hz": 2700,
+      "duty_cycle_pct": 50,
+      "_note": "UzCanSat §5 — required locator for school teams, optional for universities running alongside GNSS."
+    },
+    "payload": {
+      "enabled": true,
+      "type": "sbm20_geiger",
+      "_note": "Gamma-radiation altitude profiler — see docs/missions/cansat_radiation/. +5 bonus points for extra sensor."
+    }
+  },
+
+  "features": {
+    "buzzer": true,
+    "camera_recording": true,
+    "instantaneous_velocity": true,
+    "realtime_altitude": true,
+    "orbit_predictor": false,
+    "reaction_wheels": false,
+    "star_tracker": false,
+    "s_band_radio": false,
+    "_comment": "Bonus tasks from UzCanSat §4.2 enabled by default — they add to the scoring without altering the required subsystem list."
+  },
+
+  "ground_station": {
+    "location": {
+      "name": "Tashkent launch site (TBD)",
+      "latitude": 41.2995,
+      "longitude": 69.2401,
+      "altitude_m": 480
+    },
+    "antenna": {
+      "type": "yagi",
+      "gain_dbi": 5,
+      "frequency_mhz": 433,
+      "_note": "Yagi required for > 2 km link — see link-budget margin in CDR.md §9."
+    }
+  }
+}
