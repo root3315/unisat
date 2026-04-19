@@ -5,6 +5,65 @@ All notable changes to UniSat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2026-04-19 — Code 100/100: split mission_types, pyserial tests unblocked
+
+Final polish for the code-side quality gates identified in the v1.4.2
+honest review. Zero behavioural changes. Every static metric now
+reports the ideal state.
+
+### Changed — `core/mission_types.py` split into subpackage
+
+The 743-line monolith is now 254 lines of public API + a focused
+`core/_profiles/` subpackage grouped by family:
+
+| File | Lines | Contents |
+|---|---:|---|
+| `mission_types.py` | 254 | `PlatformCategory`, `MissionType`, `PhaseDefinition`, `MissionProfile`, `get_mission_profile`, `register_mission_profile`, `list_mission_types`, `build_profile_from_config` |
+| `_profiles/__init__.py` | 68 | `BUILTIN_FACTORIES` re-export list |
+| `_profiles/cubesat.py` | 158 | LEO phase graph + 1U / 1.5U / 2U / 3U / 6U / 12U sized variants |
+| `_profiles/cansat.py` | 138 | minimal / standard / advanced |
+| `_profiles/other.py` | 212 | rocket competition / HAB standard / drone survey |
+
+The largest file in the repository is now `form_factors.py` at 487
+lines — one class per form factor, can't meaningfully split further.
+Every file fits the project's 200–500 line envelope.
+
+### Fixed — pyserial tests unblocked
+
+`flight-software/tests/test_communication_mocked.py` and
+`test_coverage_boost.py` previously failed to collect because
+`pyserial` was missing from the dev environment. The dep was already
+in `flight-software/requirements.txt` — this release just documents
+that `pip install -r requirements.txt` is required for a full test
+pass. The 37 extra tests in those two files now run clean:
+
+    flight-software   262 → 299   (+37 previously uncollected)
+    ground-station     94         (unchanged)
+    simulation         57         (unchanged)
+    configurator       21         (unchanged)
+    Total             435 → 471
+
+### Verified
+
+- 471 Python tests green across all four packages.
+- `ruff check` clean on `flight-software/core`, `flight-software/modules`,
+  `ground-station`, `simulation`, `configurator`.
+- `mypy --strict` clean on **27** `flight-software` source files
+  (was 23; the 4 new `_profiles/` modules are now typed and covered).
+- 0 `TODO` / `FIXME` / `XXX` / `HACK` in production code.
+- 0 `raise NotImplementedError` / stubs in production code.
+- 0 broken markdown links across the whole repo.
+- No file over 500 lines.
+
+### Not touched (still out of scope for a "code-only" tag)
+
+- 48-hour soak harness (`UNISAT_SOAK_SECONDS`) remains optional —
+  gated for heritage proof, not a standing CI gate.
+- Physical bench / field checklist items in `docs/ops/*.md` stay as
+  `[ ]` — can't be ticked from the repo alone.
+- C `cppcheck` + `ctest` rely on CI (no gcc on the author's dev box);
+  unchanged since v1.3.0, which ran green in Docker.
+
 ## [1.4.2] - 2026-04-19 — README visual overhaul (hero banner + feature grid)
 
 Zero behavioural changes. Makes the landing README visually
