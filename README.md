@@ -36,9 +36,9 @@ make target-cubesat_3u                             # → firmware/build-arm-cube
 cd ground-station && streamlit run app.py          # → http://localhost:8501
 ```
 
-Prefer CanSat? Replace `cubesat_3u` with `cansat_standard`. The firmware, flight-software, and ground-station all reconfigure themselves from `mission_config.json`.
+Prefer CanSat? Replace `cubesat_3u` with `cansat_standard`. Going to a specific competition? Pick the preset that matches its rulebook — e.g. `cansat_uzcansat.json` for [🇺🇿 UzCanSat 2026](https://training.cmspace.uz/youth-projects/16). The firmware, flight-software, and ground-station all reconfigure themselves from `mission_config.json`.
 
-Full step-by-step: [`docs/guides/USAGE_GUIDE.md`](docs/guides/USAGE_GUIDE.md) · per-profile playbooks: [`docs/ops/`](docs/ops/README.md) · full docs index: [`docs/README.md`](docs/README.md).
+Full step-by-step: [`docs/guides/USAGE_GUIDE.md`](docs/guides/USAGE_GUIDE.md) · per-profile playbooks: [`docs/ops/`](docs/ops/README.md) · full docs index: [`docs/README.md`](docs/README.md) · mission templates: [`mission_templates/`](mission_templates/).
 
 ---
 
@@ -388,6 +388,7 @@ Ready-to-submit adaptations for aerospace competitions. Detailed per-profile gui
 | Competition | Template | Highlights | Ops guide | Prep time |
 |---|---|---|---|---|
 | **CanSat (beginner)** | `cansat_minimal.json` | RP2040, ISM 433 MHz, ≤350 g | [cansat_minimal.md](docs/ops/cansat_minimal.md) | 1 evening |
+| **🇺🇿 UzCanSat 2026** (cmspace.uz) | `cansat_uzcansat.json` | 1 Hz telemetry, buzzer locator, camera 640×480 @ 30 fps — preset full compliant with [cmspace.uz](https://training.cmspace.uz/youth-projects/16) rulebook | [UZCANSAT_COMPLIANCE.md](docs/missions/cansat_radiation/UZCANSAT_COMPLIANCE.md) | 2–3 days |
 | **ESERO / national CanSat** | `cansat_standard.json` | Parachute, IMU, Ø68 × 80 mm, ≤500 g | [cansat_standard.md](docs/ops/cansat_standard.md) | 2–3 days |
 | **NASA CanSat** | `cansat_advanced.json` | Pyro deploy, camera, guided descent | [cansat_advanced.md](docs/ops/cansat_advanced.md) | 1 week |
 | **CubeSat Design** | `cubesat_3u.json` | 3U LEO, CDR docs, HMAC auth | [cubesat_3u.md](docs/ops/cubesat_3u.md) | 1 week |

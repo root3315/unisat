@@ -9,22 +9,37 @@ UniSat is designed to be easily adapted for various aerospace competitions. This
 **Focus:** Atmospheric descent with sensor data collection.
 
 Since v1.3.0 CanSat is a **first-class profile** — no hand-editing
-needed. Three variants ship out of the box:
+needed. Three generic variants + per-competition presets ship out of
+the box:
+
+### Generic form-factor profiles
 
 | Profile | Regulation | Envelope | Use |
 |---|---|---|---|
 | `cansat_minimal` | ≤350 g | Ø66 × 115 mm | Telemetry-only, first CanSat |
-| `cansat_standard` | ≤500 g, CDS | Ø68 × 80 mm | Standard ESERO / AAS |
+| `cansat_standard` | ≤500 g, CDS | Ø68 × 80 mm | Standard ESERO / AAS, generic 10 Hz telemetry |
 | `cansat_advanced` | ≤500 g | Ø68 × 115 mm | Pyro parachute + camera |
+
+### Competition-specific presets
+
+| Preset | Competition | What it pins |
+|---|---|---|
+| **`cansat_uzcansat.json`** | **🇺🇿 UzCanSat 2026** ([cmspace.uz](https://training.cmspace.uz/youth-projects/16)) | 1 Hz telemetry, buzzer locator, camera 640×480 @ 30 fps horizontal + SD, bonus tasks enabled |
+
+Full per-preset traceability to the rulebook: [`docs/missions/cansat_radiation/UZCANSAT_COMPLIANCE.md`](docs/missions/cansat_radiation/UZCANSAT_COMPLIANCE.md).
 
 ### Setup
 
 ```bash
+# For a generic CanSat build — default 10 Hz telemetry:
 cp mission_templates/cansat_standard.json mission_config.json
-# Edit mission.name, mission.operator — that's it.
 
-make target-cansat_standard   # firmware binary for the chosen profile
-make configurator             # optional: Streamlit UI to tweak subsystems
+# For the UzCanSat 2026 competition — 1 Hz telemetry, buzzer, camera:
+cp mission_templates/cansat_uzcansat.json mission_config.json
+
+# Either way:
+make target-cansat_standard   # firmware (preset overrides config, not image)
+make configurator             # optional: Streamlit UI to tweak further
 ```
 
 ### What you get automatically

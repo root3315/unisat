@@ -181,6 +181,15 @@ with tab_mission:
         "configuration fits the form-factor envelope (mass, volume, "
         "power) and which feature flags the resolver enables."
     )
+    st.info(
+        "**Competition-specific presets live under "
+        "[`mission_templates/`](../mission_templates/).** They inherit "
+        "a generic profile below and override the knobs a rulebook "
+        "pins. Currently shipped: **🇺🇿 UzCanSat 2026** "
+        "(`cansat_uzcansat.json`). Use this tab to validate the "
+        "envelope; copy the JSON into `mission_config.json` to flash.",
+        icon="🏆",
+    )
 
     mt = st.selectbox(
         "Mission type",
