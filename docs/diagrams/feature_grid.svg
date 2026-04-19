@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" role="img" aria-label="UniSat feature grid">
+  <defs>
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1e40af"/>
+      <stop offset="1" stop-color="#1e3a8a"/>
+    </linearGradient>
+    <style><![CDATA[
+      .title  { font: 700 22px 'Segoe UI', 'Helvetica Neue', Arial, sans-serif; fill: #0f172a; }
+      .cap    { font: 500 13px 'Segoe UI', sans-serif; fill: #475569; }
+      .ctitle { font: 700 14px 'Segoe UI', sans-serif; fill: #f8fafc; }
+      .cbody  { font: 500 11px 'Segoe UI', sans-serif; fill: #cbd5e1; }
+      .cmetr  { font: 700 22px 'Segoe UI', sans-serif; fill: #38bdf8; }
+      .card   { fill: url(#cardGrad); stroke: #38bdf8; stroke-width: 1; rx: 10; }
+      .iconBG { fill: #f8fafc; opacity: 0.1; }
+    ]]></style>
+  </defs>
+
+  <rect width="1200" height="340" fill="#f8fafc"/>
+
+  <!-- Title -->
+  <g transform="translate(600 32)">
+    <text class="title" text-anchor="middle" y="0">What you get out of the box</text>
+    <text class="cap"   text-anchor="middle" y="20">Eight production-grade capabilities · zero glue code</text>
+  </g>
+
+  <!-- 8 cards 4x2 -->
+  <!-- row 1 -->
+  <g transform="translate(40 80)">
+    <rect width="260" height="105" rx="10" class="card"/>
+    <!-- icon: satellite -->
+    <g transform="translate(28 52)" stroke="#f8fafc" stroke-width="2" fill="none">
+      <rect x="-12" y="-14" width="24" height="28" rx="2"/>
+      <line x1="-24" y1="-6" x2="-12" y2="-6"/>
+      <line x1="-24" y1="6"  x2="-12" y2="6"/>
+      <line x1="12" y1="-6"  x2="24" y2="-6"/>
+      <line x1="12" y1="6"   x2="24" y2="6"/>
+      <circle cx="0" cy="0" r="3" fill="#fbbf24" stroke="none"/>
+    </g>
+    <text class="ctitle" x="68" y="40">Universal platform</text>
+    <text class="cmetr"  x="68" y="70">14</text>
+    <text class="cbody"  x="92" y="70">form factors</text>
+    <text class="cbody"  x="68" y="88">one codebase · one firmware source</text>
+  </g>
+
+  <g transform="translate(320 80)">
+    <rect width="260" height="105" rx="10" class="card"/>
+    <!-- icon: lock -->
+    <g transform="translate(28 52)" stroke="#f8fafc" stroke-width="2" fill="none">
+      <rect x="-10" y="-4" width="20" height="16" rx="2"/>
+      <path d="M -6 -4 L -6 -10 Q -6 -16 0 -16 Q 6 -16 6 -10 L 6 -4"/>
+      <circle cx="0" cy="4" r="2" fill="#fbbf24" stroke="none"/>
+    </g>
+    <text class="ctitle" x="68" y="40">HMAC + replay filter</text>
+    <text class="cmetr"  x="68" y="70">T1+T2</text>
+    <text class="cbody"  x="68" y="88">SHA-256 · 32-bit counter · key rotation</text>
+  </g>
+
+  <g transform="translate(600 80)">
+    <rect width="260" height="105" rx="10" class="card"/>
+    <!-- icon: heartbeat -->
+    <g transform="translate(28 52)" stroke="#f8fafc" stroke-width="2" fill="none">
+      <path d="M -22 0 L -12 0 L -8 -10 L -2 10 L 4 -6 L 10 0 L 22 0"/>
+    </g>
+    <text class="ctitle" x="68" y="40">FDIR — three-tier</text>
+    <text class="cmetr"  x="68" y="70">12</text>
+    <text class="cbody"  x="92" y="70">fault IDs</text>
+    <text class="cbody"  x="68" y="88">advisor / commander · .noinit log</text>
+  </g>
+
+  <g transform="translate(880 80)">
+    <rect width="260" height="105" rx="10" class="card"/>
+    <!-- icon: check -->
+    <g transform="translate(28 52)" stroke="#f8fafc" stroke-width="2" fill="none">
+      <circle cx="0" cy="0" r="16"/>
+      <path d="M -8 0 L -2 7 L 9 -5"/>
+    </g>
+    <text class="ctitle" x="68" y="40">Verified green</text>
+    <text class="cmetr"  x="68" y="70">28 C</text>
+    <text class="cbody"  x="120" y="70">+</text>
+    <text class="cmetr"  x="136" y="70">435 Py</text>
+    <text class="cbody"  x="68" y="88">coverage C 85 % · Py 85 %</text>
+  </g>
+
+  <!-- row 2 -->
+  <g transform="translate(40 210)">
+    <rect width="260" height="105" rx="10" class="card"/>
+    <!-- icon: radio wave -->
+    <g transform="translate(28 52)" stroke="#f8fafc" stroke-width="2" fill="none">
+      <path d="M -18 -10 Q -9 0 -18 10"/>
+      <path d="M -24 -16 Q -12 0 -24 16"/>
+      <circle cx="0" cy="0" r="2" fill="#fbbf24" stroke="none"/>
+      <path d="M 18 -10 Q 9 0 18 10"/>
+      <path d="M 24 -16 Q 12 0 24 16"/>
+    </g>
+    <text class="ctitle" x="68" y="40">AX.25 v2.2 + CCSDS</text>
+    <text class="cmetr"  x="68" y="70">28/28</text>
+    <text class="cbody"  x="68" y="88">golden vectors C ↔ Python</text>
+  </g>
+
+  <g transform="translate(320 210)">
+    <rect width="260" height="105" rx="10" class="card"/>
+    <!-- icon: chip -->
+    <g transform="translate(28 52)" stroke="#f8fafc" stroke-width="2" fill="none">
+      <rect x="-12" y="-12" width="24" height="24" rx="2"/>
+      <line x1="-16" y1="-6" x2="-12" y2="-6"/>
+      <line x1="-16" y1="0" x2="-12" y2="0"/>
+      <line x1="-16" y1="6" x2="-12" y2="6"/>
+      <line x1="12" y1="-6" x2="16" y2="-6"/>
+      <line x1="12" y1="0" x2="16" y2="0"/>
+      <line x1="12" y1="6" x2="16" y2="6"/>
+    </g>
+    <text class="ctitle" x="68" y="40">STM32F4 + FreeRTOS</text>
+    <text class="cmetr"  x="68" y="70">31.6 KB</text>
+    <text class="cbody"  x="138" y="70">flash · 6 %</text>
+    <text class="cbody"  x="68" y="88">cross-compiles with one make target</text>
+  </g>
+
+  <g transform="translate(600 210)">
+    <rect width="260" height="105" rx="10" class="card"/>
+    <!-- icon: dashboard -->
+    <g transform="translate(28 52)" stroke="#f8fafc" stroke-width="2" fill="none">
+      <rect x="-16" y="-12" width="32" height="24" rx="2"/>
+      <path d="M -10 6 A 10 10 0 0 1 10 6"/>
+      <line x1="0" y1="6" x2="7" y2="-2"/>
+    </g>
+    <text class="ctitle" x="68" y="40">Streamlit ground station</text>
+    <text class="cmetr"  x="68" y="70">13</text>
+    <text class="cbody"  x="92" y="70">pages · profile-gated</text>
+    <text class="cbody"  x="68" y="88">orbit · telemetry · command centre</text>
+  </g>
+
+  <g transform="translate(880 210)">
+    <rect width="260" height="105" rx="10" class="card"/>
+    <!-- icon: document -->
+    <g transform="translate(28 52)" stroke="#f8fafc" stroke-width="2" fill="none">
+      <path d="M -10 -14 L 6 -14 L 14 -6 L 14 14 L -10 14 Z"/>
+      <line x1="-6" y1="-4" x2="10" y2="-4"/>
+      <line x1="-6" y1="2"  x2="10" y2="2"/>
+      <line x1="-6" y1="8"  x2="6" y2="8"/>
+    </g>
+    <text class="ctitle" x="68" y="40">CDR-level docs</text>
+    <text class="cmetr"  x="68" y="70">SRS · 8</text>
+    <text class="cbody"  x="152" y="70">ADRs · 11 ops</text>
+    <text class="cbody"  x="68" y="88">threat model · trace matrix · SBOM</text>
+  </g>
+</svg>
