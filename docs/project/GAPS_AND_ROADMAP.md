@@ -171,7 +171,7 @@ event loop, имитирующим 24 часа виртуального полё
 
 #### L2. Regulatory / licensing info
 
-**Что:** раздел в README или отдельный `docs/REGULATORY.md` —
+**Что:** раздел в README или отдельный `docs/project/REGULATORY.md` —
 как получить amateur radio callsign, как подать заявку на IARU
 frequency coordination, какие страны требуют что.
 

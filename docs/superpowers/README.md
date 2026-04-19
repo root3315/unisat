@@ -27,7 +27,7 @@
 * **SRS or traceability CSV** → use `docs/requirements/SRS.md`
   and `docs/requirements/traceability.csv` for current state.
 * **Architecture page** → current layout is in
-  `docs/architecture.md` + the eight ADRs under `docs/adr/`.
+  `docs/design/architecture.md` + the eight ADRs under `docs/adr/`.
 * **Threat model** → `docs/security/ax25_threat_model.md` is
   up-to-date with T1 and T2 both mitigated.
 * **FDIR policy** → `docs/reliability/fdir.md` is the current

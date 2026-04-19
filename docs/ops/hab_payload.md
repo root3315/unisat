@@ -105,9 +105,12 @@ ground_setup → ascent → float → burst → descent → landed
 
 ## 9. Testing checklist (bench)
 
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
 - [ ] Cold test: place payload in freezer at -55 °C for 2 h. OBC continues to log.
 - [ ] Battery (Energizer Ultimate Lithium, -40 °C rated) survives 6 h at -40 °C without voltage sag.
-- [ ] GNSS retains fix through simulated stratospheric altitude by enabling "airborne < 1g" mode.
+- [x] GNSS retains fix through simulated stratospheric altitude by enabling "airborne < 1g" mode.
 - [ ] Telemetry link closes at 50 km slant range with a yagi on ground.
 - [ ] Camera SD card survives 6 h of -40 °C operation.
 - [ ] Pressure sensor reads 5 mbar ± 0.5 mbar at 30 000 m equivalent altitude in a vacuum chamber.

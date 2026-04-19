@@ -37,7 +37,7 @@ cd configurator && streamlit run configurator_app.py   # 3) визуальный
 
 Если ты просто хочешь **понять как устроен спутник** — запусти
 симуляцию (`cd simulation && python mission_analyzer.py`) и почитай
-`docs/TECHNICAL_DOCUMENTATION.md`.
+`docs/reference/TECHNICAL_DOCUMENTATION.md`.
 
 ---
 
@@ -161,7 +161,7 @@ CubeSat миссии.
 mission_templates/cubesat_sso.json        # 3U на солнечно-синхронке
 firmware/stm32/...                        # вся OBC-прошивка
 ground-station/                           # полная наземная станция
-docs/mission_design.md                    # CDR-level документация
+docs/design/mission_design.md                    # CDR-level документация
 ```
 
 Тут работает всё: firmware, flight-software, ground-station,
@@ -451,13 +451,13 @@ APID из заголовка.
 ### 7.2 CubeSat Design / NASA CSLI
 
 1. Заполни CDR-level документацию на основе шаблонов:
-   - `docs/mission_design.md`
-   - `docs/power_budget.md`
-   - `docs/mass_budget.md`
-   - `docs/link_budget.md`
-   - `docs/thermal_analysis.md`
-   - `docs/orbit_analysis.md`
-2. Адаптируй `docs/REQUIREMENTS_TRACEABILITY.md` под свои
+   - `docs/design/mission_design.md`
+   - `docs/budgets/power_budget.md`
+   - `docs/budgets/mass_budget.md`
+   - `docs/budgets/link_budget.md`
+   - `docs/budgets/thermal_analysis.md`
+   - `docs/budgets/orbit_analysis.md`
+2. Адаптируй `docs/reference/REQUIREMENTS_TRACEABILITY.md` под свои
    требования.
 3. Прикрепи `docs/verification/ax25_trace_matrix.md` — показывает
    формальное прослеживание requirements → tests.
@@ -521,7 +521,7 @@ CMake кеширует. `make clean && make all` или
 
 ### Остальное
 
-См. `docs/TROUBLESHOOTING.md`.
+См. `docs/guides/TROUBLESHOOTING.md`.
 
 ---
 
@@ -612,7 +612,7 @@ unisat/
 
 ## 10. Следующие шаги после "работает"
 
-1. Прочитай `docs/TECHNICAL_DOCUMENTATION.md` целиком — там все
+1. Прочитай `docs/reference/TECHNICAL_DOCUMENTATION.md` целиком — там все
    детали архитектуры.
 2. Прогони `notebooks/` — интерактивные демо в Jupyter.
 3. Сделай свой CanSat в симуляции (1 час).

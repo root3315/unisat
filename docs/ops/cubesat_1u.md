@@ -112,13 +112,16 @@ Entry points:
 
 ## 9. Testing checklist (ground qualification)
 
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
 - [ ] Thermal-vacuum cycle: -20 °C to +60 °C, 3 cycles × 4 h, no faults.
 - [ ] Random vibration 14 g-rms @ 20 Hz – 2 kHz, 3 axes × 2 min.
 - [ ] Sine sweep 5 Hz – 100 Hz at 2 g, check structural resonances.
 - [ ] EMC: conducted + radiated emissions per MIL-STD-461 E or equivalent.
 - [ ] Deployment dry-run: antennas + solar panels release within 30 s of timer expiry.
-- [ ] 48-hour soak test (`UNISAT_SOAK_SECONDS=172800 pytest flight-software/tests/test_long_soak.py`).
-- [ ] End-to-end SITL mission (`scripts/simulate_mission.sh mission_config.json`).
+- [x] 48-hour soak test (`UNISAT_SOAK_SECONDS=172800 pytest flight-software/tests/test_long_soak.py`).
+- [x] End-to-end SITL mission (`scripts/simulate_mission.sh mission_config.json`).
 
 ## 10. Flight-day checklist
 

@@ -53,7 +53,7 @@ Unit tests (`firmware/tests/test_command_dispatcher.c`, 11/11 green):
 **Residual risk:** the pre-shared key is currently held in `g_key[]`
 RAM installed at boot. Persistent key storage in a dedicated flash
 sector with CRC-protected rotation is the remaining Phase 2 item
-(tracked in `docs/GAPS_AND_ROADMAP.md` as S-SEC-KEYSTORE).
+(tracked in `docs/project/GAPS_AND_ROADMAP.md` as S-SEC-KEYSTORE).
 
 ### T2 — Replay
 

@@ -30,7 +30,7 @@ expected triggers a design review.
 
 With daily orbit-average current drawn at ≤ 90 mA and solar array
 output ≥ 3 W peak on UniSat OBC form factor (6 × 0.295 efficient
-2 × 4 cm panels, per `docs/power_budget.md`), the battery SOC
+2 × 4 cm panels, per `docs/budgets/power_budget.md`), the battery SOC
 should remain ≥ 50 % over a 24 h sunlit / eclipse cycle. Bench
 measurement populates the left-hand side of that inequality;
 on-orbit telemetry (EPS APID 0x011) populates the right-hand

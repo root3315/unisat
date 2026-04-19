@@ -6,7 +6,7 @@ Reference: ECSS-E-ST-40C (Software Engineering), CCSDS 133.0-B-2, CubeSat Design
 
 UniSat follows a layered architecture with clear separation between hardware abstraction, subsystem logic, and mission management. The system is split across two processors: an STM32F446RE microcontroller running FreeRTOS for real-time control, and a Raspberry Pi Zero 2 W running Python 3.11+ asyncio for high-level mission management, image processing, and ground station communication.
 
-As of **v1.3.0**, the same code base serves multiple vehicle classes — not only CubeSat. See `docs/universal_platform.md` for the full list and §1.1 below for the selection mechanism.
+As of **v1.3.0**, the same code base serves multiple vehicle classes — not only CubeSat. See `docs/design/universal_platform.md` for the full list and §1.1 below for the selection mechanism.
 
 ## 1.1. Universal platform (form-factor registry)
 
@@ -290,14 +290,14 @@ FDIR follows a three-level hierarchy per ECSS-Q-ST-30C:
 > carries a full software-side FDIR stack under
 > `firmware/stm32/Core/{Inc,Src}/`:
 > * `fdir.c/.h` — table-driven fault advisor, 12 fault IDs, 60 s escalation
->   window (details in [docs/reliability/fdir.md](reliability/fdir.md))
+>   window (details in [docs/reliability/fdir.md](../reliability/fdir.md))
 > * `mode_manager.c/.h` — polls FDIR at 1 Hz in WatchdogTask and drives
 >   the satellite-level mode transition
 > * `fdir_persistent.c/.h` — warm-reboot-survivable fault ring in .noinit
 > * `key_store.c/.h` — A/B persistent HMAC key with monotonic generation
 > * `command_dispatcher.c/.h` — HMAC + 32-bit replay counter for uplink
 >
-> See [docs/requirements/SRS.md](requirements/SRS.md) for the
+> See [docs/requirements/SRS.md](../requirements/SRS.md) for the
 > requirement-level contract and the per-REQ test coverage.
 
 ### 9.2 Fault Table

@@ -2,7 +2,7 @@ Category,Component,Part Number,Qty,Unit Price (USD),Mass (g),Supplier,Notes
 OBC,STM32F446RE (QFN64),STM32F446RET6,1,8.00,2,ST,Main flight computer
 OBC,RP2040 co-processor,RP2040,1,1.00,1,Raspberry Pi,Camera/comm offload
 OBC,microSD Card Module,SD-SPI,1,3.00,2,Generic,High-rate data logging
-Power,LiPo 2S 1500 mAh,LP-2S-1500,1,18.00,45,Generic,Dual-cell
+Power,LiPo 2S 1500 mAh,LP-2S-1500,1,18.00,80,Generic,Dual-cell pouch pack (~80 g per real pack spec)
 Power,BMS + step-down,PWR-ADV,1,5.00,6,TI,5V + 3.3V rails
 Sensor,IMU 6-DOF (high-g),BMI088,1,7.00,1,Bosch,±24 g accel
 Sensor,Magnetometer,RM3100,1,15.00,2,PNI,Precision magnetometer
@@ -17,7 +17,7 @@ Descent,Pyro ignitor,PYRO-1g,2,2.00,2,Custom,Deployment cutter
 Descent,Pyro driver (MOSFET),SI2301CDS,2,0.50,1,Vishay,Single-ended gate
 Descent,Parachute 350 mm,CHUTE-350,1,8.00,18,Custom,Main chute
 Descent,Drogue chute 100 mm,CHUTE-100,1,4.00,5,Custom,Stabilisation
-Descent,Servo 4.3 g (autorotator),HS-35HD,1,12.00,9,Hitec,Guided descent
+Descent,Servo 4.3 g (autorotator),HS-35HD,1,12.00,4,Hitec,Guided descent (datasheet 4.4 g)
 Payload,Camera 5 MP,OV5647,1,15.00,6,Omnivision,Image downlink
 Payload,CSI ribbon cable,CSI-15,1,1.00,2,Generic,To co-processor
 Structure,Aluminium can housing,CAN-68x115,1,20.00,100,Custom,Ø68x115 mm
@@ -25,4 +25,4 @@ Structure,PCB set (4-layer),PCB-CANSAT-ADV,3,12.00,15,Custom,Main + sensor + com
 Structure,PCB Spacers M2,M2-SPACER,12,0.20,5,Generic,Brass standoffs
 Thermal,Kapton tape 25 mm,KAPTON,1,3.00,2,Generic,Insulation
 Harness,AWG28/30 wire kit,WIRE-MIX,1,4.00,3,Generic,Internal wiring
-,,,,TOTAL,246,,Within 500 g — headroom for experiment payload
+,,,,TOTAL,277,,Within 500 g — headroom ~220 g for experiment payload

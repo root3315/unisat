@@ -42,13 +42,13 @@ make configurator             # optional: Streamlit UI to tweak subsystems
 
 | Criterion | Max | What UniSat already gives you |
 |---|---:|---|
-| Documentation | 15 | `docs/universal_platform.md`, SRS, traceability CSV |
+| Documentation | 15 | `docs/design/universal_platform.md`, SRS, traceability CSV |
 | Hardware design | 10 | Reference BOM + KiCad boards + mechanical spec |
 | Software | 10 | FDIR, HMAC auth, 262 flight-software tests |
 | Data collection / tx | 20 | LoRa + GNSS + IMU + baro, CSV logger, 10 Hz beacon |
 | Science mission | 15 | *You provide the hypothesis and the extra sensor* |
 | Test flight | 10 | SITL simulator (`run_cansat.py`) + HIL plan |
-| Presentation | 20 | `docs/POSTER_TEMPLATE.md`, PDF/PNG export |
+| Presentation | 20 | `docs/project/POSTER_TEMPLATE.md`, PDF/PNG export |
 
 ### Key deliverables (what judges expect)
 
@@ -70,12 +70,12 @@ Use the default `mission_config.json` — UniSat is already configured for a 3U 
 
 ### Key Deliverables
 - Complete `docs/` folder serves as CDR documentation
-- `docs/architecture.md` — system block diagram
-- `docs/power_budget.md` — detailed power analysis
-- `docs/mass_budget.md` — component mass with margins
-- `docs/link_budget.md` — communication link analysis
-- `docs/thermal_analysis.md` — thermal environment modeling
-- `docs/orbit_analysis.md` — orbit selection justification
+- `docs/design/architecture.md` — system block diagram
+- `docs/budgets/power_budget.md` — detailed power analysis
+- `docs/budgets/mass_budget.md` — component mass with margins
+- `docs/budgets/link_budget.md` — communication link analysis
+- `docs/budgets/thermal_analysis.md` — thermal environment modeling
+- `docs/budgets/orbit_analysis.md` — orbit selection justification
 - Run `simulation/mission_analyzer.py` for quantitative results
 - Use `configurator/` to generate professional PDF reports
 
@@ -121,10 +121,10 @@ Use the default `mission_config.json` — UniSat is already configured for a 3U 
 **Focus:** Theoretical knowledge and calculations.
 
 ### What to Use
-- `docs/orbit_analysis.md` — orbital mechanics fundamentals
-- `docs/link_budget.md` — communication theory
-- `docs/power_budget.md` — energy balance calculations
-- `docs/thermal_analysis.md` — heat transfer in space
+- `docs/budgets/orbit_analysis.md` — orbital mechanics fundamentals
+- `docs/budgets/link_budget.md` — communication theory
+- `docs/budgets/power_budget.md` — energy balance calculations
+- `docs/budgets/thermal_analysis.md` — heat transfer in space
 - `simulation/` — numerical verification of analytical results
 
 ### Preparation

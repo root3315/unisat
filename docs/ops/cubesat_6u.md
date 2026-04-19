@@ -90,6 +90,9 @@ collection, not 10-minute bursts.
 
 ## 9. Testing checklist (ground qualification)
 
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
 Everything from 3U plus:
 
 - [ ] Deployable panel release tested at -40 °C and +60 °C.

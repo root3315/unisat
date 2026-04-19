@@ -5,6 +5,79 @@ All notable changes to UniSat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-04-19 — Docs tree reorganised + BOM corrections + bench-test verification
+
+Zero behavioural changes. Reorganises the flat `docs/` root into
+thematic subdirectories, rebuilds the README Documentation section,
+verifies every testing-checklist item in the 12 per-profile ops
+guides, and corrects two wrong component masses in the CanSat BOM.
+
+### Changed — docs/ tree reorganised
+
+The 21 markdown files in `docs/` root are now grouped by purpose:
+
+- **`docs/guides/`** — `USAGE_GUIDE.md`, `OPERATIONS_GUIDE.md`, `TROUBLESHOOTING.md`
+- **`docs/design/`** — `architecture.md`, `universal_platform.md`, `mission_design.md`, `communication_protocol.md`, `assembly_guide.md`
+- **`docs/budgets/`** — `mass_budget.md`, `power_budget.md`, `link_budget.md`, `orbit_analysis.md`, `thermal_analysis.md`
+- **`docs/reference/`** — `API_REFERENCE.md`, `TECHNICAL_DOCUMENTATION.md`, `STYLE_GUIDE.md`, `REQUIREMENTS_TRACEABILITY.md`
+- **`docs/project/`** — `GAPS_AND_ROADMAP.md`, `REGULATORY.md`, `POSTER_TEMPLATE.md`
+- `testing_plan.md` moved next to `hil_test_plan.md` under `docs/testing/`
+
+100 file references across 25 consumer files updated in one sweep.
+Every markdown link re-verified by an automated resolver — zero
+broken links remaining.
+
+### Added
+
+- **`docs/README.md`** — single documentation index. Every file in
+  the tree is grouped by purpose (guides / ops / design / budgets /
+  reference / adr / hardware / testing / reliability / quality /
+  security / characterization / verification / requirements /
+  operations / project / sbom / tutorials / diagrams / superpowers).
+  "Quick paths" table up top answers the most common "where do I
+  find …?" questions.
+- **README.md "Documentation" section** rewritten from a 30-line
+  reference into a structured catalogue covering every directory,
+  every ADR by name, and every per-profile ops guide. Points at
+  `docs/README.md` as the single entry for the full index.
+
+### Fixed — BOM component masses
+
+`cansat_advanced.csv` had two visibly-wrong numbers:
+
+- **LiPo 2S 1500 mAh**: 45 g → **80 g** (a real dual-cell 1500 mAh
+  pouch pack is 75–80 g; 45 g was approximately the mass of a
+  single-cell pack).
+- **HS-35HD servo**: 9 g → **4 g** (Hitec datasheet lists 4.4 g; the
+  part description already said "4.3 g").
+
+BOM total corrected 246 → 277 g. `hardware/bom/by_form_factor/README.md`
+updated: bare-kit mass ≈ 280 g, payload headroom ≈ 220 g under the
+500 g regulation limit.
+
+### Verified — per-profile testing checklists
+
+All 12 `docs/ops/*.md` "Testing checklist (bench)" sections audited.
+Each item classified:
+
+- `[x]` = backed by passing tests / CI / SITL in the current release
+- `[ ]` = requires bench hardware, RF range test, or flight-day
+  field activity (team must sign off manually)
+
+17 items flipped from `[ ]` to `[x]` across 8 profiles, grounded in
+the current 435-test Python pass + 28 ctest C pass + 12
+`KeyRotationPolicy` regression tests. Remaining `[ ]` items are
+genuinely physical (drop tests, RF range at ≥ 2 km, GNSS cold-start
+outdoors, battery SoC, parachute fold, SD-card preparation, camera
+video capture) — these cannot be signed off from the repository
+alone. A legend at the top of every checklist explains the
+distinction.
+
+### Test pass
+
+Same 435 Python tests still green. Markdown-link resolver: 0 broken
+links across the whole tree. `ruff` clean, `mypy --strict` clean.
+
 ## [1.4.0] - 2026-04-19 — Reliability hardening + per-profile ops + key rotation
 
 Cherry-picks the seven genuinely new changes from the
@@ -62,7 +135,7 @@ per-profile docs, with zero rework of existing subsystems.
   `cubesat_1u.md` through `cubesat_12u.md`, `rocket_avionics.md`,
   `hab_payload.md`, `drone.md`. Each covers setup → build → flight
   → post-flight for that specific form factor. More granular than
-  the previous single-file `docs/OPERATIONS_GUIDE.md` (kept alongside
+  the previous single-file `docs/guides/OPERATIONS_GUIDE.md` (kept alongside
   as a platform-agnostic overview).
 - **Radiation budget** (`docs/hardware/radiation_budget.md`) —
   design-level TID / SEE budget for STM32F446RE + sensor stack +
@@ -104,7 +177,7 @@ per-profile docs, with zero rework of existing subsystems.
 - The 10 parallel-implementation commits on `root3315/code-review-fixes`
   that re-did v1.3.0 universal-platform work already on master were
   left behind. Merging them would have wiped `CLAUDE.md`,
-  `docs/universal_platform.md`, `docs/OPERATIONS_GUIDE.md`, the five
+  `docs/design/universal_platform.md`, `docs/guides/OPERATIONS_GUIDE.md`, the five
   configurator templates added in 1.3.1, and the v1.3.1/v1.3.2
   CHANGELOG entries.
 
@@ -124,12 +197,12 @@ cross-links form-factor-specific budgets to the 3U reference docs.
   longer CubeSat-only. Project tree gained accurate test counts per
   package and references to `utils/profile_gate.py` and the
   `by_form_factor/` BOM directory.
-- **docs/GAPS_AND_ROADMAP.md** — verification table reflects 28/28
+- **docs/project/GAPS_AND_ROADMAP.md** — verification table reflects 28/28
   ctest and 420 pytest (was 27 / 329).
-- **docs/USAGE_GUIDE.md** — "ctest 16/16 → pytest 34/34" updated to
+- **docs/guides/USAGE_GUIDE.md** — "ctest 16/16 → pytest 34/34" updated to
   "28/28 → 420/420" with per-package breakdown.
 - **docs/quality/static_analysis.md** — soft-pass numbers updated.
-- **docs/TECHNICAL_DOCUMENTATION.md** — version bumped from 1.2.0 to
+- **docs/reference/TECHNICAL_DOCUMENTATION.md** — version bumped from 1.2.0 to
   1.3.1, with a two-line "What's new since 1.2" block.
 - **COMPETITION_GUIDE.md** — CanSat section completely rewritten.
   Previous guidance ("set form_factor to 1U or custom, add parachute
@@ -138,7 +211,7 @@ cross-links form-factor-specific budgets to the 3U reference docs.
   setup, and an explicit competition-scoring table.
 - **CLAUDE.md** — "parallel-truth debt" warning rewritten into a
   "single source of truth" note (the debt was closed in 1.3.1).
-- **docs/mass_budget.md** and **docs/power_budget.md** now call out
+- **docs/budgets/mass_budget.md** and **docs/budgets/power_budget.md** now call out
   their 3U scope and point at `core.form_factors` for other profiles.
 
 ### Fixed — code quality
@@ -199,7 +272,7 @@ soak test, and ships a full end-to-end operations guide.
 
 ### Added
 
-- **`docs/OPERATIONS_GUIDE.md`** — 12-section start-to-finish playbook
+- **`docs/guides/OPERATIONS_GUIDE.md`** — 12-section start-to-finish playbook
   covering profile selection, tooling setup, simulation, firmware
   build per profile, BOM fill, ground-station bring-up, HIL bench
   tests, pre-launch checklist, flight-day roles, post-flight analysis,
@@ -304,7 +377,7 @@ supported vehicle class — CanSat (minimal/standard/advanced), CubeSat
 
 ### Added — Documentation
 
-- `docs/universal_platform.md` — architectural reference for the three
+- `docs/design/universal_platform.md` — architectural reference for the three
   registries and end-to-end flow.
 - README "Supported Form Factors" rewritten with the full 9-profile
   matrix, BOM links, and quickstart commands.

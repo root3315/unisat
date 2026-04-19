@@ -90,10 +90,13 @@ Augmented by payload deployment inside `descent`:
 
 ## 9. Testing checklist (bench)
 
-- [ ] Dual-deploy sequence verified in vacuum chamber or barometric simulator.
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
+- [x] Dual-deploy sequence verified in vacuum chamber or barometric simulator.
 - [ ] Camera + IMU write to SD without contention (stress test 10 min).
-- [ ] Redundant IMU takes over within 500 ms when primary is disabled via SITL.
-- [ ] `make target-cansat-advanced` produces a firmware that sets `PROFILE_FEATURE_IMAGERY=1`.
+- [x] Redundant IMU takes over within 500 ms when primary is disabled via SITL.
+- [x] `make target-cansat-advanced` produces a firmware that sets `PROFILE_FEATURE_IMAGERY=1`.
 - [ ] Telemetry link tested at 3 km with high-gain patch (expected RX SNR ≥ 10 dB).
 - [ ] Deployable payload mechanism triggers correctly and cleanly separates.
 

@@ -79,6 +79,9 @@ downlink happens in discrete windows when ground tracks the pass.
 
 ## 9. Testing checklist (ground qualification)
 
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
 Same as 1.5U plus:
 
 - [ ] S-band end-to-end link budget verified on a 2 m range with a 1.2 m parabolic dish (expected SNR ≥ 10 dB).

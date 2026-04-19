@@ -96,7 +96,7 @@
 | ID | Priority | Statement | Verification | Implemented in | Tested by |
 |----|:-:|---|:-:|---|---|
 | REQ-GS-001 | MUST | The Python AX.25 library shall produce output byte-identical to the C implementation against 28 shared golden vectors. | Test | `ground-station/utils/ax25.py` | `test_ax25.py::test_golden_vectors` |
-| REQ-GS-002 | MUST | The Streamlit dashboard shall decode every beacon field defined in `docs/communication_protocol.md` §7.2. | Inspection | `ground-station/pages/*` | manual demo |
+| REQ-GS-002 | MUST | The Streamlit dashboard shall decode every beacon field defined in `docs/design/communication_protocol.md` §7.2. | Inspection | `ground-station/pages/*` | manual demo |
 | REQ-GS-003 | SHOULD | The ground-side HMAC helper shall mirror RFC 4231 test vectors on the exact same bytes as the firmware library. | Test | `ground-station/utils/hmac_auth.py` | `test_hmac.py` |
 
 ## 9. Build & Quality (BLD)
@@ -120,7 +120,7 @@ Explicitly not covered by this SRS:
 * Hardware-qualified flight heritage.
 * RF front-end licensing (IARU coordination) — operator task.
 
-See `docs/GAPS_AND_ROADMAP.md` §"Out of scope" for the full list.
+See `docs/project/GAPS_AND_ROADMAP.md` §"Out of scope" for the full list.
 
 ---
 

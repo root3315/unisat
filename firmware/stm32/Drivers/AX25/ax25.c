@@ -2,7 +2,7 @@
  * @file ax25.c
  * @brief AX.25 v2.2 link layer — implementation.
  *
- * See docs/communication_protocol.md §7 for wire format and
+ * See docs/design/communication_protocol.md §7 for wire format and
  * docs/superpowers/specs/2026-04-17-track1-ax25-design.md §5.1
  * for design choices.
  */

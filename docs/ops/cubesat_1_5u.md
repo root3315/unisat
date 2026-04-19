@@ -83,6 +83,9 @@ Same as 1U (cubesat_leo profile).
 
 ## 9. Testing checklist (ground qualification)
 
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
 Same as 1U plus:
 
 - [ ] Verify deployable antenna fully extends in thermal-vacuum at -20 °C.

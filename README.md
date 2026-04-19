@@ -209,11 +209,11 @@ pip install -r requirements.txt
 python mission_analyzer.py
 ```
 
-**Подробное руководство:** [`docs/USAGE_GUIDE.md`](docs/USAGE_GUIDE.md)
+**Подробное руководство:** [`docs/guides/USAGE_GUIDE.md`](docs/guides/USAGE_GUIDE.md)
 — от выбора типа миссии (CanSat / CubeSat / HAB / Rocket / Drone)
 до подачи на конкурс.
 
-**Что ещё можно добавить:** [`docs/GAPS_AND_ROADMAP.md`](docs/GAPS_AND_ROADMAP.md)
+**Что ещё можно добавить:** [`docs/project/GAPS_AND_ROADMAP.md`](docs/project/GAPS_AND_ROADMAP.md)
 — честный статус, приоритизированный список открытых задач.
 
 ### 5. End-to-end AX.25 SITL demo (one command)
@@ -277,7 +277,7 @@ For more granular control:
 | HIL test plan + characterization templates | ✅ docs/testing + docs/characterization |
 | Requirement traceability (AX.25 subset) | ✅ auto-generated (docs/verification/ax25_trace_matrix.md) |
 
-Deferred (not TRL-5 blockers) — see [`docs/GAPS_AND_ROADMAP.md`](docs/GAPS_AND_ROADMAP.md):
+Deferred (not TRL-5 blockers) — see [`docs/project/GAPS_AND_ROADMAP.md`](docs/project/GAPS_AND_ROADMAP.md):
 Streamlit↔AX.25 live bridge, CC1125 radio config doc, MISRA backlog cleanup (~1000 Rule 8.7/10.x style deviations).
 
 ### 6. Build firmware manually (optional)
@@ -364,7 +364,7 @@ Examples:
 
 ## Competition Adaptation
 
-Ready-to-submit adaptations for aerospace competitions. Detailed per-profile guides live in [`docs/ops/`](docs/ops/) (one file per form factor) + short form in [USAGE_GUIDE.md](docs/USAGE_GUIDE.md) §7.
+Ready-to-submit adaptations for aerospace competitions. Detailed per-profile guides live in [`docs/ops/`](docs/ops/) (one file per form factor) + short form in [USAGE_GUIDE.md](docs/guides/USAGE_GUIDE.md) §7.
 
 | Competition | Template | Highlights | Ops guide | Prep time |
 |---|---|---|---|---|
@@ -424,40 +424,98 @@ unisat/
 
 ## Documentation
 
-**Start here:**
-- [USAGE_GUIDE.md](docs/USAGE_GUIDE.md) — step-by-step от клонирования до подачи на конкурс
-- [TECHNICAL_DOCUMENTATION.md](docs/TECHNICAL_DOCUMENTATION.md) — полная техническая дока (~1100 строк)
-- [GAPS_AND_ROADMAP.md](docs/GAPS_AND_ROADMAP.md) — честный статус + что ещё можно добавить
+**Full index:** [`docs/README.md`](docs/README.md) — every doc in the repo, grouped by purpose.
 
-**CDR-level design docs:**
-- [System Architecture](docs/architecture.md) · [Mission Design](docs/mission_design.md)
-- [Communication Protocol](docs/communication_protocol.md) (AX.25 + CCSDS wire format)
-- [Power Budget](docs/power_budget.md) · [Mass Budget](docs/mass_budget.md) · [Link Budget](docs/link_budget.md)
-- [Thermal Analysis](docs/thermal_analysis.md) · [Orbit Analysis](docs/orbit_analysis.md)
-- [Testing Plan](docs/testing_plan.md) · [Assembly Guide](docs/assembly_guide.md)
-- [API Reference](docs/API_REFERENCE.md) · [Requirements Traceability](docs/REQUIREMENTS_TRACEABILITY.md)
+### Start here
 
-**Contributing & conventions:**
-- [STYLE_GUIDE.md](docs/STYLE_GUIDE.md) — Google-derived code + prose conventions
-- [SECURITY.md](SECURITY.md) — vulnerability reporting policy
-- [CONTRIBUTING.md](CONTRIBUTING.md) — PR workflow
+- [`docs/guides/USAGE_GUIDE.md`](docs/guides/USAGE_GUIDE.md) — step-by-step from clone to competition submission
+- [`docs/guides/OPERATIONS_GUIDE.md`](docs/guides/OPERATIONS_GUIDE.md) — 12-section playbook: profile pick → flight day → post-flight
+- [`docs/guides/TROUBLESHOOTING.md`](docs/guides/TROUBLESHOOTING.md) — common build / run / integration issues
+- [`docs/ops/README.md`](docs/ops/README.md) — profile-selection flowchart + index of all 11 per-profile ops guides
+- [`docs/reference/TECHNICAL_DOCUMENTATION.md`](docs/reference/TECHNICAL_DOCUMENTATION.md) — full technical deep-dive (~1200 lines)
+- [`docs/project/GAPS_AND_ROADMAP.md`](docs/project/GAPS_AND_ROADMAP.md) — honest status, open work, out-of-scope
 
-**Architecture decisions, security, verification:**
-- [ADR-001 — No CSP](docs/adr/ADR-001-no-csp.md) · [ADR-002 — Style Adapter](docs/adr/ADR-002-style-adapter.md)
-- [AX.25 Threat Model](docs/security/ax25_threat_model.md) — T1 + T2 both mitigated
-- [AX.25 Walkthrough Tutorial](docs/tutorials/ax25_walkthrough.md) — byte-by-byte beacon разбор
-- [AX.25 Verification Trace Matrix](docs/verification/ax25_trace_matrix.md) (auto-generated)
-- [Driver Reality Audit](docs/verification/driver_audit.md) — все 9 драйверов verified real
-- [Track 1 Design Spec](docs/superpowers/specs/2026-04-17-track1-ax25-design.md) — 775 lines
-- [Track 1 Implementation Plan](docs/superpowers/plans/2026-04-17-track1-ax25-implementation.md) — 4022 lines
+### Per-profile operations guides (`docs/ops/`)
 
-**TRL-5 hardening (feat/trl5-hardening branch):**
-- [SRS — Software Requirements Spec](docs/requirements/SRS.md) — 10 subsystems, numbered REQs
-- [Traceability CSV](docs/requirements/traceability.csv) — REQ → source → test
-- [FDIR module](docs/reliability/fdir.md) — fault detection + recovery ladder
-- [Static analysis policy](docs/quality/static_analysis.md) — cppcheck + coverage + sanitizers
-- [Characterization templates](docs/characterization/README.md) — WCET / stack / heap / power
-- [HIL test plan](docs/testing/hil_test_plan.md) — bench BOM + 10 test IDs
+One file per form factor covering **setup → build → bench test → flight → post-flight**:
+
+- **CanSat** — [`cansat_minimal`](docs/ops/cansat_minimal.md) · [`cansat_standard`](docs/ops/cansat_standard.md) · [`cansat_advanced`](docs/ops/cansat_advanced.md)
+- **CubeSat** — [`cubesat_1u`](docs/ops/cubesat_1u.md) · [`cubesat_1_5u`](docs/ops/cubesat_1_5u.md) · [`cubesat_2u`](docs/ops/cubesat_2u.md) · [`cubesat_3u`](docs/ops/cubesat_3u.md) · [`cubesat_6u`](docs/ops/cubesat_6u.md) · [`cubesat_12u`](docs/ops/cubesat_12u.md)
+- **Other platforms** — [`rocket_avionics`](docs/ops/rocket_avionics.md) · [`hab_payload`](docs/ops/hab_payload.md) · [`drone`](docs/ops/drone.md)
+
+### Design & architecture (`docs/design/`)
+
+- [`architecture.md`](docs/design/architecture.md) — layered architecture + form-factor registry overview
+- [`universal_platform.md`](docs/design/universal_platform.md) — one code base / 14 form factors
+- [`mission_design.md`](docs/design/mission_design.md) — mission concept of operations
+- [`communication_protocol.md`](docs/design/communication_protocol.md) — AX.25 + CCSDS wire format
+- [`assembly_guide.md`](docs/design/assembly_guide.md) — physical assembly
+
+### Quantitative budgets (`docs/budgets/`, 3U reference)
+
+- [`mass_budget.md`](docs/budgets/mass_budget.md) — 3U component mass with margins
+- [`power_budget.md`](docs/budgets/power_budget.md) — solar / storage / consumption
+- [`link_budget.md`](docs/budgets/link_budget.md) — UHF + S-band link margins
+- [`orbit_analysis.md`](docs/budgets/orbit_analysis.md) — ground track, eclipse, J2
+- [`thermal_analysis.md`](docs/budgets/thermal_analysis.md) — orbital thermal environment
+
+Per-profile envelopes (mass / volume / power) are in `flight-software/core/form_factors.py`; per-class BOMs are under [`hardware/bom/by_form_factor/`](hardware/bom/by_form_factor/README.md).
+
+### Reference (`docs/reference/`)
+
+- [`API_REFERENCE.md`](docs/reference/API_REFERENCE.md) — programmatic API surface
+- [`TECHNICAL_DOCUMENTATION.md`](docs/reference/TECHNICAL_DOCUMENTATION.md) — technical deep-dive
+- [`STYLE_GUIDE.md`](docs/reference/STYLE_GUIDE.md) — Google-derived code + prose conventions
+- [`REQUIREMENTS_TRACEABILITY.md`](docs/reference/REQUIREMENTS_TRACEABILITY.md) — REQ → source → test mapping
+
+### Architecture decisions (`docs/adr/` — 8 ADRs)
+
+- ADR-001 — [No CSP](docs/adr/ADR-001-no-csp.md)
+- ADR-002 — [Style Adapter](docs/adr/ADR-002-style-adapter.md)
+- ADR-003 — [A/B Key Store](docs/adr/ADR-003-ab-keystore.md)
+- ADR-004 — [Replay Counter Zero-Sentinel](docs/adr/ADR-004-replay-counter-zero-sentinel.md)
+- ADR-005 — [FDIR Advisory Split](docs/adr/ADR-005-fdir-advisory-split.md)
+- ADR-006 — [.noinit Persistent Log](docs/adr/ADR-006-noinit-persistent-log.md)
+- ADR-007 — [HAL Shim Strategy](docs/adr/ADR-007-hal-shim-strategy.md)
+- ADR-008 — [Command Dispatcher Wire Format](docs/adr/ADR-008-command-dispatcher-wire-format.md)
+
+### Hardware (`docs/hardware/`)
+
+- [`CC1125_configuration.md`](docs/hardware/CC1125_configuration.md) — UHF radio register map
+- [`radiation_budget.md`](docs/hardware/radiation_budget.md) — TID / SEE design budget per orbital class
+
+### Verification, testing, reliability
+
+- [`docs/requirements/SRS.md`](docs/requirements/SRS.md) — Software Requirements Specification
+- [`docs/requirements/traceability.csv`](docs/requirements/traceability.csv) — REQ → source → test CSV
+- [`docs/verification/ax25_trace_matrix.md`](docs/verification/ax25_trace_matrix.md) — auto-generated trace matrix
+- [`docs/verification/driver_audit.md`](docs/verification/driver_audit.md) — every driver proven real (not mock)
+- [`docs/testing/testing_plan.md`](docs/testing/testing_plan.md) — overall V&V strategy
+- [`docs/testing/hil_test_plan.md`](docs/testing/hil_test_plan.md) — HIL bench procedure + 10 tests
+- [`docs/reliability/fdir.md`](docs/reliability/fdir.md) — 12 fault IDs + recovery ladder
+- [`docs/quality/static_analysis.md`](docs/quality/static_analysis.md) — cppcheck + coverage + sanitizers
+- [`docs/characterization/README.md`](docs/characterization/README.md) — WCET / stack / power measured baselines
+- [`docs/security/ax25_threat_model.md`](docs/security/ax25_threat_model.md) — T1 + T2 both mitigated
+
+### Project state & regulatory (`docs/project/`)
+
+- [`GAPS_AND_ROADMAP.md`](docs/project/GAPS_AND_ROADMAP.md) — what works, what's next, what's out of scope
+- [`REGULATORY.md`](docs/project/REGULATORY.md) — licensing, export control, radio regulation
+- [`POSTER_TEMPLATE.md`](docs/project/POSTER_TEMPLATE.md) — competition poster starter
+
+### Tutorials, operations, SBOM, diagrams
+
+- [`docs/tutorials/ax25_walkthrough.md`](docs/tutorials/ax25_walkthrough.md) — byte-by-byte beacon decode
+- [`docs/operations/commissioning_runbook.md`](docs/operations/commissioning_runbook.md) — post-deploy activation
+- [`docs/sbom/sbom-summary.md`](docs/sbom/sbom-summary.md) — SPDX bill of materials (auto-generated via `make sbom`)
+- [`docs/diagrams/`](docs/diagrams/) — SVG block diagrams
+
+### Contributing & security
+
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — PR workflow
+- [`SECURITY.md`](SECURITY.md) — vulnerability reporting
+- [`CHANGELOG.md`](CHANGELOG.md) — semantic-versioned history
+- [`CLAUDE.md`](CLAUDE.md) — guidance for AI-assisted contributions
 
 ---
 

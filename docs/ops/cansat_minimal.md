@@ -122,12 +122,15 @@ Each phase gates which modules are active:
 
 ## 9. Testing checklist (bench)
 
-- [ ] `make target-cansat-minimal` completes with no warnings.
-- [ ] `./scripts/verify.sh` is green.
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
+- [x] `make target-cansat-minimal` completes with no warnings.
+- [x] `./scripts/verify.sh` is green.
 - [ ] Ground station receives telemetry on the chosen 433 MHz channel at ≥ -110 dBm.
-- [ ] IMU detects a simulated 3 g launch event and transitions `pre_launch → launch_detect` in the SITL harness.
+- [x] IMU detects a simulated 3 g launch event and transitions `pre_launch → launch_detect` in the SITL harness.
 - [ ] Barometer reads pressure within ± 1 hPa of a reference device.
-- [ ] Descent-controller fires within 50 ms of apogee detection (SITL-injected pressure profile).
+- [x] Descent-controller fires within 50 ms of apogee detection (SITL-injected pressure profile).
 - [ ] Battery survives 90 minutes of continuous operation on a single charge.
 - [ ] Watchdog feeds for 30 minutes with no missed periods (check `CommandDispatcher_GetStats`).
 
