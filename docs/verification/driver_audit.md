@@ -85,7 +85,7 @@ is complete.
   bus or out-of-range fault into FDIR, and publishes the value as
   signed 0.1 °C for the beacon. `telemetry.c` writes the live
   value into beacon bytes 14–15 (see §7.2 of
-  `docs/communication_protocol.md`). Unit tests live at
+  `docs/design/communication_protocol.md`). Unit tests live at
   `firmware/tests/test_board_temp.c` (6 / 6 green).
 - **UBLOX UART interface:** the current driver implements the I2C
   (DDC) path only. UART is a datasheet-documented alternative but is

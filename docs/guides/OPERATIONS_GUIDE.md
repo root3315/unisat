@@ -252,7 +252,7 @@ as time-series plots and let you export PNG / PDF.
 Document what you flew:
 
 - **Report** — mission, design, science rationale, results. Start from
-  `docs/POSTER_TEMPLATE.md` or `docs/TECHNICAL_DOCUMENTATION.md`.
+  `docs/project/POSTER_TEMPLATE.md` or `docs/reference/TECHNICAL_DOCUMENTATION.md`.
 - **Bill of materials** — your modified `hardware/bom/.../*.csv`.
 - **Test evidence** — bench-test video, drop-test video, mass-check
   photo, radio-link margin plot.
@@ -290,4 +290,4 @@ Pyserial missing under tests | Optional dep, skipped on CI | `pip install pyseri
 ---
 
 *Keep this guide short enough to stay useful. For deep design docs
-start from `docs/architecture.md` and `docs/universal_platform.md`.*
+start from `docs/design/architecture.md` and `docs/design/universal_platform.md`.*

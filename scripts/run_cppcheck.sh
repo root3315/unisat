@@ -16,7 +16,7 @@
 #                              misra_report.log.  Does NOT fail the
 #                              script — MISRA compliance on the
 #                              existing codebase is a scheduled cleanup
-#                              (tracked in docs/GAPS_AND_ROADMAP.md).
+#                              (tracked in docs/project/GAPS_AND_ROADMAP.md).
 #
 #  Flags are assembled from .cppcheck-suppressions in the repo root.
 # =============================================================================

@@ -115,6 +115,9 @@ Loss-of-link behaviour:
 
 ## 9. Testing checklist (bench)
 
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
 - [ ] IMU cross-check: UniSat IMU vs. autopilot IMU agree within 0.5°/s at rest.
 - [ ] MAVLink heartbeat received at 1 Hz from the autopilot over UART.
 - [ ] Geofence trigger at the configured radius in a hardware-in-the-loop test.

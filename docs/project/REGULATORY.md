@@ -148,7 +148,7 @@ already made in v1.2.0 does not change export control status.
    budget feed into this review.
 6. **De-orbit plan** — most authorities require < 25 years
    post-mission. Our 550 km SSO template decays in ~5 years
-   naturally (see `docs/orbit_analysis.md`).
+   naturally (see `docs/budgets/orbit_analysis.md`).
 
 **Total wall time:** 18-36 months from first regulator contact
 to launch vehicle handover for a typical university CubeSat.
@@ -159,12 +159,12 @@ to launch vehicle handover for a typical university CubeSat.
 
 | Reviewer asks for… | UniSat doc |
 |---|---|
-| Emission description | `docs/communication_protocol.md` + `docs/hardware/CC1125_configuration.md` |
-| Link budget | `docs/link_budget.md` |
-| Power budget | `docs/power_budget.md` |
-| Mass budget | `docs/mass_budget.md` |
-| Orbit / de-orbit | `docs/orbit_analysis.md` |
-| Thermal margins | `docs/thermal_analysis.md` |
+| Emission description | `docs/design/communication_protocol.md` + `docs/hardware/CC1125_configuration.md` |
+| Link budget | `docs/budgets/link_budget.md` |
+| Power budget | `docs/budgets/power_budget.md` |
+| Mass budget | `docs/budgets/mass_budget.md` |
+| Orbit / de-orbit | `docs/budgets/orbit_analysis.md` |
+| Thermal margins | `docs/budgets/thermal_analysis.md` |
 | FDIR / safe-mode behaviour | `docs/reliability/fdir.md` |
 | Command authentication | `docs/security/ax25_threat_model.md` |
 | Software requirements | `docs/requirements/SRS.md` + traceability.csv |

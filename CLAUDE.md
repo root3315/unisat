@@ -75,7 +75,7 @@ When adding a new form factor: register it in `form_factors.py` **first**, then 
 
 Ground ↔ OBC over **UHF 437 MHz** using **AX.25 v2.2** framing wrapping **CCSDS** Space Packets, authenticated with **HMAC-SHA256 + 32-bit counter + 64-bit sliding-window replay filter** (threats T1 and T2 in `docs/security/ax25_threat_model.md`). OBC ↔ flight-software over **UART @ 115 200 baud** using plain CCSDS.
 
-The **Application layer (Python on RPi) never reaches past Subsystem (STM32)** — it speaks CCSDS only. Enforced by the layer table in `docs/architecture.md` §3.2. Don't introduce direct sensor access from Python; go through OBC telemetry/commands.
+The **Application layer (Python on RPi) never reaches past Subsystem (STM32)** — it speaks CCSDS only. Enforced by the layer table in `docs/design/architecture.md` §3.2. Don't introduce direct sensor access from Python; go through OBC telemetry/commands.
 
 ### 2. AX.25 and HMAC have parallel C + Python implementations kept byte-identical
 
@@ -97,11 +97,11 @@ Layer 4 (Application, Python) → Layer 3 (Subsystem, C) → Layer 2 (Driver, C)
 
 ### 6. Requirements traceability is a hard review gate
 
-`docs/requirements/SRS.md` defines numbered REQs; `docs/requirements/traceability.csv` maps each to its source file and test. When you add a module, updating `docs/API_REFERENCE.md` and `docs/REQUIREMENTS_TRACEABILITY.md` is part of the change — see `docs/STYLE_GUIDE.md` §"Documentation roadmap for new modules" for the 6-item checklist.
+`docs/requirements/SRS.md` defines numbered REQs; `docs/requirements/traceability.csv` maps each to its source file and test. When you add a module, updating `docs/reference/API_REFERENCE.md` and `docs/reference/REQUIREMENTS_TRACEABILITY.md` is part of the change — see `docs/reference/STYLE_GUIDE.md` §"Documentation roadmap for new modules" for the 6-item checklist.
 
 ## Code conventions (project-specific deltas from Google style)
 
-See `docs/STYLE_GUIDE.md` for the full table. Key rules that bite:
+See `docs/reference/STYLE_GUIDE.md` for the full table. Key rules that bite:
 
 - **C:** 4-space indent, 80-col hard limit, `module_snake_case()` for functions, `module_name_t` for types, `MODULE_UPPER_SNAKE` for public macros, every non-API function `static`, `#ifndef FILE_H` guards (never `#pragma once`), Doxygen `@file`/`@brief` at top of every `.c`/`.h`, return-status enums (never `errno`).
 - **Python:** `black` line length 79, `mypy --strict` must be clean, Google-style docstrings, custom exception hierarchy rooted at `AX25Error` — never raise bare `Exception`.
@@ -110,7 +110,7 @@ See `docs/STYLE_GUIDE.md` for the full table. Key rules that bite:
 
 ## Commit conventions
 
-Conventional Commits: `<type>(<scope>): <imperative, ≤50 chars>`. Types: `feat fix docs test build ci perf refactor chore`. Scopes used in-tree: `ax25 comm dispatcher crypto gs-ax25 gs-cli firmware config docs build ci`. Body wraps at 72, explains **why**, not what. Reference REQ-IDs when touching requirements-traced code. See `docs/STYLE_GUIDE.md` §"Writing commit messages" for the good-vs-bad example.
+Conventional Commits: `<type>(<scope>): <imperative, ≤50 chars>`. Types: `feat fix docs test build ci perf refactor chore`. Scopes used in-tree: `ax25 comm dispatcher crypto gs-ax25 gs-cli firmware config docs build ci`. Body wraps at 72, explains **why**, not what. Reference REQ-IDs when touching requirements-traced code. See `docs/reference/STYLE_GUIDE.md` §"Writing commit messages" for the good-vs-bad example.
 
 ## Things to know before editing
 

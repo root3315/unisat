@@ -21,7 +21,7 @@
 > For current implementation guidance see:
 > - `docs/requirements/SRS.md` — authoritative requirements
 > - `docs/adr/` — 8 ADRs covering post-Track-1 design decisions
-> - `docs/TECHNICAL_DOCUMENTATION.md §0` — Phase 7/8 summary
+> - `docs/reference/TECHNICAL_DOCUMENTATION.md §0` — Phase 7/8 summary
 >
 > See `docs/superpowers/README.md` for the archival context.
 
@@ -113,7 +113,7 @@ Makefile                                 # new: lib-c, lib-py, goldens, demo
 **Files:**
 - Modify (if needed): `firmware/stm32/Core/Src/telemetry.c`
 - Read: `firmware/stm32/Core/Inc/telemetry.h`
-- Reference: `docs/communication_protocol.md` §7.2
+- Reference: `docs/design/communication_protocol.md` §7.2
 
 - [ ] **Step 1: Read current implementation**
 
@@ -531,7 +531,7 @@ Create `firmware/stm32/Drivers/AX25/ax25.c`:
 
 ```c
 /* AX.25 v2.2 link layer — implementation.
- * See docs/communication_protocol.md §7 and the design spec in
+ * See docs/design/communication_protocol.md §7 and the design spec in
  * docs/superpowers/specs/2026-04-17-track1-ax25-design.md. */
 
 #include "ax25.h"

@@ -105,8 +105,11 @@ ground_checkout → armed → boost → coast → apogee
 
 ## 9. Testing checklist (bench)
 
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
 - [ ] High-g IMU confirms ± 16 g range on a shake-table drop test.
-- [ ] Barometer reads ascent + descent consistent with an altitude profile from a previous flight or simulation.
+- [x] Barometer reads ascent + descent consistent with an altitude profile from a previous flight or simulation.
 - [ ] Ejection charges fire at commanded altitude in a drop test (actual pyro inside a blast chamber).
 - [ ] Redundant altimeter (if fitted) agrees with primary within 5 % during pressure sweep.
 - [ ] GNSS reacquires fix within 30 s post-boost.

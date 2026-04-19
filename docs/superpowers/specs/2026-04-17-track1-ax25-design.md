@@ -23,7 +23,7 @@
 ## 1. Goals
 
 1. Implement the AX.25 UI-frame link layer fully specified in
-   `docs/communication_protocol.md` §7 — both on the satellite (STM32 firmware)
+   `docs/design/communication_protocol.md` §7 — both on the satellite (STM32 firmware)
    and on the ground station (Python).
 2. Provide a reproducible end-to-end demonstration:
    `make demo` sends a beacon from the firmware (in SITL), and the ground
@@ -47,7 +47,7 @@
 
 ## 3. Reference Documents
 
-- `docs/communication_protocol.md` §7 — AX.25 UI Frame Format.
+- `docs/design/communication_protocol.md` §7 — AX.25 UI Frame Format.
 - AX.25 Link Access Protocol for Amateur Packet Radio, v2.2, 1998.
 - Google C++ Style Guide (applied to pure library C11 code).
 - Google Python Style Guide (applied to `utils/ax25.py` and CLI).
@@ -116,7 +116,7 @@ to Track 3 (Renode / QEMU / HIL with a real CC1125 transceiver).
 
 ### 4.4 Requirement Traceability
 
-Every bullet in `docs/communication_protocol.md` §7 receives an ID of the form
+Every bullet in `docs/design/communication_protocol.md` §7 receives an ID of the form
 `REQ-AX25-NNN`. A matrix in `docs/verification/ax25_trace_matrix.md` maps:
 
 ```

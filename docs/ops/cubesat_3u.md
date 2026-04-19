@@ -114,14 +114,17 @@ Reference timings:
 
 ## 9. Testing checklist (ground qualification)
 
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
 - [ ] **Thermal-vacuum**: -20 °C to +60 °C, 5 cycles, 6 h each (typical launch provider ICD).
 - [ ] **Random vibration**: 14 g-rms, 3 axes, 2 min each.
 - [ ] **Shock**: half-sine 1500 g, 0.5 ms, one shot per axis.
 - [ ] **EMC**: MIL-STD-461E CE102 / RE102.
 - [ ] **Thermal cycling**: 8 cycles from -40 °C to +85 °C at board level.
 - [ ] **Radiation**: 60Co TID to 2 krad (see `docs/hardware/radiation_budget.md`).
-- [ ] **48-hour soak**: `UNISAT_SOAK_SECONDS=172800 pytest flight-software/tests/test_long_soak.py`.
-- [ ] **End-to-end SITL**: `scripts/simulate_mission.sh mission_config.json` ≥ 1 orbit.
+- [x] **48-hour soak**: `UNISAT_SOAK_SECONDS=172800 pytest flight-software/tests/test_long_soak.py`.
+- [x] **End-to-end SITL**: `scripts/simulate_mission.sh mission_config.json` ≥ 1 orbit.
 
 ## 10. Flight-day checklist
 

@@ -7,7 +7,7 @@
 
 **Что нового с v1.2.0:**
 - **v1.3.0** — универсальная платформа: реестр форм-факторов (`form_factors.py`), feature-flag резолвер (`feature_flags.py`), compile-time профили firmware через `mission_profile.h` (9 билд-целей `make target-<profile>`), Streamlit profile gate.
-- **v1.3.1** — configurator-валидаторы подключены к `core.form_factors` (единый источник правды вместо параллельных словарей), CanSat-масштабные дефолты компонентов, 5 новых configurator-шаблонов, `docs/OPERATIONS_GUIDE.md` (12 секций от выбора профиля до сдачи на конкурс), фикс flaky `test_long_soak`.
+- **v1.3.1** — configurator-валидаторы подключены к `core.form_factors` (единый источник правды вместо параллельных словарей), CanSat-масштабные дефолты компонентов, 5 новых configurator-шаблонов, `docs/guides/OPERATIONS_GUIDE.md` (12 секций от выбора профиля до сдачи на конкурс), фикс flaky `test_long_soak`.
 
 ---
 

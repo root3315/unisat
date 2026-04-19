@@ -125,7 +125,7 @@ packet containing:
 
 That packet is the *software* deliverable of TRL 5. The hardware
 deliverable (vibration, TVAC, radiation) remains out of scope
-per `docs/GAPS_AND_ROADMAP.md`.
+per `docs/project/GAPS_AND_ROADMAP.md`.
 
 ## Current status
 

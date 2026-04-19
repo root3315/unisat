@@ -16,7 +16,7 @@ compatible with the AX.25 stack already in firmware.
 | Parameter | Value | Source |
 |---|---|---|
 | Carrier | 437.000 MHz | AMSAT band plan (amateur satellite) |
-| Modulation | 2-GFSK | `docs/link_budget.md`, matches libfec / gr-satellites defaults |
+| Modulation | 2-GFSK | `docs/budgets/link_budget.md`, matches libfec / gr-satellites defaults |
 | Symbol rate | 9600 sym/s | = bit rate (2-GFSK, 1 bit/symbol) |
 | RX bandwidth | 25 kHz | IF filter target (datasheet Table 16) |
 | TX deviation | 2.4 kHz | Modulation index 0.5 (matches MSK-like spectrum) |
@@ -27,7 +27,7 @@ compatible with the AX.25 stack already in firmware.
 
 Computed at these parameters: ~−118 dBm receiver sensitivity (BER 1e-3),
 which aligns with the −116 dBm link-budget worst-case in
-`docs/link_budget.md`.
+`docs/budgets/link_budget.md`.
 
 ---
 
@@ -190,7 +190,7 @@ driver.
 - TI SmartRF Studio 7 — desktop tool that generated the base preset
 - AX.25 v2.2 — <https://www.tapr.org/pub_ax25.html>
 - AMSAT band plan — <https://www.amsat.org/frequency-coordination/>
-- UniSat link budget — [`docs/link_budget.md`](../link_budget.md)
+- UniSat link budget — [`docs/budgets/link_budget.md`](../budgets/link_budget.md)
 - UniSat threat model — [`docs/security/ax25_threat_model.md`](../security/ax25_threat_model.md)
 
 ---

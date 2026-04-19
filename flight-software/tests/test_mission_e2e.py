@@ -19,7 +19,7 @@ wiring between modules, not to simulate orbital mechanics.
 The scenario is structured as a single ``pytest`` session so the
 whole run either passes end-to-end or fails with a specific
 assertion identifying the broken contract. This closes gap M3 in
-``docs/GAPS_AND_ROADMAP.md`` — previously the flight-software stack
+``docs/project/GAPS_AND_ROADMAP.md`` — previously the flight-software stack
 had 14 well-tested units but no single assertion proving they
 compose.
 """

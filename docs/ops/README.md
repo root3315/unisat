@@ -121,8 +121,8 @@ profile guides assume a green baseline.
 
 ## Cross-references
 
-* Architecture overview — [`docs/architecture.md`](../architecture.md)
-* SRS + trace matrix    — [`docs/REQUIREMENTS_TRACEABILITY.md`](../REQUIREMENTS_TRACEABILITY.md)
+* Architecture overview — [`docs/design/architecture.md`](../design/architecture.md)
+* SRS + trace matrix    — [`docs/reference/REQUIREMENTS_TRACEABILITY.md`](../reference/REQUIREMENTS_TRACEABILITY.md)
 * Commissioning runbook — [`docs/operations/commissioning_runbook.md`](../operations/commissioning_runbook.md)
 * Radiation budget      — [`docs/hardware/radiation_budget.md`](../hardware/radiation_budget.md)
 * Threat model          — [`docs/security/ax25_threat_model.md`](../security/ax25_threat_model.md)

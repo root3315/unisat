@@ -102,6 +102,9 @@ weeks or months.
 
 ## 9. Testing checklist (ground qualification)
 
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
 Everything from 6U plus:
 
 - [ ] Extended TVac: 10 cycles, -30 °C to +65 °C, 8 h dwell.
@@ -109,7 +112,7 @@ Everything from 6U plus:
 - [ ] SEU cross-section characterisation at proton energies ≥ 65 MeV.
 - [ ] Propulsion firing verification on air-bearing table (cold-gas) or vacuum chamber (electric).
 - [ ] Star-tracker sky-field + stray-light tests in dark chamber.
-- [ ] End-to-end SITL with full phase sequence including `transfer_burn`.
+- [x] End-to-end SITL with full phase sequence including `transfer_burn`.
 
 ## 10. Flight-day checklist
 

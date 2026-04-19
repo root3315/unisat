@@ -58,5 +58,5 @@ referenced by external report number.
 
 The external-report fields are placeholders for operator-supplied
 PDFs. The repository does not claim TRL 5 without them — see
-`docs/GAPS_AND_ROADMAP.md` §"Out of scope" for the explicit
+`docs/project/GAPS_AND_ROADMAP.md` §"Out of scope" for the explicit
 disclaimer.

@@ -232,8 +232,8 @@ similar), the PR is not complete without:
 2. Module source with module-level comment explaining lifecycle
    (init → use → shutdown).
 3. At least one Unity test file registered in `firmware/CMakeLists.txt`.
-4. Entry in `docs/API_REFERENCE.md` pointing at the header.
-5. Update to `docs/REQUIREMENTS_TRACEABILITY.md` linking the REQ
+4. Entry in `docs/reference/API_REFERENCE.md` pointing at the header.
+5. Update to `docs/reference/REQUIREMENTS_TRACEABILITY.md` linking the REQ
    IDs this module satisfies.
 6. If behaviour is user-visible: mention in `CHANGELOG.md` under
    the `Unreleased` or next version heading.

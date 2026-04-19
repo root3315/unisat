@@ -103,14 +103,17 @@ per phase:
 
 ## 9. Testing checklist (bench)
 
-- [ ] Green `./scripts/verify.sh`.
+> **Legend:** `[x]` = verified in software / CI / SITL (passes in the current release); `[ ]` = requires bench hardware, RF range test, or flight-day field activity — team must sign off manually.
+
+
+- [x] Green `./scripts/verify.sh`.
 - [ ] Telemetry link closes at worst-case launch-site distance (≥ 2 km with yagi).
 - [ ] GNSS cold-start ≤ 45 s indoors with an active antenna, ≤ 90 s outdoors on battery.
-- [ ] Parachute eject mechanism fires within 50 ms of apogee detection (SITL).
+- [x] Parachute eject mechanism fires within 50 ms of apogee detection (SITL).
 - [ ] Descent rate stays inside [6, 11] m/s in a 1 : 10 drop test from a tower or UAV.
 - [ ] Camera records ≥ 1 minute of 5 fps video without frame drops.
 - [ ] On-board CSV logger writes at 10 Hz for 15 minutes without loss.
-- [ ] HMAC key rotation check: `KeyRotationPolicy.check_before_send()` returns `ok`.
+- [x] HMAC key rotation check: `KeyRotationPolicy.check_before_send()` returns `ok`.
 
 ## 10. Flight-day checklist
 
