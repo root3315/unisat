@@ -20,7 +20,6 @@ from __future__ import annotations
 
 import csv
 import io
-import random
 import subprocess
 import sys
 import time
@@ -30,28 +29,26 @@ import streamlit as st
 
 # Ensure the project's Python packages resolve
 REPO = Path(__file__).resolve().parent.parent
-for sub in ("flight-software", "ground-station", "configurator", "simulation"):
+for sub in ("flight-software", "ground-station", "configurator", "simulation", "tools"):
     path = REPO / sub
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
-from core.feature_flags import FEATURES, resolve_flags           # noqa: E402
-from core.form_factors import (                                  # noqa: E402
+from cansat_sim import average_descent_rate, simulate_cansat_flight  # noqa: E402
+from core.feature_flags import resolve_flags                          # noqa: E402
+from core.form_factors import (                                      # noqa: E402
     FormFactorClass,
     get_form_factor,
-    list_by_family,
     list_form_factors,
 )
-from core.mission_types import (                                 # noqa: E402
-    MissionType,
-    build_profile_from_config,
+from core.mission_types import (                                     # noqa: E402
     get_mission_profile,
     list_mission_types,
 )
 
-from validators.mass_validator import validate_mass              # noqa: E402
-from validators.volume_validator import validate_volume          # noqa: E402
-from validators.power_validator import validate_power            # noqa: E402
+from validators.mass_validator import validate_mass                  # noqa: E402
+from validators.power_validator import validate_power                # noqa: E402
+from validators.volume_validator import validate_volume              # noqa: E402
 
 
 st.set_page_config(
@@ -173,7 +170,21 @@ with tab_mission:
     )
 
     profile = get_mission_profile(mt)
-    ff_key = profile.competition.get("form_factor", mt)
+    # Mission types like "cubesat_leo" don't match any form-factor key.
+    # Map common aliases to the registered form factor they represent.
+    _MT_TO_FF = {
+        "cubesat_leo": "cubesat_3u",
+        "cubesat_sso": "cubesat_3u",
+        "cubesat_tech_demo": "cubesat_3u",
+        "rocket_competition": "rocket_payload",
+        "rocket_sounding": "rocket_payload",
+        "hab_standard": "hab_payload",
+        "hab_long_duration": "hab_payload",
+        "drone_survey": "drone_small",
+        "drone_inspection": "drone_small",
+        "rover_exploration": "rover_small",
+    }
+    ff_key = profile.competition.get("form_factor") or _MT_TO_FF.get(mt, mt)
 
     st.caption(f"Platform: **{profile.platform.value}** · "
                f"initial phase: **{profile.initial_phase}** · "
@@ -237,12 +248,12 @@ with tab_mission:
             c1, c2 = st.columns(2)
             with c1:
                 st.markdown("**🟢 Enabled**")
-                for flag in resolved.enabled:
+                for flag in sorted(resolved.enabled):
                     reason = resolved.reasons.get(flag, "")
                     st.markdown(f"- `{flag}` — {reason}")
             with c2:
                 st.markdown("**⚪ Disabled**")
-                for flag in resolved.disabled:
+                for flag in sorted(resolved.disabled):
                     reason = resolved.reasons.get(flag, "")
                     st.markdown(f"- `{flag}` — {reason}")
             if resolved.warnings:
@@ -252,58 +263,6 @@ with tab_mission:
 # ---------------------------------------------------------------------------
 # Tab 3 — CanSat SITL
 # ---------------------------------------------------------------------------
-
-def simulate_cansat_flight(max_altitude_m: float,
-                           target_descent_rate_ms: float,
-                           dt: float = 0.1) -> list[dict]:
-    """Minimal stand-alone SITL producing a plottable trajectory.
-
-    Mirrors the dynamics in ``flight-software/run_cansat.py`` — kept
-    here as a pure function so we can feed results straight into
-    Streamlit charts without spawning the full flight controller.
-    """
-    samples = []
-    t = 0.0
-    altitude = 0.0
-    velocity = 0.0
-    phase = "pre_launch"
-    ascent_a = max_altitude_m / 25.0  # rough boost accel to reach max_alt in ~5s
-    descent_v = -target_descent_rate_ms
-
-    # Launch
-    phase = "ascent"
-    while altitude < max_altitude_m:
-        velocity += ascent_a * dt
-        altitude += velocity * dt - 0.5 * 9.81 * dt * dt
-        if velocity <= 0:
-            break
-        samples.append({
-            "t": round(t, 2), "altitude_m": round(altitude, 2),
-            "velocity_ms": round(velocity, 2), "phase": phase,
-        })
-        t += dt
-
-    # Apogee
-    phase = "apogee"
-    samples.append({"t": round(t, 2), "altitude_m": round(altitude, 2),
-                    "velocity_ms": 0.0, "phase": phase})
-    t += 0.5
-
-    # Parachute descent at target rate
-    phase = "descent"
-    while altitude > 0:
-        altitude += descent_v * dt
-        samples.append({
-            "t": round(t, 2), "altitude_m": round(max(altitude, 0), 2),
-            "velocity_ms": descent_v + random.uniform(-0.3, 0.3),
-            "phase": phase,
-        })
-        t += dt
-
-    samples.append({"t": round(t, 2), "altitude_m": 0.0,
-                    "velocity_ms": 0.0, "phase": "landed"})
-    return samples
-
 
 with tab_sitl:
     st.subheader("CanSat SITL — simulated flight")
@@ -349,10 +308,8 @@ with tab_sitl:
                     f"({len(ts)} samples)")
 
     # Competition verdict
-    descent_samples = [s for s in samples if s["phase"] == "descent"][:-1]
-    if descent_samples:
-        avg_rate = abs(sum(s["velocity_ms"] for s in descent_samples)
-                       / len(descent_samples))
+    avg_rate = average_descent_rate(samples)
+    if avg_rate > 0:
         ok = 6.0 <= avg_rate <= 11.0
         if ok:
             st.success(f"✅ Descent rate **{avg_rate:.1f} m/s** — inside "
@@ -438,21 +395,23 @@ with tab_tests:
     )
 
     SUITES = {
-        "flight-software (299)": ["python", "-m", "pytest",
+        "flight-software (299)": [sys.executable, "-m", "pytest",
                                   "flight-software/tests", "-q"],
-        "ground-station (94)":   ["python", "-m", "pytest",
+        "ground-station (94)":   [sys.executable, "-m", "pytest",
                                   "ground-station/tests", "-q",
                                   "--ignore=ground-station/tests/test_pages_smoke.py"],
-        "configurator (21)":     ["python", "-m", "pytest",
+        "configurator (21)":     [sys.executable, "-m", "pytest",
                                   "configurator/tests", "-q"],
-        "simulation (57)":       ["python", "-m", "pytest",
+        "simulation (57)":       [sys.executable, "-m", "pytest",
                                   "simulation/tests", "-q"],
-        "ruff (all)":            ["python", "-m", "ruff", "check",
+        "ruff (all)":            [sys.executable, "-m", "ruff", "check",
                                   "flight-software/core",
                                   "flight-software/modules",
                                   "ground-station", "simulation",
                                   "configurator"],
-        "mypy --strict":         ["python", "-m", "mypy",
+        "mypy --strict":         [sys.executable, "-m", "mypy",
+                                  "--config-file",
+                                  "flight-software/pyproject.toml",
                                   "flight-software/core",
                                   "flight-software/modules"],
     }
@@ -528,7 +487,7 @@ with tab_fw:
 with st.sidebar:
     st.markdown("### UniSat Lab")
     st.caption(f"Repo: `{REPO.name}`")
-    st.caption(f"Version: v1.4.3")
+    st.caption("Version: v1.4.3")
     st.markdown("---")
     st.markdown("#### Useful links")
     st.markdown("- [`docs/README.md`](../docs/README.md)")

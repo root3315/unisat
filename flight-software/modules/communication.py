@@ -147,7 +147,7 @@ class CommunicationManager(BaseModule):
             self.record_error("Serial port not open, packet queued")
             return False
         try:
-            written = self._serial.write(packet)
+            written = self._serial.write(packet) or 0
             self._bytes_sent += written
             self.logger.debug("TX %d bytes", written)
             return True

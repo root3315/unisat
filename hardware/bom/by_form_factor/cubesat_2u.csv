@@ -1,16 +1,24 @@
-component,mass_kg,volume_cm3,notes
-structure,0.30,180,2U aluminium skeleton
-harness,0.12,50,
-obc,0.15,50,
-eps_board,0.10,60,
-battery_pack,0.40,180,4x 18650
-solar_panels,0.18,70,6 body-mounted
-comm_uhf,0.10,40,
-comm_sband,0.12,50,2.4 GHz patch
-adcs_magnetorquers,0.15,100,
-adcs_sensors,0.08,20,
-gnss,0.05,15,
-imu,0.02,5,
-camera,0.25,70,8 MP
-payload,0.18,80,science
-thermal,0.10,18,
+Category,Component,Part Number,Qty,Unit Price (USD),Mass (g),Supplier,Notes
+Structure,CubeSat Frame 2U,CS-2U-AL,1,170.00,300,Custom,2U aluminium skeleton
+Structure,PCB Spacers M3,M3-SPACER,16,0.50,8,Generic,Brass standoffs
+OBC,STM32F446RE Nucleo Board,NUCLEO-F446RE,1,15.00,30,ST,Main MCU
+OBC,microSD Card Module,SD-SPI,1,3.00,3,Generic,Data storage
+EPS,Solar Cell 40x80mm GaAs,SC-3G30A,6,45.00,60,SpectroLab,Body-mounted
+EPS,18650 Li-ion Cell 3400mAh,NCR18650B,4,8.00,200,Panasonic,Battery pack 4P
+EPS,MPPT Charge Controller,SPV1040,1,5.00,2,ST,Solar charger IC
+COMM,UHF Transceiver 437MHz,CC1125,1,12.00,3,TI,AX.25 compatible
+COMM,S-band Transceiver,XR-Sband,1,150.00,60,Custom,2400 MHz patch
+COMM,UHF Antenna (deployable),DPLA-437,1,25.00,20,Custom,Quarter-wave monopole
+COMM,Patch Antenna S-band,PATCH-SBAND,1,80.00,25,Custom,Nadir-pointing
+ADCS,Magnetorquer Coil Set,MTQ-3X,3,15.00,60,Custom,Air-core coils
+ADCS,Magnetometer LIS3MDL,LIS3MDLTR,1,3.50,1,ST,3-axis digital
+ADCS,IMU MPU-9250,MPU-9250,1,8.00,1,InvenSense,9-DOF
+ADCS,Sun Sensor Photodiode,BPW34,6,1.50,6,Osram,One per face
+Sensor,BME280 Environmental,BME280,1,4.00,1,Bosch,Temp/Press/Humidity
+Sensor,TMP117 Precision Temp,TMP117,2,5.00,2,TI,±0.1°C accuracy
+GNSS,u-blox MAX-M10S,MAX-M10S,1,15.00,3,u-blox,Multi-GNSS receiver
+Camera,Camera 8MP,IMX219,1,25.00,15,Sony,MIPI CSI-2
+Payload,Payload slot,PL-SLOT,1,0.00,0,Custom,180 g headroom for experiment
+Thermal,MLI Blanket 5-layer,MLI-5L,1,35.00,25,Custom,Kapton/Mylar
+Harness,Wire Harness Kit,AWG30-KIT,1,25.00,22,Custom,Kapton insulated
+,,,,TOTAL,847,,~2.7 kg with mass reserve for payload
