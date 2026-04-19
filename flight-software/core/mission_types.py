@@ -1,9 +1,19 @@
-"""Mission type registry — defines supported platforms and competition profiles.
+"""Mission type registry — platform categories, phases, and profile lookup.
 
-Each MissionType describes the platform category, default mission phases,
-required/optional modules, and competition-specific constraints. The flight
-controller loads the appropriate profile from mission_config.json and uses
-it to configure the state machine, module registry, and power manager.
+Public surface:
+    * :class:`PlatformCategory` — top-level vehicle category.
+    * :class:`MissionType` — concrete profile identifier.
+    * :class:`PhaseDefinition` — one phase in a mission.
+    * :class:`MissionProfile` — full profile (phases + modules + metadata).
+    * :func:`get_mission_profile` — lookup by ``MissionType``.
+    * :func:`register_mission_profile` — register a custom profile.
+    * :func:`list_mission_types` — every registered type.
+    * :func:`build_profile_from_config` — resolve from ``mission_config.json``.
+
+Built-in profiles live in :mod:`core._profiles` and are registered on
+module import. The flight controller consumes
+:func:`get_mission_profile` to configure the state machine, module
+registry, and power manager.
 """
 
 from __future__ import annotations
@@ -133,494 +143,6 @@ class MissionProfile:
 
 
 # ---------------------------------------------------------------------------
-# Built-in mission profiles
-# ---------------------------------------------------------------------------
-
-def _cubesat_leo_profile() -> MissionProfile:
-    return MissionProfile(
-        mission_type=MissionType.CUBESAT_LEO,
-        platform=PlatformCategory.CUBESAT,
-        phases=[
-            PhaseDefinition(
-                name="startup",
-                transitions_to=["deployment", "safe_mode"],
-                timeout_s=300,
-                auto_next="deployment",
-            ),
-            PhaseDefinition(
-                name="deployment",
-                display_name="Antenna/Panel Deployment",
-                transitions_to=["detumbling", "safe_mode"],
-                timeout_s=1800,
-                auto_next="detumbling",
-                required_modules=["telemetry", "health", "eps"],
-            ),
-            PhaseDefinition(
-                name="detumbling",
-                transitions_to=["nominal", "safe_mode"],
-                timeout_s=3600,
-                auto_next="nominal",
-                required_modules=["telemetry", "health", "adcs", "eps"],
-            ),
-            PhaseDefinition(
-                name="nominal",
-                transitions_to=["science", "comm_window", "safe_mode", "low_power"],
-                required_modules=["telemetry", "health", "adcs", "eps", "comm", "scheduler"],
-            ),
-            PhaseDefinition(
-                name="science",
-                display_name="Science/Payload Operations",
-                transitions_to=["nominal", "safe_mode", "low_power"],
-                required_modules=["telemetry", "health", "payload", "data_logger"],
-            ),
-            PhaseDefinition(
-                name="comm_window",
-                display_name="Communication Window",
-                transitions_to=["nominal", "safe_mode"],
-                required_modules=["telemetry", "comm", "data_logger"],
-            ),
-            PhaseDefinition(
-                name="low_power",
-                transitions_to=["nominal", "safe_mode"],
-                required_modules=["telemetry", "health", "eps"],
-                disabled_modules=["camera", "payload", "comm_sband"],
-            ),
-            PhaseDefinition(
-                name="safe_mode",
-                transitions_to=["nominal", "low_power"],
-                required_modules=["telemetry", "health", "comm"],
-                disabled_modules=["camera", "payload", "comm_sband", "adcs"],
-            ),
-        ],
-        initial_phase="startup",
-        core_modules=["telemetry", "data_logger", "health", "scheduler", "eps"],
-        optional_modules=["comm", "adcs", "camera", "payload", "gnss", "orbit_predictor"],
-        default_telemetry_hz=1.0,
-        safe_mode_config={"comm_timeout_s": 86400, "beacon_interval_s": 30},
-        power_config={"soc_low": 30.0, "soc_critical": 15.0},
-    )
-
-
-def _cansat_standard_profile() -> MissionProfile:
-    return MissionProfile(
-        mission_type=MissionType.CANSAT_STANDARD,
-        platform=PlatformCategory.CANSAT,
-        phases=[
-            PhaseDefinition(
-                name="pre_launch",
-                display_name="Pre-Launch / Ground Checkout",
-                transitions_to=["launch_detect"],
-                required_modules=["telemetry", "health", "imu", "barometer"],
-            ),
-            PhaseDefinition(
-                name="launch_detect",
-                display_name="Launch Detection",
-                transitions_to=["ascent", "pre_launch"],
-                timeout_s=600,
-                auto_next="pre_launch",
-                required_modules=["telemetry", "imu", "barometer"],
-            ),
-            PhaseDefinition(
-                name="ascent",
-                transitions_to=["apogee"],
-                timeout_s=120,
-                auto_next="apogee",
-                required_modules=["telemetry", "imu", "barometer", "data_logger"],
-            ),
-            PhaseDefinition(
-                name="apogee",
-                display_name="Apogee / Ejection",
-                transitions_to=["descent"],
-                timeout_s=30,
-                auto_next="descent",
-                required_modules=["telemetry", "imu", "barometer", "descent_controller"],
-            ),
-            PhaseDefinition(
-                name="descent",
-                display_name="Parachute Descent",
-                transitions_to=["landed"],
-                timeout_s=300,
-                auto_next="landed",
-                required_modules=["telemetry", "imu", "barometer", "descent_controller",
-                                  "data_logger", "payload"],
-            ),
-            PhaseDefinition(
-                name="landed",
-                transitions_to=[],
-                timeout_s=3600,
-                required_modules=["telemetry", "comm"],
-                disabled_modules=["descent_controller"],
-            ),
-        ],
-        initial_phase="pre_launch",
-        core_modules=["telemetry", "data_logger", "health", "imu", "barometer"],
-        optional_modules=["comm", "camera", "payload", "descent_controller", "gnss"],
-        default_telemetry_hz=10.0,
-        safe_mode_config={"comm_timeout_s": 300, "beacon_interval_s": 5},
-        power_config={"soc_low": 20.0, "soc_critical": 10.0},
-        competition={
-            "type": "cansat",
-            "max_mass_g": 500,
-            "outer_diameter_mm": 68,
-            "inner_diameter_mm": 64,
-            "height_mm": 80,
-            "descent_rate_range_m_s": [6.0, 11.0],
-            "max_landing_velocity_m_s": 12.0,
-            "min_telemetry_samples": 100,
-        },
-    )
-
-
-def _rocket_competition_profile() -> MissionProfile:
-    return MissionProfile(
-        mission_type=MissionType.ROCKET_COMPETITION,
-        platform=PlatformCategory.SUBORBITAL_ROCKET,
-        phases=[
-            PhaseDefinition(
-                name="ground_checkout",
-                display_name="Ground Checkout",
-                transitions_to=["armed"],
-                required_modules=["telemetry", "health", "imu"],
-            ),
-            PhaseDefinition(
-                name="armed",
-                transitions_to=["boost", "ground_checkout"],
-                timeout_s=600,
-                auto_next="ground_checkout",
-                required_modules=["telemetry", "imu", "barometer"],
-            ),
-            PhaseDefinition(
-                name="boost",
-                display_name="Boost Phase",
-                transitions_to=["coast"],
-                timeout_s=30,
-                auto_next="coast",
-                required_modules=["telemetry", "imu", "barometer", "data_logger"],
-            ),
-            PhaseDefinition(
-                name="coast",
-                display_name="Coast Phase",
-                transitions_to=["apogee"],
-                timeout_s=60,
-                auto_next="apogee",
-                required_modules=["telemetry", "imu", "barometer", "data_logger"],
-            ),
-            PhaseDefinition(
-                name="apogee",
-                transitions_to=["drogue_descent"],
-                timeout_s=10,
-                auto_next="drogue_descent",
-                required_modules=["telemetry", "imu", "barometer"],
-            ),
-            PhaseDefinition(
-                name="drogue_descent",
-                display_name="Drogue Descent",
-                transitions_to=["main_descent"],
-                required_modules=["telemetry", "imu", "barometer", "data_logger"],
-            ),
-            PhaseDefinition(
-                name="main_descent",
-                display_name="Main Chute Descent",
-                transitions_to=["landed"],
-                required_modules=["telemetry", "imu", "barometer", "data_logger"],
-            ),
-            PhaseDefinition(
-                name="landed",
-                transitions_to=[],
-                required_modules=["telemetry", "comm"],
-            ),
-        ],
-        initial_phase="ground_checkout",
-        core_modules=["telemetry", "data_logger", "health", "imu", "barometer"],
-        optional_modules=["comm", "payload", "gnss", "camera"],
-        default_telemetry_hz=20.0,
-        safe_mode_config={"comm_timeout_s": 600, "beacon_interval_s": 10},
-        power_config={"soc_low": 20.0, "soc_critical": 10.0},
-        competition={
-            "type": "rocket",
-            "target_altitude_m": 3048,
-            "max_acceleration_g": 20,
-        },
-    )
-
-
-def _hab_standard_profile() -> MissionProfile:
-    return MissionProfile(
-        mission_type=MissionType.HAB_STANDARD,
-        platform=PlatformCategory.HIGH_ALTITUDE_BALLOON,
-        phases=[
-            PhaseDefinition(
-                name="ground_setup",
-                display_name="Ground Setup / Inflation",
-                transitions_to=["ascent"],
-                required_modules=["telemetry", "health", "barometer"],
-            ),
-            PhaseDefinition(
-                name="ascent",
-                transitions_to=["float", "burst"],
-                timeout_s=10800,
-                auto_next="float",
-                required_modules=["telemetry", "health", "barometer", "gnss",
-                                  "data_logger", "payload", "camera"],
-            ),
-            PhaseDefinition(
-                name="float",
-                display_name="Float Altitude",
-                transitions_to=["burst"],
-                timeout_s=7200,
-                auto_next="burst",
-                required_modules=["telemetry", "health", "barometer", "gnss",
-                                  "data_logger", "payload", "camera"],
-            ),
-            PhaseDefinition(
-                name="burst",
-                display_name="Balloon Burst",
-                transitions_to=["descent"],
-                timeout_s=10,
-                auto_next="descent",
-                required_modules=["telemetry", "barometer", "gnss"],
-            ),
-            PhaseDefinition(
-                name="descent",
-                transitions_to=["landed"],
-                timeout_s=5400,
-                auto_next="landed",
-                required_modules=["telemetry", "barometer", "gnss", "comm", "data_logger"],
-            ),
-            PhaseDefinition(
-                name="landed",
-                transitions_to=[],
-                required_modules=["telemetry", "comm", "gnss"],
-            ),
-        ],
-        initial_phase="ground_setup",
-        core_modules=["telemetry", "data_logger", "health", "barometer", "gnss"],
-        optional_modules=["comm", "camera", "payload", "imu"],
-        default_telemetry_hz=0.5,
-        safe_mode_config={"comm_timeout_s": 7200, "beacon_interval_s": 60},
-        power_config={"soc_low": 25.0, "soc_critical": 10.0},
-    )
-
-
-def _drone_survey_profile() -> MissionProfile:
-    return MissionProfile(
-        mission_type=MissionType.DRONE_SURVEY,
-        platform=PlatformCategory.DRONE,
-        phases=[
-            PhaseDefinition(
-                name="preflight",
-                display_name="Pre-Flight Check",
-                transitions_to=["armed"],
-                required_modules=["telemetry", "health", "imu", "gnss"],
-            ),
-            PhaseDefinition(
-                name="armed",
-                transitions_to=["takeoff", "preflight"],
-                timeout_s=120,
-                auto_next="preflight",
-                required_modules=["telemetry", "health", "imu", "gnss"],
-            ),
-            PhaseDefinition(
-                name="takeoff",
-                transitions_to=["mission_flight"],
-                timeout_s=60,
-                auto_next="mission_flight",
-                required_modules=["telemetry", "imu", "gnss", "barometer"],
-            ),
-            PhaseDefinition(
-                name="mission_flight",
-                display_name="Mission Flight",
-                transitions_to=["return_to_home", "landing", "emergency"],
-                required_modules=["telemetry", "imu", "gnss", "camera",
-                                  "payload", "data_logger"],
-            ),
-            PhaseDefinition(
-                name="return_to_home",
-                display_name="Return to Home",
-                transitions_to=["landing", "emergency"],
-                required_modules=["telemetry", "imu", "gnss"],
-                disabled_modules=["camera", "payload"],
-            ),
-            PhaseDefinition(
-                name="landing",
-                transitions_to=["landed"],
-                timeout_s=120,
-                auto_next="landed",
-                required_modules=["telemetry", "imu", "gnss", "barometer"],
-            ),
-            PhaseDefinition(
-                name="landed",
-                transitions_to=["preflight"],
-                required_modules=["telemetry", "health"],
-            ),
-            PhaseDefinition(
-                name="emergency",
-                display_name="Emergency Landing",
-                transitions_to=["landed"],
-                required_modules=["telemetry", "imu", "gnss"],
-                disabled_modules=["camera", "payload"],
-            ),
-        ],
-        initial_phase="preflight",
-        core_modules=["telemetry", "data_logger", "health", "imu", "gnss", "barometer"],
-        optional_modules=["comm", "camera", "payload"],
-        default_telemetry_hz=10.0,
-        safe_mode_config={"comm_timeout_s": 300, "beacon_interval_s": 5},
-        power_config={"soc_low": 25.0, "soc_critical": 15.0},
-    )
-
-
-# ---------------------------------------------------------------------------
-# CubeSat size variants
-# ---------------------------------------------------------------------------
-#
-# Each size shares the LEO phase graph (startup → deployment → detumbling →
-# nominal → …) but tunes the module list, telemetry rate, and safe-mode
-# parameters to match the energy budget and typical payload fit of that
-# physical size.  The form-factor registry is the authoritative source for
-# mass / volume / power envelopes — these profiles only carry *software*
-# defaults.
-
-
-def _cubesat_sized_profile(
-    mission_type: MissionType,
-    form_factor_key: str,
-    *,
-    telemetry_hz: float,
-    optional_modules: list[str],
-) -> MissionProfile:
-    """Build a size-specific CubeSat profile reusing the LEO phase graph.
-
-    Args:
-        mission_type: The MissionType enum value for this profile.
-        form_factor_key: The form-factor key (``"cubesat_1u"`` …).
-        telemetry_hz: Default telemetry rate; smaller units downlink slower.
-        optional_modules: Module names that may be enabled on this size.
-    """
-    leo = _cubesat_leo_profile()
-    return MissionProfile(
-        mission_type=mission_type,
-        platform=PlatformCategory.CUBESAT,
-        phases=leo.phases,
-        initial_phase=leo.initial_phase,
-        core_modules=list(leo.core_modules),
-        optional_modules=list(optional_modules),
-        default_telemetry_hz=telemetry_hz,
-        safe_mode_config=dict(leo.safe_mode_config),
-        power_config=dict(leo.power_config),
-        competition={"form_factor": form_factor_key},
-    )
-
-
-def _cubesat_1u_profile() -> MissionProfile:
-    return _cubesat_sized_profile(
-        MissionType.CUBESAT_1U, "cubesat_1u",
-        telemetry_hz=0.2,
-        optional_modules=["comm", "gnss"],
-    )
-
-
-def _cubesat_1_5u_profile() -> MissionProfile:
-    return _cubesat_sized_profile(
-        MissionType.CUBESAT_1_5U, "cubesat_1_5u",
-        telemetry_hz=0.5,
-        optional_modules=["comm", "gnss", "camera"],
-    )
-
-
-def _cubesat_2u_profile() -> MissionProfile:
-    return _cubesat_sized_profile(
-        MissionType.CUBESAT_2U, "cubesat_2u",
-        telemetry_hz=0.5,
-        optional_modules=["comm", "adcs", "gnss", "camera", "payload"],
-    )
-
-
-def _cubesat_3u_profile() -> MissionProfile:
-    return _cubesat_sized_profile(
-        MissionType.CUBESAT_3U, "cubesat_3u",
-        telemetry_hz=1.0,
-        optional_modules=["comm", "adcs", "gnss", "camera", "payload",
-                          "orbit_predictor", "image_processor"],
-    )
-
-
-def _cubesat_6u_profile() -> MissionProfile:
-    return _cubesat_sized_profile(
-        MissionType.CUBESAT_6U, "cubesat_6u",
-        telemetry_hz=2.0,
-        optional_modules=["comm", "adcs", "gnss", "camera", "payload",
-                          "orbit_predictor", "image_processor"],
-    )
-
-
-def _cubesat_12u_profile() -> MissionProfile:
-    return _cubesat_sized_profile(
-        MissionType.CUBESAT_12U, "cubesat_12u",
-        telemetry_hz=5.0,
-        optional_modules=["comm", "adcs", "gnss", "camera", "payload",
-                          "orbit_predictor", "image_processor"],
-    )
-
-
-# ---------------------------------------------------------------------------
-# CanSat variants
-# ---------------------------------------------------------------------------
-
-
-def _cansat_minimal_profile() -> MissionProfile:
-    """Lightweight CanSat (≤350 g) — telemetry only, no parachute pyro."""
-    base = _cansat_standard_profile()
-    return MissionProfile(
-        mission_type=MissionType.CANSAT_MINIMAL,
-        platform=PlatformCategory.CANSAT,
-        phases=base.phases,
-        initial_phase=base.initial_phase,
-        core_modules=["telemetry", "data_logger", "health", "imu", "barometer"],
-        optional_modules=["comm", "gnss"],
-        default_telemetry_hz=4.0,
-        safe_mode_config=dict(base.safe_mode_config),
-        power_config={"soc_low": 20.0, "soc_critical": 10.0},
-        competition={
-            "type": "cansat",
-            "form_factor": "cansat_minimal",
-            "max_mass_g": 350,
-            "outer_diameter_mm": 66,
-            "inner_diameter_mm": 64,
-            "height_mm": 115,
-            "descent_rate_range_m_s": [5.0, 15.0],
-        },
-    )
-
-
-def _cansat_advanced_profile() -> MissionProfile:
-    """Advanced CanSat with autorotator, secondary payload, guided descent."""
-    base = _cansat_standard_profile()
-    return MissionProfile(
-        mission_type=MissionType.CANSAT_ADVANCED,
-        platform=PlatformCategory.CANSAT,
-        phases=base.phases,
-        initial_phase=base.initial_phase,
-        core_modules=list(base.core_modules) + ["descent_controller"],
-        optional_modules=["comm", "camera", "payload", "gnss", "image_processor"],
-        default_telemetry_hz=20.0,
-        safe_mode_config=dict(base.safe_mode_config),
-        power_config={"soc_low": 25.0, "soc_critical": 12.0},
-        competition={
-            "type": "cansat",
-            "form_factor": "cansat_advanced",
-            "max_mass_g": 500,
-            "outer_diameter_mm": 68,
-            "inner_diameter_mm": 64,
-            "height_mm": 115,
-            "descent_rate_range_m_s": [6.0, 11.0],
-            "max_landing_velocity_m_s": 12.0,
-            "min_telemetry_samples": 200,
-        },
-    )
-
-
-# ---------------------------------------------------------------------------
 # Profile registry
 # ---------------------------------------------------------------------------
 
@@ -628,22 +150,13 @@ _PROFILES: dict[MissionType, MissionProfile] = {}
 
 
 def _register_builtins() -> None:
-    """Register all built-in mission profiles."""
-    for factory in [
-        _cubesat_leo_profile,
-        _cubesat_1u_profile,
-        _cubesat_1_5u_profile,
-        _cubesat_2u_profile,
-        _cubesat_3u_profile,
-        _cubesat_6u_profile,
-        _cubesat_12u_profile,
-        _cansat_minimal_profile,
-        _cansat_standard_profile,
-        _cansat_advanced_profile,
-        _rocket_competition_profile,
-        _hab_standard_profile,
-        _drone_survey_profile,
-    ]:
+    """Register all built-in mission profiles from ``core._profiles``."""
+    # Imported here to avoid a circular import: _profiles/*.py depend on
+    # MissionProfile / MissionType / PhaseDefinition / PlatformCategory
+    # defined above.
+    from . import _profiles  # noqa: PLC0415
+
+    for factory in _profiles.BUILTIN_FACTORIES:
         profile = factory()
         _PROFILES[profile.mission_type] = profile
 
@@ -691,7 +204,7 @@ def build_profile_from_config(config: dict[str, Any]) -> MissionProfile:
     """Build a MissionProfile from a mission_config.json dict.
 
     If config contains a known ``mission_type``, the built-in profile is
-    loaded and then overridden by any explicit config values.  If the type
+    loaded and then overridden by any explicit config values. If the type
     is ``custom``, the profile is built entirely from config.
 
     Args:
@@ -714,9 +227,7 @@ def build_profile_from_config(config: dict[str, Any]) -> MissionProfile:
     # Override phases from config if provided
     phases_cfg = mission_cfg.get("phases")
     if phases_cfg:
-        base.phases = [
-            PhaseDefinition(**p) for p in phases_cfg
-        ]
+        base.phases = [PhaseDefinition(**p) for p in phases_cfg]
         if mission_cfg.get("initial_phase"):
             base.initial_phase = mission_cfg["initial_phase"]
 
