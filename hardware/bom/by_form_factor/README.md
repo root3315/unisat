@@ -11,6 +11,8 @@ components for what you can actually procure.
 | [`cansat_standard.csv`](cansat_standard.csv) | CanSat competition | ~170 g | **~330 g** | **500 g** |
 | [`cansat_advanced.csv`](cansat_advanced.csv) | CanSat guided descent | ~250 g | ~250 g | **500 g** |
 | [`cubesat_1u.csv`](cubesat_1u.csv) | 1U CubeSat | ~420 g | ~910 g | **1.33 kg** (CDS) / 2.0 kg |
+| [`cubesat_1_5u.csv`](cubesat_1_5u.csv) | 1.5U CubeSat | ~680 g | ~2.32 kg | **3.0 kg** |
+| [`cubesat_2u.csv`](cubesat_2u.csv) | 2U CubeSat | ~990 g | ~3.01 kg | **4.0 kg** |
 | [`cubesat_3u.csv`](cubesat_3u.csv) | 3U CubeSat | ~1.28 kg | ~2.72 kg | **4.0 kg** (CDS) / 6.0 kg |
 | [`cubesat_6u.csv`](cubesat_6u.csv) | 6U CubeSat | ~7.1 kg | ~4.9 kg | **12 kg** |
 | [`cubesat_12u.csv`](cubesat_12u.csv) | 12U CubeSat | ~16 kg | ~8 kg | **24 kg** |

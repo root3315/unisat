@@ -5,6 +5,109 @@ All notable changes to UniSat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-04-19 — Reliability hardening + per-profile ops + key rotation
+
+Cherry-picks the seven genuinely new changes from the
+`root3315/code-review-fixes` branch. The branch also contained a
+parallel re-implementation of v1.3.0 universal-platform; that half
+was skipped since master already has it. Net effect: real bug
+fix + three new firmware/ground-station capabilities + richer
+per-profile docs, with zero rework of existing subsystems.
+
+### Fixed
+
+- **`flight-software/core/event_bus.py`** — `EventBus.subscribe`
+  blindly appended handlers; a caller that subscribed the same
+  handler twice would see each publish fire the handler twice, and
+  one unsubscribe only removed the first entry — leaking a live
+  duplicate that silently kept reacting. Now dedupes on registration
+  and logs repeated subscribes at debug level. Regression test
+  `test_subscribe_is_idempotent` in `test_event_bus.py` drives the
+  three-subscribe / one-unsubscribe sequence.
+
+### Added — Firmware reliability
+
+- **Reboot-loop guard** (`firmware/stm32/Core/Src/main.c`,
+  `fdir_persistent.c`). If the `.noinit` `reboot_count` shows more
+  than `FDIR_REBOOT_LOOP_THRESHOLD` (5) consecutive warm resets, boot
+  engages a reboot-suppression flag in the mode manager: FDIR
+  recommendations of `RECOVERY_REBOOT` are diverted to `SAFE` mode
+  instead. Ground has to clear the flag (and typically the .noinit
+  ring via a diag command) once the faulty subsystem is isolated —
+  otherwise a board-level intermittent takes the vehicle down in a
+  tight reset loop with no chance for operator intervention.
+- **Grayscale FDIR** (`firmware/stm32/Core/Src/fdir.c`). Sensor
+  degradation used to be binary — either nominal or faulted. Now
+  `fdir_report_grayscale(fault_id, severity_0_to_255)` accumulates
+  a per-sensor health score; DEGRADED mode kicks in at score ≥ 128
+  while the sensor is still usable, full REBOOT only at ≥ 224. Lets
+  the vehicle keep flying with partially-working instruments instead
+  of hard-failing at the first glitch.
+
+### Added — Ground station
+
+- **HMAC key-rotation policy** (`ground-station/utils/key_rotation.py`).
+  Firmware already supported A/B key rotation via `key_store`; this
+  module adds the operator-facing *policy*: when to actually press
+  the button. Knobs: `WARN_THRESHOLD_PCT` (50 %, orange chip in UI),
+  `ROTATE_THRESHOLD_PCT` (80 %, hard-refuses further signatures),
+  `MAX_LIFETIME_DAYS` (365, calendar-based ceiling). 12 pytest cases
+  cover threshold math, calendar rollover, and rotate-while-signing
+  interleave.
+
+### Added — Documentation
+
+- **Per-profile ops guides** (`docs/ops/` — 11 files + a README):
+  `cansat_minimal.md`, `cansat_standard.md`, `cansat_advanced.md`,
+  `cubesat_1u.md` through `cubesat_12u.md`, `rocket_avionics.md`,
+  `hab_payload.md`, `drone.md`. Each covers setup → build → flight
+  → post-flight for that specific form factor. More granular than
+  the previous single-file `docs/OPERATIONS_GUIDE.md` (kept alongside
+  as a platform-agnostic overview).
+- **Radiation budget** (`docs/hardware/radiation_budget.md`) —
+  design-level TID / SEE budget for STM32F446RE + sensor stack +
+  CC1125 / RFM radios, per orbital class (LEO equatorial → SSO 600
+  km → HEO). Input spec for board-level accelerated testing, not a
+  substitute for it.
+
+### Added — Hardware
+
+- **`cubesat_1_5u.csv` + `cubesat_2u.csv` reference BOMs** fill the
+  two remaining gaps in `hardware/bom/by_form_factor/`. Every
+  CubeSat size registered in `form_factors.py` now has a BOM. README
+  updated with bare-kit mass and payload headroom for both.
+
+### Changed
+
+- **`README.md`** "Supported Form Factors" section merged: every row
+  now has both the reference BOM and the per-profile ops guide link.
+  Competition Adaptation table gains an "Ops guide" column pointing
+  into `docs/ops/*.md`.
+- **`configurator/tests/test_validators.py`** — two new mission-
+  template cross-consistency tests catch orphan `form_factor` keys
+  that would silently fall back to the 3U default.
+- **Drone / HAB mission templates** (`mission_templates/`) point at
+  the canonical `form_factor` keys (`drone_small` / `hab_payload`)
+  instead of historical aliases.
+
+### Test pass
+
+- 435 Python tests green: 263 flight-software + 94 ground-station
+  + 57 simulation + 21 configurator (was 420 before this release).
+- `ruff` clean across all four Python packages.
+- `mypy --strict` clean on all 23 `flight-software` source files.
+- Firmware host ctest + ARM cross-compile footprint unchanged from
+  1.3.0 (31.6 KB flash / 36.3 KB RAM).
+
+### Skipped (intentionally)
+
+- The 10 parallel-implementation commits on `root3315/code-review-fixes`
+  that re-did v1.3.0 universal-platform work already on master were
+  left behind. Merging them would have wiped `CLAUDE.md`,
+  `docs/universal_platform.md`, `docs/OPERATIONS_GUIDE.md`, the five
+  configurator templates added in 1.3.1, and the v1.3.1/v1.3.2
+  CHANGELOG entries.
+
 ## [1.3.2] - 2026-04-18 — Full audit: docs sync + lint clean
 
 Full repository audit after the 1.3.1 polish. Zero behavioural changes;
