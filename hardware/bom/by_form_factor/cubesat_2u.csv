@@ -1,0 +1,16 @@
+component,mass_kg,volume_cm3,notes
+structure,0.30,180,2U aluminium skeleton
+harness,0.12,50,
+obc,0.15,50,
+eps_board,0.10,60,
+battery_pack,0.40,180,4x 18650
+solar_panels,0.18,70,6 body-mounted
+comm_uhf,0.10,40,
+comm_sband,0.12,50,2.4 GHz patch
+adcs_magnetorquers,0.15,100,
+adcs_sensors,0.08,20,
+gnss,0.05,15,
+imu,0.02,5,
+camera,0.25,70,8 MP
+payload,0.18,80,science
+thermal,0.10,18,

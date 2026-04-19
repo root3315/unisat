@@ -1,13 +1,16 @@
 """Tests for configurator validators."""
 
+import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from validators.mass_validator import validate_mass
+from validators.mass_validator import FORM_FACTOR_LIMITS, validate_mass
 from validators.power_validator import validate_power
-from validators.volume_validator import validate_volume
+from validators.volume_validator import FORM_FACTOR_VOLUMES, validate_volume
+
+TEMPLATES_DIR = Path(__file__).parent.parent.parent / "mission_templates"
 
 
 ALL_ENABLED = {
@@ -163,3 +166,46 @@ def test_all_registry_form_factors_validate():
         vol = validate_volume(key, ALL_ENABLED)
         assert mass.limit_kg > 0, f"{key}: zero mass limit"
         assert vol.available_cm3 >= 0, f"{key}: negative volume"
+
+
+# --- Mission-template cross-consistency ---
+#
+# Each shipped mission_templates/*.json declares a satellite.form_factor
+# that the mass + volume validators must recognise — otherwise the
+# validators silently fall back to a default limit and let obviously
+# over-budget configurations pass. Regression guard against orphan
+# keys like the historical "drone"/"hab_payload" aliases.
+
+def _template_paths() -> list[Path]:
+    return sorted(TEMPLATES_DIR.glob("*.json"))
+
+
+def test_every_template_references_a_known_form_factor():
+    assert _template_paths(), "no mission templates found"
+    for path in _template_paths():
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        ff = payload.get("satellite", {}).get("form_factor")
+        assert ff in FORM_FACTOR_LIMITS, (
+            f"{path.name}: form_factor '{ff}' is not a key of "
+            f"FORM_FACTOR_LIMITS — mass validation would silently "
+            f"fall back to the 3U default"
+        )
+        assert ff in FORM_FACTOR_VOLUMES, (
+            f"{path.name}: form_factor '{ff}' is not a key of "
+            f"FORM_FACTOR_VOLUMES — volume validation would silently "
+            f"fall back to the 3U default"
+        )
+
+
+def test_every_template_mass_fits_declared_form_factor():
+    """Declared mass_kg must not exceed the form factor's mass budget."""
+    for path in _template_paths():
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        sat = payload.get("satellite", {})
+        ff = sat["form_factor"]
+        mass = float(sat.get("mass_kg", 0.0))
+        limit = FORM_FACTOR_LIMITS[ff]
+        assert mass <= limit, (
+            f"{path.name}: declared mass {mass} kg exceeds the "
+            f"{ff} limit {limit} kg"
+        )

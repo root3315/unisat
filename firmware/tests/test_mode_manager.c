@@ -188,6 +188,66 @@ void test_degraded_stays_when_safe_not_yet_triggered(void)
     TEST_ASSERT_EQUAL(1U, s.subsystem_disables);
 }
 
+void test_reboot_suppression_diverts_fdir_reboot_to_safe(void)
+{
+    setUp();
+    ModeManager_EnterNominal();
+    ModeManager_SuppressReboot(true);
+
+    /* STACK_OVERFLOW primary = REBOOT with threshold 1 — without
+     * suppression this would arm MODE_REBOOT_PEND and fire the
+     * platform hook on the next tick. With the loop guard active,
+     * the supervisor must divert to SAFE instead. */
+    FDIR_Report(FAULT_STACK_OVERFLOW);
+    SystemMode_t m = ModeManager_Tick();
+
+    TEST_ASSERT_EQUAL(MODE_SAFE, m);
+    TEST_ASSERT_EQUAL(0, g_reboot_fired);
+
+    ModeManager_Stats_t s = ModeManager_GetStats();
+    TEST_ASSERT_EQUAL(1U, s.safe_entries);
+    TEST_ASSERT_EQUAL(0U, s.reboots_requested);
+    TEST_ASSERT_EQUAL(MODE_REASON_REBOOT_LOOP, s.last_reason);
+
+    /* Subsequent ticks keep us in SAFE, not REBOOT_PEND. */
+    (void)ModeManager_Tick();
+    TEST_ASSERT_EQUAL(0, g_reboot_fired);
+    TEST_ASSERT_EQUAL(MODE_SAFE, ModeManager_GetMode());
+}
+
+void test_reboot_suppression_blocks_direct_request(void)
+{
+    setUp();
+    ModeManager_EnterNominal();
+    ModeManager_SuppressReboot(true);
+
+    /* A direct RequestReboot must also divert to SAFE — otherwise a
+     * command handler could defeat the loop guard. */
+    ModeManager_RequestReboot(MODE_REASON_MANUAL_GROUND);
+    TEST_ASSERT_EQUAL(MODE_SAFE, ModeManager_GetMode());
+
+    ModeManager_Stats_t s = ModeManager_GetStats();
+    TEST_ASSERT_EQUAL(0U, s.reboots_requested);
+    TEST_ASSERT_EQUAL(1U, s.safe_entries);
+}
+
+void test_reboot_suppression_can_be_cleared(void)
+{
+    setUp();
+    ModeManager_EnterNominal();
+    ModeManager_SuppressReboot(true);
+    TEST_ASSERT_TRUE(ModeManager_IsRebootSuppressed());
+
+    /* Clearing the flag restores normal RECOVERY_REBOOT behaviour
+     * on the next tick. */
+    ModeManager_SuppressReboot(false);
+    TEST_ASSERT_FALSE(ModeManager_IsRebootSuppressed());
+
+    FDIR_Report(FAULT_STACK_OVERFLOW);
+    (void)ModeManager_Tick();
+    TEST_ASSERT_EQUAL(MODE_REBOOT_PEND, ModeManager_GetMode());
+}
+
 
 int main(void)
 {
@@ -201,5 +261,8 @@ int main(void)
     RUN_TEST(test_safe_mode_recovers_to_nominal_after_clear);
     RUN_TEST(test_worst_action_wins_across_multiple_faults);
     RUN_TEST(test_degraded_stays_when_safe_not_yet_triggered);
+    RUN_TEST(test_reboot_suppression_diverts_fdir_reboot_to_safe);
+    RUN_TEST(test_reboot_suppression_blocks_direct_request);
+    RUN_TEST(test_reboot_suppression_can_be_cleared);
     return UNITY_END();
 }

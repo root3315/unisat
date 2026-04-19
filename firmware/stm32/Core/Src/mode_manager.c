@@ -28,6 +28,13 @@ static SystemMode_t       g_mode   = MODE_BOOT;
 static ModeReason_t       g_reason = MODE_REASON_BOOT;
 static ModeManager_Stats_t g_stats  = {0, 0, 0, 0, 0, MODE_BOOT, MODE_REASON_BOOT};
 
+/* Reboot-loop guard. When set, FDIR-driven RECOVERY_REBOOT and
+ * explicit ModeManager_RequestReboot calls are downgraded to
+ * SAFE-mode entries so a broken subsystem that fires on every boot
+ * cannot trap the vehicle in an infinite reset cycle. Ground
+ * clears the flag once the root cause is isolated. */
+static bool g_reboot_suppressed = false;
+
 /* ------------------------------------------------------------------
  *  Platform hook — weak, so host tests link without NVIC_SystemReset.
  * ------------------------------------------------------------------ */
@@ -78,6 +85,17 @@ void ModeManager_Init(void)
     g_reason = MODE_REASON_BOOT;
     g_stats.current_mode = MODE_BOOT;
     g_stats.last_reason  = MODE_REASON_BOOT;
+    g_reboot_suppressed = false;
+}
+
+void ModeManager_SuppressReboot(bool suppress)
+{
+    g_reboot_suppressed = suppress;
+}
+
+bool ModeManager_IsRebootSuppressed(void)
+{
+    return g_reboot_suppressed;
 }
 
 SystemMode_t ModeManager_GetMode(void) { return g_mode; }
@@ -112,6 +130,16 @@ void ModeManager_EnterDegraded(ModeReason_t reason)
 
 void ModeManager_RequestReboot(ModeReason_t reason)
 {
+    /* Reboot-loop guard active: divert to SAFE instead of
+     * re-entering the reset cycle. The caller's reason code is
+     * preserved so downlink telemetry still shows what triggered
+     * the attempt. */
+    if (g_reboot_suppressed) {
+        if (g_mode != MODE_SAFE) {
+            transition(MODE_SAFE, reason);
+        }
+        return;
+    }
     /* Arm the pending-reboot state; the actual NVIC_SystemReset
      * fires on the next ModeManager_Tick call so the telemetry task
      * has a window to flush the reason code into the downlink. */
@@ -157,7 +185,14 @@ SystemMode_t ModeManager_Tick(void)
     FDIR_Recovery_t worst = worst_action();
     switch (worst) {
     case RECOVERY_REBOOT:
-        ModeManager_RequestReboot(MODE_REASON_FDIR_REBOOT);
+        if (g_reboot_suppressed) {
+            /* Loop guard: downgrade the FDIR recommendation to a
+             * SAFE-mode entry so ground can triage the root cause
+             * without the vehicle cycling through reset forever. */
+            ModeManager_EnterSafe(MODE_REASON_REBOOT_LOOP);
+        } else {
+            ModeManager_RequestReboot(MODE_REASON_FDIR_REBOOT);
+        }
         break;
     case RECOVERY_SAFE_MODE:
         ModeManager_EnterSafe(MODE_REASON_FDIR_SAFE);

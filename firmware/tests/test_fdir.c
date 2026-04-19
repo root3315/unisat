@@ -228,6 +228,73 @@ void test_aggregate_stats(void)
 }
 
 
+/* ------------------------------------------------------------------
+ * 10. Grayscale severity — moving average + peak-driven escalation.
+ * ------------------------------------------------------------------ */
+void test_grayscale_watch_is_log_only(void)
+{
+    setUp();
+    /* A single WATCH-band sample must NOT escalate past the binary
+     * lane's primary action. FAULT_I2C_BUS_STUCK primary is
+     * RECOVERY_RESET_BUS, so reporting one WATCH sample should
+     * return RESET_BUS (the binary lane wins). */
+    FDIR_ReportGrayscale(FAULT_I2C_BUS_STUCK, FDIR_SEVERITY_WATCH);
+    TEST_ASSERT_EQUAL(RECOVERY_RESET_BUS,
+                      FDIR_GetRecommendedAction(FAULT_I2C_BUS_STUCK));
+}
+
+void test_grayscale_critical_forces_safe_mode(void)
+{
+    setUp();
+    /* FAULT_SENSOR_OUT_OF_RANGE has primary LOG_ONLY, escalation
+     * DISABLE_SUBSYS with threshold 10. A single CRITICAL
+     * grayscale sample should force SAFE_MODE even though the
+     * binary lane still sees only 1 / 10 reports. */
+    FDIR_ReportGrayscale(FAULT_SENSOR_OUT_OF_RANGE, FDIR_SEVERITY_CRITICAL);
+    TEST_ASSERT_EQUAL(RECOVERY_SAFE_MODE,
+                      FDIR_GetRecommendedAction(FAULT_SENSOR_OUT_OF_RANGE));
+}
+
+void test_grayscale_peak_clears_with_recent_window(void)
+{
+    setUp();
+    FDIR_ReportGrayscale(FAULT_SENSOR_OUT_OF_RANGE, FDIR_SEVERITY_CRITICAL);
+    TEST_ASSERT_EQUAL(RECOVERY_SAFE_MODE,
+                      FDIR_GetRecommendedAction(FAULT_SENSOR_OUT_OF_RANGE));
+
+    /* Calling ClearRecent should drop the peak back to 0 so the
+     * recommendation falls to LOG_ONLY on the next query. */
+    FDIR_ClearRecent(FAULT_SENSOR_OUT_OF_RANGE);
+    TEST_ASSERT_EQUAL(RECOVERY_LOG_ONLY,
+                      FDIR_GetRecommendedAction(FAULT_SENSOR_OUT_OF_RANGE));
+}
+
+void test_grayscale_ema_converges_towards_sample(void)
+{
+    setUp();
+    /* Feed 128 samples at WARNING severity; the EMA should converge
+     * towards 128 from the initial 0. The exact value after 128
+     * samples with alpha=1/16 is well within +-8 of the input. */
+    for (int i = 0; i < 128; i++) {
+        FDIR_ReportGrayscale(FAULT_BATTERY_UNDERVOLT,
+                              FDIR_SEVERITY_WARNING);
+    }
+    const FDIR_FaultState_t *s =
+        FDIR_GetState(FAULT_BATTERY_UNDERVOLT);
+    TEST_ASSERT_NOT_NULL(s);
+    TEST_ASSERT_TRUE(s->severity_ema > 100U);
+    TEST_ASSERT_TRUE(s->severity_ema <= 135U);
+}
+
+void test_grayscale_out_of_range_id_is_safe(void)
+{
+    setUp();
+    FDIR_ReportGrayscale((FDIR_FaultId_t)99, FDIR_SEVERITY_CRITICAL);
+    TEST_ASSERT_EQUAL(RECOVERY_LOG_ONLY,
+                      FDIR_GetRecommendedAction((FDIR_FaultId_t)99));
+}
+
+
 int main(void)
 {
     UNITY_BEGIN();
@@ -240,5 +307,10 @@ int main(void)
     RUN_TEST(test_reset_all_zeroes_state);
     RUN_TEST(test_out_of_range_id_is_safe);
     RUN_TEST(test_aggregate_stats);
+    RUN_TEST(test_grayscale_watch_is_log_only);
+    RUN_TEST(test_grayscale_critical_forces_safe_mode);
+    RUN_TEST(test_grayscale_peak_clears_with_recent_window);
+    RUN_TEST(test_grayscale_ema_converges_towards_sample);
+    RUN_TEST(test_grayscale_out_of_range_id_is_safe);
     return UNITY_END();
 }

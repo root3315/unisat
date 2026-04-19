@@ -16,7 +16,7 @@
     }
   },
   "satellite": {
-    "form_factor": "hab_payload",
+    "form_factor": "hab_payload_medium",
     "mass_kg": 1.5,
     "dimensions_mm": [200, 200, 150]
   },

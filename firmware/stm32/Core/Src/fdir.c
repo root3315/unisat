@@ -98,11 +98,8 @@ void FDIR_Init(void)
     memset(&g_stats, 0, sizeof(g_stats));
 }
 
-void FDIR_Report(FDIR_FaultId_t id)
+static void report_internal(FDIR_FaultId_t id, uint32_t now)
 {
-    if ((uint32_t)id >= FDIR_FAULT_COUNT) { return; }
-
-    uint32_t now = FDIR_GetTick();
     FDIR_FaultState_t *s = &g_state[id];
 
     /* Slide the recent window: if the last event is older than the
@@ -111,14 +108,23 @@ void FDIR_Report(FDIR_FaultId_t id)
         (now - s->window_start_ms) > FDIR_RECENT_WINDOW_MS) {
         s->window_start_ms = now;
         s->recent_count    = 1U;
+        s->severity_peak   = 0U;
     } else {
         s->recent_count   += 1U;
     }
 
     s->total_count += 1U;
     s->last_event_ms = now;
-
     g_stats.total_faults += 1U;
+}
+
+void FDIR_Report(FDIR_FaultId_t id)
+{
+    if ((uint32_t)id >= FDIR_FAULT_COUNT) { return; }
+
+    uint32_t now = FDIR_GetTick();
+    FDIR_FaultState_t *s = &g_state[id];
+    report_internal(id, now);
 
     /* Update escalation / recovery aggregate stats eagerly so the
      * downlink telemetry reflects the current policy even before a
@@ -139,6 +145,30 @@ void FDIR_Report(FDIR_FaultId_t id)
     }
 }
 
+void FDIR_ReportGrayscale(FDIR_FaultId_t id, uint8_t sample)
+{
+    if ((uint32_t)id >= FDIR_FAULT_COUNT) { return; }
+
+    uint32_t now = FDIR_GetTick();
+    FDIR_FaultState_t *s = &g_state[id];
+
+    /* Drop the bookkeeping update from the binary path first so the
+     * EMA / peak we set below survive the window slide. */
+    report_internal(id, now);
+
+    uint32_t sample32 = (uint32_t)sample;
+    if (sample32 > s->severity_peak) {
+        s->severity_peak = sample32;
+    }
+
+    /* Exponential moving average with a shift-4 smoothing factor:
+     *     ema <- ema + (sample - ema) >> 4
+     * which is equivalent to alpha = 1/16.  Converges in ~64 samples
+     * and has no division, so the hot path is branch-light. */
+    int32_t diff = (int32_t)sample32 - (int32_t)s->severity_ema;
+    s->severity_ema = (uint32_t)((int32_t)s->severity_ema + (diff >> 4));
+}
+
 FDIR_Recovery_t FDIR_GetRecommendedAction(FDIR_FaultId_t id)
 {
     if ((uint32_t)id >= FDIR_FAULT_COUNT) { return RECOVERY_LOG_ONLY; }
@@ -154,8 +184,26 @@ FDIR_Recovery_t FDIR_GetRecommendedAction(FDIR_FaultId_t id)
      * supervisor's next tick sees "no active fault" here. */
     if (s->recent_count == 0U) { return RECOVERY_LOG_ONLY; }
 
-    return (s->recent_count >= e->escalation_threshold)
-           ? e->escalation : e->primary;
+    FDIR_Recovery_t by_binary = (s->recent_count >= e->escalation_threshold)
+                                ? e->escalation : e->primary;
+
+    /* Grayscale lane: the worst sample seen inside the window drives
+     * a second, independent recommendation. We pick whichever path
+     * asks for the more severe action so a sensor drifting into
+     * CRITICAL territory escalates even if the binary threshold has
+     * not been reached yet. */
+    FDIR_Recovery_t by_gray;
+    if (s->severity_peak >= FDIR_SEVERITY_CRITICAL) {
+        by_gray = RECOVERY_SAFE_MODE;
+    } else if (s->severity_peak >= FDIR_SEVERITY_MAJOR) {
+        by_gray = RECOVERY_DISABLE_SUBSYS;
+    } else if (s->severity_peak >= FDIR_SEVERITY_WARNING) {
+        by_gray = RECOVERY_RETRY;
+    } else {
+        by_gray = RECOVERY_LOG_ONLY;
+    }
+
+    return ((uint32_t)by_gray > (uint32_t)by_binary) ? by_gray : by_binary;
 }
 
 const FDIR_FaultState_t *FDIR_GetState(FDIR_FaultId_t id)
@@ -179,6 +227,12 @@ void FDIR_ClearRecent(FDIR_FaultId_t id)
 {
     if ((uint32_t)id >= FDIR_FAULT_COUNT) { return; }
     g_state[id].recent_count = 0U;
+    /* Clearing the window also retires the grayscale peak — a
+     * successful retry / bus-reset means the analogue signal drove
+     * back into range, so the next escalation should start from a
+     * clean slate. The EMA intentionally bleeds back down on its
+     * own timescale so a repeat offender still trips the ladder. */
+    g_state[id].severity_peak = 0U;
     /* window_start_ms is left alone; on next Report the "recent == 0"
      * branch re-initialises it. */
 }

@@ -153,3 +153,30 @@ async def test_event_data_and_source(bus):
     assert received[0].data["x"] == 42
     assert received[0].source == "my_module"
     assert received[0].priority == 1
+
+
+@pytest.mark.asyncio
+async def test_duplicate_subscribe_is_ignored(bus):
+    """Subscribing the same handler twice must not double-fire it.
+
+    Prior to the fix, subscribe() blindly appended the handler so a
+    publish invoked it once per entry and a single unsubscribe call
+    only removed the first copy, leaking a live duplicate.
+    """
+    received = []
+
+    async def handler(event: Event):
+        received.append(event.name)
+
+    bus.subscribe("test", handler)
+    bus.subscribe("test", handler)       # duplicate — must be ignored
+    bus.subscribe("test", handler)       # still ignored
+
+    count = await bus.emit("test")
+    assert count == 1
+    assert received == ["test"]
+
+    # A single unsubscribe now fully detaches the handler.
+    bus.unsubscribe("test", handler)
+    await bus.emit("test")
+    assert received == ["test"]
