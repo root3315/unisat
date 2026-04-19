@@ -4,6 +4,8 @@ Profile key: `cansat_standard` · Mass cap: **500 g** · Volume: **290 cm³**
 Template: [`mission_templates/cansat_standard.json`](../../mission_templates/cansat_standard.json) ·
 BOM: [`hardware/bom/by_form_factor/cansat_standard.csv`](../../hardware/bom/by_form_factor/cansat_standard.csv)
 
+> **🇺🇿 Targeting UzCanSat 2026?** This generic profile runs at 10 Hz telemetry and leaves the buzzer / camera settings default. The UzCanSat rulebook pins specific values for telemetry cadence, the post-landing locator, and camera specs — use the [`cansat_uzcansat.json`](../../mission_templates/cansat_uzcansat.json) preset instead, and see [`missions/cansat_radiation/UZCANSAT_COMPLIANCE.md`](../missions/cansat_radiation/UZCANSAT_COMPLIANCE.md) for clause-by-clause traceability.
+
 ---
 
 ## 1. Mission class
