@@ -75,14 +75,34 @@ with st.container():
         st.metric("Form factors", len(list_form_factors()))
         st.metric("Mission profiles", len(list_mission_types()))
 
+st.info(
+    "**What you can do here, tab by tab:**\n"
+    "1. **🚀 CanSat SITL** — drag two sliders, see a simulated flight "
+    "with altitude + velocity charts (auto-runs on first load).\n"
+    "2. **Form factors** — browse all 14 vehicle classes the platform "
+    "supports (CanSat, CubeSat 1U–12U, rocket, HAB, drone, rover).\n"
+    "3. **Mission profile** — pick a profile + toggle subsystems → "
+    "see mass / volume / power validation in real time.\n"
+    "4. **Bill of materials** — pick any form factor, browse the BOM, "
+    "download CSV.\n"
+    "5. **Test runner** — run the repo's test suites (pytest / ruff / "
+    "mypy) from the browser and see live output.\n"
+    "6. **Firmware** — the 9 compile-time profiles and footprint.\n"
+    "7. **Setup check** — diagnose which Python packages are missing "
+    "on this machine.",
+    icon="💡",
+)
 
-tab_ff, tab_mission, tab_sitl, tab_bom, tab_tests, tab_fw = st.tabs([
+(
+    tab_sitl, tab_ff, tab_mission, tab_bom, tab_tests, tab_fw, tab_setup
+) = st.tabs([
+    "🚀 CanSat SITL",
     "Form factors",
     "Mission profile",
-    "CanSat SITL",
     "Bill of materials",
     "Test runner",
     "Firmware",
+    "⚙ Setup check",
 ])
 
 
@@ -282,7 +302,15 @@ with tab_sitl:
         "will be flagged after the run."
     )
 
-    if run_btn or "last_flight" not in st.session_state:
+    # Auto-run on first visit, re-run on button click or when sliders
+    # change from the last displayed run (so user sees the effect of
+    # moving the sliders immediately, without having to press Launch).
+    last = st.session_state.get("last_flight")
+    sliders_changed = (
+        last is not None and
+        (last["max_alt"] != max_alt or last["descent_rate"] != descent_rate)
+    )
+    if run_btn or last is None or sliders_changed:
         samples = simulate_cansat_flight(max_alt, descent_rate)
         st.session_state["last_flight"] = {
             "samples": samples,
@@ -393,6 +421,12 @@ with tab_tests:
         "shells out to `pytest` / `ruff` / `mypy` and streams the "
         "result back."
     )
+    st.warning(
+        "If a suite exits ≠ 0 on a fresh checkout, the Python env is "
+        "probably missing deps. Go to the **⚙ Setup check** tab first "
+        "— it lists exactly what to `pip install`.",
+        icon="⚠️",
+    )
 
     SUITES = {
         "flight-software (299)": [sys.executable, "-m", "pytest",
@@ -478,6 +512,104 @@ with tab_fw:
     c1.metric("Flash", "31.6 KB / 512 KB", delta="6 %")
     c2.metric("RAM", "36.3 KB / 128 KB", delta="28 %")
     c3.metric("ctest targets", "28", delta="100 % green")
+
+
+# ---------------------------------------------------------------------------
+# Tab 7 — Setup check (dependency diagnostics)
+# ---------------------------------------------------------------------------
+
+def _check_import(module: str) -> bool:
+    try:
+        __import__(module)
+        return True
+    except ImportError:
+        return False
+
+
+REQUIRED_DEPS = {
+    # flight-software runtime
+    "serial":        ("pyserial",        "flight-software comms module"),
+    "aiofiles":      ("aiofiles",        "flight-software data logger"),
+    "sgp4":          ("sgp4",            "simulation / orbit predictor"),
+    "numpy":         ("numpy",           "simulation, power, telemetry"),
+    "PIL":           ("Pillow",          "flight-software image processor"),
+    # tests
+    "hypothesis":    ("hypothesis",      "ground-station AX.25 fuzz tests"),
+    "pytest_cov":    ("pytest-cov",      "coverage gate"),
+    "anyio":         ("anyio",           "async test plumbing"),
+    # lab itself
+    "streamlit":     ("streamlit",       "this UI"),
+    "pandas":        ("pandas",          "CanSat SITL chart"),
+    # type stubs (mypy --strict on Windows)
+    # types-pyserial check handled separately below
+    # quality gates
+    "ruff":          ("ruff",            "lint gate"),
+    "mypy":          ("mypy",            "type gate"),
+}
+
+
+with tab_setup:
+    st.subheader("Setup check — which deps are on this Python?")
+    st.markdown(
+        f"Running **Python {sys.version.split()[0]}** at "
+        f"`{sys.executable}`.\n\n"
+        "If a test suite fails with exit 1 or 2, the most common "
+        "cause is a missing dependency. This tab checks every module "
+        "Lab or the test suites need and tells you exactly what to "
+        "`pip install`."
+    )
+
+    rows = []
+    missing = []
+    for mod, (pkg, purpose) in REQUIRED_DEPS.items():
+        ok = _check_import(mod)
+        rows.append({
+            "Module": mod,
+            "pip package": pkg,
+            "Used by": purpose,
+            "Status": "✅ installed" if ok else "❌ missing",
+        })
+        if not ok:
+            missing.append(pkg)
+
+    # Type stubs — separate heuristic (mypy's own check)
+    types_pyserial_ok = _check_import("serial.tools")
+    rows.append({
+        "Module": "(type stubs)",
+        "pip package": "types-pyserial",
+        "Used by": "mypy --strict on flight-software/modules/communication.py",
+        "Status": "✅ likely present" if types_pyserial_ok
+                   else "⚠ install only if mypy complains",
+    })
+
+    st.dataframe(rows, use_container_width=True, hide_index=True)
+
+    if missing:
+        st.error(f"Missing **{len(missing)}** packages. Run this in your terminal:")
+        st.code(
+            f'"{sys.executable}" -m pip install '
+            + " ".join(missing)
+            + " types-pyserial",
+            language="bash",
+        )
+    else:
+        st.success("🎉 All required deps are installed. "
+                   "Test-runner tab should pass for every suite.")
+
+    st.markdown("---")
+    st.markdown("#### One-shot full install")
+    st.markdown(
+        "If you're setting up a fresh venv, the shortest path is "
+        "installing every per-package requirements file:"
+    )
+    st.code(
+        f'"{sys.executable}" -m pip install '
+        f"-r flight-software/requirements.txt "
+        f"-r ground-station/requirements.txt "
+        f"-r simulation/requirements.txt "
+        f"streamlit pandas pytest pytest-cov ruff mypy types-pyserial",
+        language="bash",
+    )
 
 
 # ---------------------------------------------------------------------------
