@@ -114,9 +114,26 @@ async def test_camera_cleanup_oldest(camera_tmpdir: Path) -> None:
 #  communication.py
 # =========================================================================
 
-from modules.communication import CommunicationManager
+# pyserial is an optional runtime dep (only the flight RPi needs it). On a
+# bare CI image without `pip install -r flight-software/requirements.txt`,
+# `modules.communication` fails to import on `import serial`. Guard the
+# import and skip the communication tests individually so the rest of this
+# file (camera, module_registry) still runs. See #8.
+try:
+    from modules.communication import CommunicationManager
+
+    _HAS_PYSERIAL = True
+except ImportError:
+    CommunicationManager = None  # type: ignore[assignment,misc]
+    _HAS_PYSERIAL = False
+
+_requires_pyserial = pytest.mark.skipif(
+    not _HAS_PYSERIAL,
+    reason="pyserial required for CommunicationManager tests",
+)
 
 
+@_requires_pyserial
 @pytest.mark.asyncio
 async def test_communication_lifecycle() -> None:
     """Communication opens a real serial port in the default config.
@@ -131,6 +148,7 @@ async def test_communication_lifecycle() -> None:
     await comm.stop()
 
 
+@_requires_pyserial
 def test_communication_sign_verify_round_trip() -> None:
     comm = CommunicationManager({
         "hmac_key": "0123456789abcdef0123456789abcdef",
@@ -142,6 +160,7 @@ def test_communication_sign_verify_round_trip() -> None:
     assert comm.verify_command(cmd, sig) is True
 
 
+@_requires_pyserial
 def test_communication_verify_rejects_tampered_signature() -> None:
     comm = CommunicationManager({
         "hmac_key": "0123456789abcdef0123456789abcdef",
@@ -152,6 +171,7 @@ def test_communication_verify_rejects_tampered_signature() -> None:
     assert comm.verify_command(cmd, bytes(sig)) is False
 
 
+@_requires_pyserial
 def test_communication_verify_rejects_tampered_command() -> None:
     comm = CommunicationManager({
         "hmac_key": "0123456789abcdef0123456789abcdef",
@@ -161,6 +181,7 @@ def test_communication_verify_rejects_tampered_command() -> None:
     assert comm.verify_command(b"pong", sig) is False
 
 
+@_requires_pyserial
 @pytest.mark.asyncio
 async def test_communication_send_packet(tmp_path: Path) -> None:
     """send_packet returns False without an open serial port
@@ -172,6 +193,7 @@ async def test_communication_send_packet(tmp_path: Path) -> None:
     assert isinstance(ok, bool)
 
 
+@_requires_pyserial
 @pytest.mark.asyncio
 async def test_communication_receive_packet_empty_returns_none() -> None:
     comm = CommunicationManager({"simulate": True})
@@ -181,6 +203,7 @@ async def test_communication_receive_packet_empty_returns_none() -> None:
     assert pkt is None or isinstance(pkt, bytes)
 
 
+@_requires_pyserial
 @pytest.mark.asyncio
 async def test_communication_send_authenticated_command() -> None:
     comm = CommunicationManager({
@@ -192,6 +215,7 @@ async def test_communication_send_authenticated_command() -> None:
     assert isinstance(ok, bool)
 
 
+@_requires_pyserial
 def test_communication_seconds_since_last_rx_is_float() -> None:
     comm = CommunicationManager({"simulate": True})
     val = comm.seconds_since_last_rx()
@@ -199,6 +223,7 @@ def test_communication_seconds_since_last_rx_is_float() -> None:
     assert val >= 0.0
 
 
+@_requires_pyserial
 def test_communication_is_connected_returns_bool() -> None:
     comm = CommunicationManager({"simulate": True})
     result = comm.is_connected()

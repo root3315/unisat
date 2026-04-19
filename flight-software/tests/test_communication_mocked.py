@@ -26,6 +26,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+# Every test in this file patches or instantiates a real pyserial object,
+# so skip the whole module cleanly on a checkout that does not have
+# pyserial installed (CI images without flight-software/requirements.txt).
+# Without this guard, pytest raises a collection error on `import serial`
+# below, which counts as a hard failure instead of a skip — see #8.
+pytest.importorskip("serial", reason="pyserial required for CommunicationManager tests")
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from modules.communication import CommunicationManager, SYNC_WORD

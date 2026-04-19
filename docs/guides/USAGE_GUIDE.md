@@ -216,6 +216,13 @@ make test-c      # ctest 25/25 (post-TRL-5)
 make test-py     # pytest 56+ тестов
 ```
 
+> **Note on pyserial / flight-software tests.** A full green pytest run on
+> `flight-software/tests/` requires `pip install -r flight-software/requirements.txt`
+> (pyserial is the one that trips this). Without it, the
+> `CommunicationManager` tests auto-skip cleanly — they no longer abort
+> collection. The rest of the suite (camera, module_registry, …) still
+> runs end-to-end.
+
 Или вручную:
 
 ```bash
