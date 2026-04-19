@@ -1,14 +1,12 @@
 <p align="center">
-  <img src="docs/diagrams/system_block_diagram.svg" alt="UniSat Logo" width="600">
+  <img src="docs/diagrams/hero_banner.svg" alt="UniSat — universal modular satellite platform" width="100%">
 </p>
-
-<h1 align="center">UniSat — Universal Modular Satellite Platform</h1>
 
 <p align="center">
   <a href="scripts/verify.sh"><img src="https://img.shields.io/badge/verify-.%2Fscripts%2Fverify.sh-brightgreen.svg" alt="Verify"></a>
   <a href="docs/security/ax25_threat_model.md"><img src="https://img.shields.io/badge/AX.25-v2.2_full-success.svg" alt="AX.25"></a>
   <a href="docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/ctest-28%2F28-brightgreen.svg" alt="C tests"></a>
-  <a href="flight-software/tests"><img src="https://img.shields.io/badge/pytest-420%20passing-brightgreen.svg" alt="Python tests"></a>
+  <a href="flight-software/tests"><img src="https://img.shields.io/badge/pytest-435%20passing-brightgreen.svg" alt="Python tests"></a>
   <a href="docs/quality/static_analysis.md"><img src="https://img.shields.io/badge/coverage-C%2085.3%25%20%2F%20Py%2085.2%25-brightgreen.svg" alt="Coverage"></a>
   <a href="firmware/build-arm"><img src="https://img.shields.io/badge/ARM%20build-31.6KB%20%2F%2036.3KB-success.svg" alt="ARM"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
@@ -18,12 +16,29 @@
 </p>
 
 <p align="center">
-  <b>Version 1.3.1 — Universal Platform (CanSat + CubeSat 1U–12U + HAB + Rocket + Drone + Rover)</b>
+  <b>Version 1.4.1 — Universal Platform (CanSat + CubeSat 1U–12U + HAB + Rocket + Drone + Rover)</b><br>
+  <i>Professional open-source flight software for any small-satellite class</i>
 </p>
 
 <p align="center">
-  <b>Professional open-source flight software for any small-satellite class</b>
+  <img src="docs/diagrams/feature_grid.svg" alt="UniSat key capabilities" width="100%">
 </p>
+
+---
+
+## 60-second tour
+
+```bash
+git clone https://github.com/root3315/unisat.git && cd unisat
+./scripts/verify.sh                                # full green pipeline (Docker)
+cp mission_templates/cubesat_3u.json mission_config.json
+make target-cubesat_3u                             # → firmware/build-arm-cubesat_3u/
+cd ground-station && streamlit run app.py          # → http://localhost:8501
+```
+
+Prefer CanSat? Replace `cubesat_3u` with `cansat_standard`. The firmware, flight-software, and ground-station all reconfigure themselves from `mission_config.json`.
+
+Full step-by-step: [`docs/guides/USAGE_GUIDE.md`](docs/guides/USAGE_GUIDE.md) · per-profile playbooks: [`docs/ops/`](docs/ops/README.md) · full docs index: [`docs/README.md`](docs/README.md).
 
 ---
 
@@ -303,6 +318,10 @@ cmake --build build-arm
 ---
 
 ## Supported Form Factors
+
+<p align="center">
+  <img src="docs/diagrams/form_factors_lineup.svg" alt="UniSat supported form factors" width="100%">
+</p>
 
 UniSat's [form-factor registry](flight-software/core/form_factors.py) is the single source of truth for every supported class. Every envelope in the tables below is enforced at runtime; each row also ships a mission template, a hardware BOM, a compile-time firmware profile, and a dedicated [ops guide](docs/ops/).
 
