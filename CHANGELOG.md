@@ -5,6 +5,50 @@ All notable changes to UniSat will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2026-04-19 — README visual overhaul (hero banner + feature grid)
+
+Zero behavioural changes. Makes the landing README visually
+user-friendly on GitHub with three new inline SVGs above the fold.
+
+### Added
+
+- **`docs/diagrams/hero_banner.svg`** — 1200 × 340 dark-space banner
+  (title, tagline, central satellite illustration, three form-factor
+  silhouettes, version chip, five capability chips with real
+  metrics).
+- **`docs/diagrams/feature_grid.svg`** — 1200 × 340 grid of 8
+  capability cards with line-art icons: Universal platform (14
+  form factors), HMAC + replay filter, FDIR three-tier, Verified
+  tests (28 C / 435 Py), AX.25 + CCSDS, STM32 + FreeRTOS, Streamlit
+  ground station, CDR-level docs.
+- **`docs/diagrams/form_factors_lineup.svg`** — 1200 × 420 to-scale
+  silhouettes of all 14 form factors grouped by family (CanSat × 3,
+  CubeSat 1U–12U with 3U highlighted as TRL-5 reference, rocket /
+  HAB / drone / rover / custom / registry marker).
+
+All three SVGs validate as well-formed XML and render inline on
+GitHub without external CDN dependencies.
+
+### Changed
+
+- **`README.md`** landing layout:
+  - Top banner switched from `system_block_diagram.svg` to the new
+    `hero_banner.svg` (full-width).
+  - New **"60-second tour"** block under the banner with a 5-line
+    quickstart (clone → verify → copy template → build → ground
+    station).
+  - Version chip bumped 1.3.1 → 1.4.1 and test badge updated
+    420 → 435 to match the actual release.
+  - `feature_grid.svg` inserted under the version chip.
+  - `form_factors_lineup.svg` inserted at the top of the "Supported
+    Form Factors" section.
+
+### Verified
+
+No code or test touched. All 435 Python tests still green; all 28
+ctest targets unchanged; markdown-link resolver still reports 0
+broken links.
+
 ## [1.4.1] - 2026-04-19 — Docs tree reorganised + BOM corrections + bench-test verification
 
 Zero behavioural changes. Reorganises the flat `docs/` root into
