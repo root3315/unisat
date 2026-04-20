@@ -6,7 +6,10 @@
   <a href="scripts/verify.sh"><img src="https://img.shields.io/badge/verify-.%2Fscripts%2Fverify.sh-brightgreen.svg" alt="Verify"></a>
   <a href="docs/security/ax25_threat_model.md"><img src="https://img.shields.io/badge/AX.25-v2.2_full-success.svg" alt="AX.25"></a>
   <a href="docs/verification/ax25_trace_matrix.md"><img src="https://img.shields.io/badge/ctest-28%2F28-brightgreen.svg" alt="C tests"></a>
-  <a href="flight-software/tests"><img src="https://img.shields.io/badge/pytest-435%20passing-brightgreen.svg" alt="Python tests"></a>
+  <a href="flight-software/tests"><img src="https://img.shields.io/badge/pytest-471%20passing-brightgreen.svg" alt="Python tests"></a>
+  <a href="https://github.com/root3315/unisat/releases/latest"><img src="https://img.shields.io/github/v/release/root3315/unisat?color=blue" alt="Latest release"></a>
+  <a href="https://github.com/root3315/unisat/stargazers"><img src="https://img.shields.io/github/stars/root3315/unisat?style=social" alt="Stars"></a>
+  <a href="https://github.com/root3315/unisat/issues"><img src="https://img.shields.io/github/issues/root3315/unisat?color=yellow" alt="Open issues"></a>
   <a href="docs/quality/static_analysis.md"><img src="https://img.shields.io/badge/coverage-C%2085.3%25%20%2F%20Py%2085.2%25-brightgreen.svg" alt="Coverage"></a>
   <a href="firmware/build-arm"><img src="https://img.shields.io/badge/ARM%20build-31.6KB%20%2F%2036.3KB-success.svg" alt="ARM"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"></a>
@@ -16,7 +19,7 @@
 </p>
 
 <p align="center">
-  <b>Version 1.4.1 — Universal Platform (CanSat + CubeSat 1U–12U + HAB + Rocket + Drone + Rover)</b><br>
+  <b>Version 1.5.1 — Universal Platform (CanSat + CubeSat 1U–12U + HAB + Rocket + Drone + Rover)</b><br>
   <i>Professional open-source flight software for any small-satellite class</i>
 </p>
 
