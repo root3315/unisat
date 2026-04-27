@@ -124,7 +124,7 @@ def test_anomaly_threshold_flags_a_handcrafted_burst(acr, tmp_path):
             })
 
     rows = acr.analyze(csv_path, bin_width_m=20.0)
-    target = [r for r in rows if r["altitude_min"] <= 100.0 < r["altitude_max"]] if False else [
+    target = [
         r for r in rows if r["altitude_mid_m"] == pytest.approx(110.0, abs=0.5)
     ]
     assert target, f"expected a 100-120m bin, got {[r['altitude_bin_m'] for r in rows]}"
