@@ -8,6 +8,7 @@ One file per concern, organised by purpose. Start here if you are new.
 |---|---|
 | Clone, build, and fly a reference mission | [`guides/USAGE_GUIDE.md`](guides/USAGE_GUIDE.md) → [`guides/OPERATIONS_GUIDE.md`](guides/OPERATIONS_GUIDE.md) |
 | Pick the right mission profile | [`ops/README.md`](ops/README.md) |
+| Browse a complete mission pack (CDR + science + key data) | [`missions/README.md`](missions/README.md) |
 | Understand how the system fits together | [`design/architecture.md`](design/architecture.md) |
 | Know what works and what is still TODO | [`project/GAPS_AND_ROADMAP.md`](project/GAPS_AND_ROADMAP.md) |
 | Look up an API | [`reference/API_REFERENCE.md`](reference/API_REFERENCE.md) |
@@ -27,6 +28,16 @@ Granular ops for a specific vehicle class: setup → build → flight → post-f
 - CubeSat: [`cubesat_1u`](ops/cubesat_1u.md), [`cubesat_1_5u`](ops/cubesat_1_5u.md), [`cubesat_2u`](ops/cubesat_2u.md), [`cubesat_3u`](ops/cubesat_3u.md), [`cubesat_6u`](ops/cubesat_6u.md), [`cubesat_12u`](ops/cubesat_12u.md)
 - Other platforms: [`rocket_avionics`](ops/rocket_avionics.md), [`hab_payload`](ops/hab_payload.md), [`drone`](ops/drone.md)
 - Index + selection flowchart: [`ops/README.md`](ops/README.md)
+
+## `missions/` — full mission documentation packs
+
+Each subdirectory is a complete mission pack: CDR, science rationale, key-data
+format, presentation, poster, compliance checklist, and (recommended) a baseline
+SITL dataset. Use this when you need an end-to-end worked example.
+
+- Index + comparison table: [`missions/README.md`](missions/README.md)
+- Blueprint for new packs: [`missions/_template/`](missions/_template/)
+- Shipped pack: [`missions/cansat_radiation/`](missions/cansat_radiation/) — vertical gamma dose-rate profile (SBM-20 Geiger tube), targets `cansat_standard`.
 
 ## `design/` — architecture and design decisions
 
