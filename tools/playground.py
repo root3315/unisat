@@ -447,6 +447,8 @@ with tab_tests:
                                   "configurator/tests", "-q"],
         "simulation (57)":       [sys.executable, "-m", "pytest",
                                   "simulation/tests", "-q"],
+        "scripts (5)":           [sys.executable, "-m", "pytest",
+                                  "scripts/tests", "-q"],
         "ruff (all)":            [sys.executable, "-m", "ruff", "check",
                                   "flight-software/core",
                                   "flight-software/modules",
